@@ -456,21 +456,17 @@ const noteContentInput = document.getElementById('noteContentInput')
 
 function openNote(id) {
   currentNoteId = id
-  noteUndoStack = []
-  noteRedoStack = []
   const notes = getNotes()
   const n = notes.filter(x => x.id === id)[0]
   if (!n) return
-  lastSavedContent = n.content || ''
   // Close grid view if open
   const gridBtn = document.getElementById('gridBtn')
   if (gridBtn.classList.contains('active')) gridBtn.click()
   document.querySelector('.container').style.display = 'none'
   document.getElementById('noteView').style.display = 'flex'
   document.getElementById('noteViewTitle').value = n.title || ''
-  document.getElementById('noteViewContent').value = n.content || ''
+  document.getElementById('noteViewContent').innerHTML = n.content || ''
   document.getElementById('noteViewFooter').textContent = `Last edited ${new Date(n.updated || n.added).toLocaleString()}`
-  renderNotePreview()
   renderSidebar()
 }
 
@@ -483,27 +479,8 @@ function closeNoteView() {
 
 // Auto-save note on input
 let noteSaveTimer = null
-let noteUndoStack = []
-let noteRedoStack = []
-let lastSavedContent = ''
-let noteUndoing = false
-function pushNoteUndo() {
-  const current = document.getElementById('noteViewContent').value
-  if (lastSavedContent !== '' && lastSavedContent !== current) {
-    noteUndoStack.push(lastSavedContent)
-    if (noteUndoStack.length > 100) noteUndoStack.shift()
-    noteRedoStack = []
-  }
-  lastSavedContent = current
-}
-document.getElementById('noteViewTitle').addEventListener('input', () => {
-  noteSaveContent()
-})
-document.getElementById('noteViewContent').addEventListener('input', () => {
-  if (!noteUndoing) pushNoteUndo()
-  noteUndoing = false
-  noteSaveContent()
-})
+document.getElementById('noteViewTitle').addEventListener('input', noteSaveContent)
+document.getElementById('noteViewContent').addEventListener('input', noteSaveContent)
 
 function noteSaveContent() {
   clearTimeout(noteSaveTimer)
@@ -513,14 +490,25 @@ function noteSaveContent() {
     const n = notes.filter(x => x.id === currentNoteId)[0]
     if (!n) return
     n.title = document.getElementById('noteViewTitle').value
-    n.content = document.getElementById('noteViewContent').value
+    n.content = document.getElementById('noteViewContent').innerHTML
     n.updated = Date.now()
     saveNotes(notes)
     document.getElementById('noteViewFooter').textContent = `Last edited ${new Date().toLocaleString()}`
-    renderNotePreview()
     renderSidebar()
   }, 300)
 }
+
+// Paste images: browser handles it natively in contenteditable, we just make sure images have styling
+document.getElementById('noteViewContent').addEventListener('paste', function () {
+  setTimeout(() => {
+    this.querySelectorAll('img').forEach(img => {
+      if (!img.style.maxWidth) img.style.maxWidth = '100%'
+      if (!img.style.borderRadius) img.style.borderRadius = '8px'
+      if (img.style.margin === '') img.style.margin = '8px 0'
+    })
+  }, 0)
+})
+
 document.getElementById('noteDeleteBtn').addEventListener('click', () => {
   if (!currentNoteId) return
   let notes = getNotes().filter(x => x.id !== currentNoteId)
@@ -529,6 +517,14 @@ document.getElementById('noteDeleteBtn').addEventListener('click', () => {
   renderSidebar()
 })
 document.getElementById('noteCloseBtn').addEventListener('click', closeNoteView)
+
+// Note toolbar
+document.getElementById('noteMenuBtn').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('closed'))
+document.getElementById('noteBookmarkBtn').addEventListener('click', () => document.getElementById('bookmarkDialog').classList.add('open'))
+document.getElementById('noteGridBtn').addEventListener('click', () => {
+  closeNoteView()
+  document.getElementById('gridBtn').click()
+})
 
 // Note dialog
 document.getElementById('newNoteBtn').addEventListener('click', () => {
@@ -551,74 +547,6 @@ document.getElementById('noteDialogConfirm').addEventListener('click', () => {
 })
 noteTitleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); noteContentInput.focus() } })
 noteDialog.addEventListener('mousedown', (e) => { if (e.target === noteDialog) noteDialog.classList.remove('open') })
-
-// Paste images into notes
-document.getElementById('noteViewContent').addEventListener('paste', function (e) {
-  const items = e.clipboardData.items
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      e.preventDefault()
-      const file = item.getAsFile()
-      if (!file) continue
-      const reader = new FileReader()
-      reader.onload = () => {
-        if (!currentNoteId) return
-        const notes = getNotes()
-        const n = notes.filter(x => x.id === currentNoteId)[0]
-        if (!n) return
-        n.images = n.images || []
-        n.images.push({ dataUrl: reader.result })
-        n.updated = Date.now()
-        saveNotes(notes)
-        renderNotePreview()
-        this.dispatchEvent(new Event('input'))
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-})
-function renderNotePreview() {
-  const el = document.getElementById('noteViewRendered')
-  if (!currentNoteId) { el.innerHTML = ''; return }
-  const n = getNotes().filter(x => x.id === currentNoteId)[0]
-  if (!n) { el.innerHTML = ''; return }
-  let html = (n.content || '').replace(/\n/g, '<br>')
-  if (n.images && n.images.length) {
-    for (const img of n.images) {
-      html += `<img src="${img.dataUrl}" style="max-width:100%;border-radius:8px;margin:8px 0">`
-    }
-  }
-  el.innerHTML = html
-}
-
-// Undo / Redo for notes
-function noteUndo() {
-  const ta = document.getElementById('noteViewContent')
-  if (!noteUndoStack.length) return
-  noteUndoing = true
-  const cur = ta.value
-  ta.value = noteUndoStack.pop()
-  noteRedoStack.push(cur)
-  ta.dispatchEvent(new Event('input'))
-}
-function noteRedo() {
-  const ta = document.getElementById('noteViewContent')
-  if (!noteRedoStack.length) return
-  noteUndoing = true
-  const cur = ta.value
-  ta.value = noteRedoStack.pop()
-  noteUndoStack.push(cur)
-  ta.dispatchEvent(new Event('input'))
-}
-document.getElementById('noteUndoBtn').addEventListener('click', noteUndo)
-document.getElementById('noteRedoBtn').addEventListener('click', noteRedo)
-document.getElementById('noteViewContent').addEventListener('keydown', function (e) {
-  const isZ = e.key === 'z' || e.key === 'Z'
-  if (!isZ || !(e.metaKey || e.ctrlKey)) return
-  e.preventDefault()
-  if (e.shiftKey) noteRedo()
-  else noteUndo()
-})
 
 // ─── Grid view ─────────────────────────────────────────
 function renderGridView() {

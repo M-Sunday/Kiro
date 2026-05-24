@@ -107,17 +107,20 @@
             </div>
         </div>
         <div class="note-view" id="noteView" style="display:none">
+            <div class="note-toolbar">
+                <button class="menu-btn" id="noteMenuBtn"><i data-lucide="panel-left" class="menu-btn-icon"></i></button>
+                <span class="note-toolbar-title">Note</span>
+                <button class="menu-btn" id="noteBookmarkBtn"><i data-lucide="bookmark" style="width:18px;height:18px"></i></button>
+                <button class="menu-btn" id="noteGridBtn"><i data-lucide="grid-3x3" style="width:18px;height:18px"></i></button>
+            </div>
             <div class="note-view-header">
                 <input class="note-view-title" id="noteViewTitle" placeholder="Note title" spellcheck="false" />
                 <div class="note-view-actions">
-                    <button class="note-view-btn" id="noteUndoBtn"><i data-lucide="undo-2" style="width:16px;height:16px"></i></button>
-                    <button class="note-view-btn" id="noteRedoBtn"><i data-lucide="redo-2" style="width:16px;height:16px"></i></button>
                     <button class="note-view-btn" id="noteDeleteBtn"><i data-lucide="trash-2" style="width:16px;height:16px;color:#ff453a"></i></button>
                     <button class="note-view-btn" id="noteCloseBtn"><i data-lucide="x" style="width:16px;height:16px"></i></button>
                 </div>
             </div>
-            <textarea class="note-view-content" id="noteViewContent" placeholder="Write something..." spellcheck="false"></textarea>
-            <div class="note-view-rendered" id="noteViewRendered"></div>
+            <div class="note-view-content" id="noteViewContent" contenteditable="true" spellcheck="false"></div>
             <div class="note-view-footer" id="noteViewFooter"></div>
         </div>
         <div class="grid-view" id="gridView"></div>

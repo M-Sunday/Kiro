@@ -320,8 +320,14 @@ body.theme-black .folder-dialog textarea:focus { border-color: #f5f5f7; }
 body.theme-obsidian .folder-dialog textarea { background: #2a2a30; border-color: #2a2a30; color: #e8e8ec; }
 body.theme-obsidian .folder-dialog textarea:focus { border-color: #e8e8ec; }
 
-.note-view { padding: 20px; display: flex; flex-direction: column; gap: 0; min-height: 200px; width: 100%; max-width: 600px; }
-.note-view-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.note-view { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 0; min-height: 200px; width: 100%; max-width: 600px; }
+.note-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; margin-top: 14px; margin-bottom: 4px; background: #f5f5f7; border-radius: 14px; border: 1px solid #e8e8ed; }
+.note-toolbar-title { font-size: 13px; font-weight: 600; color: #86868b; flex-shrink: 0; margin-right: auto; }
+body.theme-black .note-toolbar { background: #2c2c2e; border-color: #3a3a3c; }
+body.theme-black .note-toolbar-title { color: #a1a1a6; }
+body.theme-obsidian .note-toolbar { background: #1e1e24; border-color: #2a2a30; }
+body.theme-obsidian .note-toolbar-title { color: #8e8e9a; }
+.note-view-header { display: flex; align-items: center; gap: 8px; margin-top: 16px; margin-bottom: 12px; }
 .note-view-title { flex: 1; font-size: 20px; font-weight: 700; border: none; background: transparent; outline: none; color: #1d1d1f; font-family: inherit; letter-spacing: -0.3px; padding: 0; }
 body.theme-black .note-view-title { color: #f5f5f7; }
 body.theme-obsidian .note-view-title { color: #e8e8ec; }
@@ -332,13 +338,10 @@ body.theme-black .note-view-btn { border-color: #3a3a3c; }
 body.theme-black .note-view-btn:hover { background: #3a3a3c; }
 body.theme-obsidian .note-view-btn { border-color: #2a2a30; }
 body.theme-obsidian .note-view-btn:hover { background: #2a2a30; }
-.note-view-content { flex: 1; border: none; background: transparent; outline: none; font-size: 14px; line-height: 1.6; color: #3a3a3c; font-family: inherit; resize: none; min-height: 150px; padding: 0; }
+.note-view-content { flex: 1; border: none; background: transparent; outline: none; font-size: 14px; line-height: 1.6; color: #3a3a3c; font-family: inherit; min-height: 150px; padding: 0; white-space: pre-wrap; word-break: break-word; }
+.note-view-content img { max-width: 100%; border-radius: 8px; margin: 8px 0; display: block; }
 body.theme-black .note-view-content { color: #a1a1a6; }
 body.theme-obsidian .note-view-content { color: #a1a1a6; }
-.note-view-rendered { padding: 8px 0; font-size: 14px; line-height: 1.6; color: #3a3a3c; white-space: pre-wrap; word-break: break-word; min-height: 40px; border-top: 1px solid #e8e8ed; margin-top: 8px; }
-.note-view-rendered img { max-width: 100%; border-radius: 8px; margin: 8px 0; display: block; }
-body.theme-black .note-view-rendered { color: #a1a1a6; border-color: #3a3a3c; }
-body.theme-obsidian .note-view-rendered { color: #a1a1a6; border-color: #2a2a30; }
 .note-view-footer { font-size: 11px; color: #8e8e93; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e8e8ed; }
 body.theme-black .note-view-footer { border-color: #3a3a3c; }
 body.theme-obsidian .note-view-footer { border-color: #2a2a30; }

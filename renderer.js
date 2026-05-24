@@ -210,19 +210,17 @@ document.getElementById('searchInput').addEventListener('input', renderSidebar)
 function loadVideoById(id) {
   const v = getVideos()[id]; if (!v) return
   currentVideo = { ...v, id }
-  document.getElementById('thumbnail').src = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`
+  document.getElementById('thumbnail').src = v.thumbnail || ''
   document.getElementById('durationBadge').textContent = v.duration || '–'
   document.getElementById('videoTitle').textContent = v.title
   document.getElementById('channelName').textContent = v.channel
-  if (v.pubDate) setPublishedDate(new Date(v.pubDate))
-  updatePrivacy(v.privacy || 'PUBLIC')
   renderSidebar()
 }
 
 function clearCard() {
   document.getElementById('thumbnail').src = ''
   document.getElementById('durationBadge').textContent = '–'
-  document.getElementById('videoTitle').textContent = 'Paste a YouTube link above'
+  document.getElementById('videoTitle').textContent = 'Paste a video link above'
   document.getElementById('channelName').textContent = ''
 }
 
@@ -268,10 +266,10 @@ document.getElementById('imageWrap').addEventListener('mousedown', (e) => {
 // ─── Add video ────────────────────────────────────────
 document.getElementById('addBtn').addEventListener('click', () => {
   if (!currentVideo) { document.getElementById('videoTitle').textContent = 'Load a video first'; return }
-  const { id, title, channel, duration, pubDate, privacy } = currentVideo
+  const { id, title, channel, duration, url, thumbnail } = currentVideo
   const vs = getVideos()
   if (vs[id]) return
-  vs[id] = { title, channel, duration, pubDate: pubDate?.toISOString(), privacy: privacy || 'PUBLIC', added: Date.now() }
+  vs[id] = { title, channel, duration, url: url || '', thumbnail: thumbnail || '', added: Date.now() }
   saveVideos(vs)
   const fs = getFolders()
   if (!fs['Videos']) fs['Videos'] = []
@@ -282,40 +280,44 @@ document.getElementById('addBtn').addEventListener('click', () => {
   if (t?.classList.contains('on')) { const h = loadHistory().filter(x => x.id !== id); h.unshift({ id, title, channel }); saveHistory(h) }
 })
 
-// ─── YouTube fetch ────────────────────────────────────
-function getVideoId(url) {
-  for (const r of [/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/, /^([a-zA-Z0-9_-]{11})$/]) { const m = url.match(r); if (m) return m[1] }
-  return null
+// ─── Video fetch ──────────────────────────────────────
+function hashUrl(url) {
+  let h = 0; for (let i = 0; i < url.length; i++) { h = ((h << 5) - h) + url.charCodeAt(i); h |= 0 }
+  return Math.abs(h).toString(36)
 }
-async function loadVideo(videoId) {
-  document.getElementById('thumbnail').src = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+
+async function loadVideo(url) {
+  const urlStr = typeof url === 'string' ? url : url.trim()
+  document.getElementById('thumbnail').src = ''
   document.getElementById('durationBadge').textContent = '...'
   document.getElementById('videoTitle').textContent = 'Loading...'; document.getElementById('channelName').textContent = ''
   try {
-    const data = await (await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)).json()
-    const title = data.title || 'Unknown'
-    const channel = data.author_name || ''
-    let sec = 0, dateStr = '', privacy = 'PUBLIC'
-    try {
-      const html = await (await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${videoId}`)}`)).text()
-      sec = parseInt((html.match(/"lengthSeconds":"?(\d+)"?/) || [])[1] || '0')
-      dateStr = (html.match(/"uploadDate":"([^"]+)"/) || html.match(/<meta\s+itemprop="datePublished"\s+content="([^"]+)"/) || [])[1]
-      privacy = (html.match(/"privacyStatus":"([^"]+)"/) || [])[1] || 'PUBLIC'
-    } catch (_) {}
+    const data = await (await fetch(`https://noembed.com/embed?url=${encodeURIComponent(urlStr)}`)).json()
+    if (data.error) throw new Error(data.error)
+    const id = hashUrl(urlStr)
+    let title = data.title || 'Unknown'
+    const channel = data.author_name || new URL(urlStr).hostname.replace('www.', '')
+    let thumbnail = data.thumbnail_url || ''
+    let sec = 0
+    if (!thumbnail) {
+      try {
+        const html = await (await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(urlStr)}`)).text()
+        thumbnail = (html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/) || [])[1] || ''
+        sec = parseInt((html.match(/"lengthSeconds":"?(\d+)"?/) || [])[1] || '0')
+      } catch (_) {}
+    }
     const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60
     const duration = sec ? (h ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}:${String(s).padStart(2,'0')}`) : ''
-    const pubDate = dateStr ? new Date(dateStr) : null
-    currentVideo = { id: videoId, title, channel, duration, pubDate, privacy }
+    currentVideo = { id, title, channel, duration, url: urlStr, thumbnail }
+    if (thumbnail) document.getElementById('thumbnail').src = thumbnail
     document.getElementById('durationBadge').textContent = duration || '–'
     document.getElementById('videoTitle').textContent = title; document.getElementById('channelName').textContent = channel
-    if (pubDate) setPublishedDate(pubDate)
-    updatePrivacy(privacy)
     renderSidebar()
   } catch (e) { document.getElementById('durationBadge').textContent = '–'; document.getElementById('videoTitle').textContent = 'Could not load video info'; document.getElementById('channelName').textContent = 'Try again or check the link' }
 }
 document.getElementById('ytBtn').addEventListener('click', () => {
-  const id = getVideoId(document.getElementById('ytInput').value.trim())
-  if (id) loadVideo(id); else document.getElementById('videoTitle').textContent = 'Invalid YouTube link'
+  const url = document.getElementById('ytInput').value.trim()
+  if (url) loadVideo(url); else document.getElementById('videoTitle').textContent = 'Paste a video link'
 })
 document.getElementById('ytInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('ytBtn').click() })
 

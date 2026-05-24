@@ -77,7 +77,7 @@ function renderSidebar() {
     html += '</div></div>'
   }
   tree.innerHTML = html || `<div style="padding:20px;text-align:center;font-size:12px;color:#8e8e93">No videos yet.<br>Add one with the button above.</div>`
-  lucide.createIcons()
+  loadIcons()
   bindSidebarEvents()
 }
 
@@ -229,7 +229,7 @@ function showContextMenu(x, y, videoId, folderName, bookmarkId, noteId) {
       moveToEl.classList.remove('show')
       moveDiv4.style.display = 'none'
     }
-    lucide.createIcons()
+    loadIcons()
   } else {
     document.getElementById('ctxDiv3').style.display = 'none'
     document.getElementById('ctxMoveTo').classList.remove('show')
@@ -609,7 +609,7 @@ function renderGridView() {
     html += '</div></div>'
   }
   el.innerHTML = html || '<div style="padding:30px;text-align:center;font-size:13px;color:#8e8e93">Nothing to show yet.</div>'
-  lucide.createIcons()
+  loadIcons()
   // Click handlers
   el.querySelectorAll('[data-video-id]').forEach(item => {
     item.addEventListener('click', () => {
@@ -706,12 +706,12 @@ function updateCardAddBtn() {
     row.style.display = 'flex'
     btn.classList.add('saved')
     btn.innerHTML = '<i data-lucide="check" class="card-add-icon"></i> Saved'
-    lucide.createIcons()
+    loadIcons()
   } else {
     row.style.display = 'flex'
     btn.classList.remove('saved')
     btn.innerHTML = '<i data-lucide="plus" class="card-add-icon"></i> Add video'
-    lucide.createIcons()
+    loadIcons()
   }
 }
 
@@ -850,7 +850,7 @@ function renderCalendar() {
   h += '</div>'; el.innerHTML = h
   document.getElementById('prevMonth').addEventListener('click', () => { calMonth--; if (calMonth < 0) { calMonth = 11; calYear-- }; renderCalendar() })
   document.getElementById('nextMonth').addEventListener('click', () => { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++ }; renderCalendar() })
-  lucide.createIcons()
+  loadIcons()
 }
 function setPublishedDate(d) { publishedDate = d; calMonth = d.getMonth(); calYear = d.getFullYear(); renderCalendar() }
 function updatePrivacy(s) {
@@ -867,7 +867,7 @@ document.addEventListener('keydown', (e) => {
 })
 
 // ─── Init ──────────────────────────────────────────────
-lucide.createIcons(); renderCalendar(); renderSidebar(); showWelcome()
+loadIcons(); renderCalendar(); renderSidebar(); showWelcome()
 
 // Service worker update
 if ('serviceWorker' in navigator) {

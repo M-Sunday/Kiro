@@ -75,7 +75,7 @@ function bindSidebarEvents() {
   document.querySelectorAll('.tree-file').forEach(file => {
     file.addEventListener('click', () => {
       const id = file.closest('[data-video-id]')?.dataset.videoId
-      if (id && id !== 'placeholder') { const v = getVideos()[id]; if (v) loadVideoById(id) }
+      if (id && id !== 'placeholder') { const v = getVideos()[id]; if (v) { loadVideoById(id); if (window.innerWidth <= 640) document.getElementById('sidebar').classList.add('closed') } }
     })
   })
 
@@ -203,6 +203,7 @@ folderDialog.addEventListener('mousedown', (e) => { if (e.target === folderDialo
 // ─── Sidebar toolbar ──────────────────────────────────
 document.getElementById('pinBtn').addEventListener('click', function () { this.classList.toggle('pinned') })
 document.getElementById('menuBtn').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('closed'))
+document.getElementById('sidebarBackdrop').addEventListener('click', () => document.getElementById('sidebar').classList.add('closed'))
 document.getElementById('searchInput').addEventListener('input', renderSidebar)
 
 // ─── Load video ───────────────────────────────────────

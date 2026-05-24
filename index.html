@@ -48,6 +48,10 @@
                 <i data-lucide="bookmark" class="footer-icon"></i>
                 Add bookmark
             </button>
+            <button class="sidebar-footer-btn" id="newNoteBtn">
+                <i data-lucide="file-text" class="footer-icon"></i>
+                New note
+            </button>
         </div>
     </div>
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -58,7 +62,7 @@
             <button class="menu-btn" id="menuBtn">
                 <i data-lucide="panel-left" class="menu-btn-icon"></i>
             </button>
-            <div class="top-bar-center">YouTube</div>
+            <div class="top-bar-center">Vault</div>
             <button class="menu-btn" id="bookmarkBtn" style="margin-right:6px">
                 <i data-lucide="bookmark" style="width:18px;height:18px"></i>
             </button>
@@ -99,7 +103,19 @@
                     </div>
                     <div class="calendar" id="calendar"></div>
                 </div>
+                </div>
             </div>
+        </div>
+        <div class="note-view" id="noteView" style="display:none">
+            <div class="note-view-header">
+                <input class="note-view-title" id="noteViewTitle" placeholder="Note title" spellcheck="false" />
+                <div class="note-view-actions">
+                    <button class="note-view-btn" id="noteDeleteBtn"><i data-lucide="trash-2" style="width:16px;height:16px;color:#ff453a"></i></button>
+                    <button class="note-view-btn" id="noteCloseBtn"><i data-lucide="x" style="width:16px;height:16px"></i></button>
+                </div>
+            </div>
+            <textarea class="note-view-content" id="noteViewContent" placeholder="Write something..." spellcheck="false"></textarea>
+            <div class="note-view-footer" id="noteViewFooter"></div>
         </div>
         <div class="grid-view" id="gridView"></div>
     </div>
@@ -132,6 +148,19 @@
             <div class="folder-dialog-actions">
                 <button class="dialog-btn cancel" id="bookmarkDialogCancel">Cancel</button>
                 <button class="dialog-btn confirm" id="bookmarkDialogConfirm">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note dialog -->
+    <div class="folder-dialog-overlay" id="noteDialog">
+        <div class="folder-dialog note-dialog">
+            <h3>New note</h3>
+            <input type="text" id="noteTitleInput" placeholder="Title" spellcheck="false" />
+            <textarea id="noteContentInput" placeholder="Write something..." spellcheck="false"></textarea>
+            <div class="folder-dialog-actions">
+                <button class="dialog-btn cancel" id="noteDialogCancel">Cancel</button>
+                <button class="dialog-btn confirm" id="noteDialogConfirm">Add</button>
             </div>
         </div>
     </div>

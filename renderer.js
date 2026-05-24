@@ -9,9 +9,12 @@ function getPins() { try { return JSON.parse(localStorage.getItem('ytPins') || '
 function savePins(p) { localStorage.setItem('ytPins', JSON.stringify(p)) }
 function getBookmarks() { try { return JSON.parse(localStorage.getItem('ytBookmarks') || '[]') } catch { return [] } }
 function saveBookmarks(b) { localStorage.setItem('ytBookmarks', JSON.stringify(b)) }
+function getNotes() { try { return JSON.parse(localStorage.getItem('ytNotes') || '[]') } catch { return [] } }
+function saveNotes(n) { localStorage.setItem('ytNotes', JSON.stringify(n)) }
 
 let currentVideo = null
 let dragVideoId = null
+let currentNoteId = null
 
 // ─── Render sidebar ───────────────────────────────────
 function renderSidebar() {
@@ -42,6 +45,13 @@ function renderSidebar() {
       const isPinned = pins.includes(id)
       html += `<div class="tree-item" data-video-id="${id}" draggable="true"><div class="tree-file${currentVideo?.id === id ? ' active' : ''}${isPinned ? ' pinned' : ''}"><i data-lucide="file-video-2" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">${v.title}</span><span class="tree-sublabel">${v.channel}</span></div></div></div>`
     }
+    // Folder notes
+    for (const n of getNotes()) {
+      if (n.folder !== name) continue
+      if (query && !n.title.toLowerCase().includes(query)) continue
+      const preview = (n.content || '').replace(/\n/g, ' ').substring(0, 50)
+      html += `<div class="tree-item ${currentNoteId === n.id ? 'active' : ''}" data-note-id="${n.id}"><div class="tree-file${currentNoteId === n.id ? ' active' : ''}"><i data-lucide="file-text" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">${n.title || 'Untitled'}</span><span class="tree-sublabel">${preview}${n.content?.length > 50 ? '…' : ''}</span></div></div></div>`
+    }
     html += '</div></div>'
   }
   // Bookmarks
@@ -51,6 +61,17 @@ function renderSidebar() {
     for (const bm of bookmarks) {
       if (query && !bm.title.toLowerCase().includes(query) && !bm.url.toLowerCase().includes(query)) continue
       html += `<div class="tree-item" data-bookmark-id="${bm.id}"><div class="tree-file"><div class="bm-thumb-wrap">${bm.image ? `<img class="bm-thumb" src="${bm.image}" onerror="this.style.display='none'" />` : `<i data-lucide="external-link" class="tree-file-icon" style="margin:4px"></i>`}</div><div class="tree-file-meta"><span class="tree-label">${bm.title || bm.url}</span><span class="tree-sublabel">${bm.url}</span></div></div></div>`
+    }
+    html += '</div></div>'
+  }
+  // Notes (unassigned)
+  const notes = getNotes().filter(n => !n.folder)
+  if (notes.length) {
+    html += `<div class="tree-item expanded" data-notes="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="file-text" class="tree-folder-icon"></i><span class="tree-label">Notes</span></div><div class="tree-children">`
+    for (const n of notes) {
+      if (query && !n.title.toLowerCase().includes(query)) continue
+      const preview = (n.content || '').replace(/\n/g, ' ').substring(0, 50)
+      html += `<div class="tree-item ${currentNoteId === n.id ? 'active' : ''}" data-note-id="${n.id}"><div class="tree-file${currentNoteId === n.id ? ' active' : ''}"><i data-lucide="file-text" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">${n.title || 'Untitled'}</span><span class="tree-sublabel">${preview}${n.content?.length > 50 ? '…' : ''}</span></div></div></div>`
     }
     html += '</div></div>'
   }
@@ -93,6 +114,8 @@ function bindSidebarEvents() {
         const bms = getBookmarks().filter(b => b.id === bm.dataset.bookmarkId)
         if (bms[0]?.url) { window.open(bms[0].url); if (window.innerWidth <= 640) document.getElementById('sidebar').classList.add('closed') }
       }
+      const note = file.closest('[data-note-id]')
+      if (note) { openNote(note.dataset.noteId); if (window.innerWidth <= 640) document.getElementById('sidebar').classList.add('closed') }
     })
   })
 
@@ -107,8 +130,9 @@ function bindSidebarEvents() {
   document.querySelectorAll('.tree-file').forEach(file => {
     file.addEventListener('contextmenu', (e) => {
       e.preventDefault()
-      const entry = file.closest('[data-video-id]'), folder = file.closest('[data-folder]'), bm = file.closest('[data-bookmark-id]')
+      const entry = file.closest('[data-video-id]'), folder = file.closest('[data-folder]'), bm = file.closest('[data-bookmark-id]'), note = file.closest('[data-note-id]')
       if (bm) showContextMenu(e.clientX, e.clientY, null, null, bm.dataset.bookmarkId)
+      else if (note) showContextMenu(e.clientX, e.clientY, null, null, null, note.dataset.noteId)
       else if (entry) showContextMenu(e.clientX, e.clientY, entry?.dataset.videoId, folder?.dataset.folder)
     })
   })
@@ -129,11 +153,13 @@ function bindSidebarEvents() {
       longTimer = setTimeout(() => {
         longPressed = true
         const touch = e.touches[0]
-        const item = el.closest('[data-folder]'), video = el.closest('[data-video-id]'), bm = el.closest('[data-bookmark-id]')
+        const item = el.closest('[data-folder]'), video = el.closest('[data-video-id]'), bm = el.closest('[data-bookmark-id]'), note = el.closest('[data-note-id]')
         if (video) {
           showContextMenu(touch.clientX, touch.clientY, video.dataset.videoId, item?.dataset.folder || null)
         } else if (bm) {
           showContextMenu(touch.clientX, touch.clientY, null, null, bm.dataset.bookmarkId)
+        } else if (note) {
+          showContextMenu(touch.clientX, touch.clientY, null, null, null, note.dataset.noteId)
         } else if (item && item.dataset.folder !== 'Videos' && item.dataset.folder !== 'Archived') {
           showContextMenu(touch.clientX, touch.clientY, null, item.dataset.folder)
         }
@@ -147,44 +173,50 @@ function bindSidebarEvents() {
 }
 
 // ─── Context menu ─────────────────────────────────────
-let ctxTarget = null, ctxFolder = null, ctxBookmark = null
-function showContextMenu(x, y, videoId, folderName, bookmarkId) {
+let ctxTarget = null, ctxFolder = null, ctxBookmark = null, ctxNote = null
+function showContextMenu(x, y, videoId, folderName, bookmarkId, noteId) {
   const menu = document.getElementById('ctxMenu')
-  ctxTarget = videoId; ctxFolder = folderName; ctxBookmark = bookmarkId
+  ctxTarget = videoId; ctxFolder = folderName; ctxBookmark = bookmarkId; ctxNote = noteId
   const isTouch = 'ontouchstart' in window
   menu.style.left = (isTouch ? x - 40 : x) + 'px'
   menu.style.top = (isTouch ? y - 40 : y) + 'px'
   menu.classList.add('open')
   const isBm = bookmarkId !== null && bookmarkId !== undefined
+  const isNote = noteId !== null && noteId !== undefined
   const showVideo = videoId !== null && videoId !== undefined
-  menu.querySelector('[data-action="rename-folder"]').style.display = videoId ? 'none' : isBm ? 'none' : ''
-  menu.querySelector('[data-action="delete-folder"]').style.display = videoId ? 'none' : isBm ? 'none' : ''
+  menu.querySelector('[data-action="rename-folder"]').style.display = videoId ? 'none' : (isBm || isNote) ? 'none' : ''
+  menu.querySelector('[data-action="delete-folder"]').style.display = videoId ? 'none' : (isBm || isNote) ? 'none' : ''
   menu.querySelector('[data-action="open-link"]').style.display = (showVideo || isBm) ? '' : 'none'
   menu.querySelector('[data-action="archive"]').style.display = showVideo ? '' : 'none'
   menu.querySelector('[data-action="pin"]').style.display = showVideo ? '' : 'none'
   menu.querySelector('[data-action="move-up"]').style.display = showVideo ? '' : 'none'
   menu.querySelector('[data-action="move-down"]').style.display = showVideo ? '' : 'none'
-  menu.querySelector('[data-action="delete"]').style.display = (showVideo || isBm) ? '' : 'none'
+  menu.querySelector('[data-action="delete"]').style.display = (showVideo || isBm || isNote) ? '' : 'none'
   const delItem = menu.querySelector('[data-action="delete"]')
-  delItem.innerHTML = `<i data-lucide="trash-2" class="ctx-icon"></i> ${isBm ? 'Delete bookmark' : 'Delete'}`
-  delItem.className = isBm ? 'ctx-item ctx-danger' : 'ctx-item ctx-danger'
-  document.getElementById('ctxDiv1').style.display = (videoId || isBm) ? '' : 'none'
+  delItem.innerHTML = `<i data-lucide="trash-2" class="ctx-icon"></i> ${isNote ? 'Delete note' : isBm ? 'Delete bookmark' : 'Delete'}`
+  delItem.className = 'ctx-item ctx-danger'
+  document.getElementById('ctxDiv1').style.display = (videoId || isBm || isNote) ? '' : 'none'
   document.getElementById('ctxDiv2').style.display = showVideo ? '' : 'none'
-  document.getElementById('ctxDiv3').style.display = showVideo ? '' : 'none'
+  document.getElementById('ctxDiv3').style.display = (showVideo || isNote) ? '' : 'none'
   document.getElementById('ctxMoveTo').classList.remove('show')
   document.getElementById('ctxDiv4').style.display = 'none'
-  if (videoId) {
+  if (videoId || isNote) {
     const pinItem = menu.querySelector('[data-action="pin"]')
-    const isPinned = getPins().includes(videoId)
-    pinItem.innerHTML = `<i data-lucide="pin" class="ctx-icon"></i> ${isPinned ? 'Unpin' : 'Pin'}`
-    // Populate "Move to" section
+    if (videoId) {
+      const isPinned = getPins().includes(videoId)
+      pinItem.innerHTML = `<i data-lucide="pin" class="ctx-icon"></i> ${isPinned ? 'Unpin' : 'Pin'}`
+    }
+    // Populate "Move to" section (folders for videos, folders for notes)
     const moveToEl = document.getElementById('ctxMoveTo')
     const folders = getFolders()
-    const currentFolder = folderName
+    const currentFolder = isNote ? (getNotes().filter(n => n.id === noteId)[0]?.folder || null) : folderName
     const folderEntries = Object.keys(folders).filter(n => n !== currentFolder && n !== 'Archived')
     const moveDiv4 = document.getElementById('ctxDiv4')
     if (folderEntries.length) {
       let mHtml = ''
+      if (isNote && currentFolder) {
+        mHtml += `<div class="ctx-item" data-action="unassign-folder"><i data-lucide="x" class="ctx-icon"></i> Remove from folder</div><div class="ctx-divider" style="margin:4px 8px"></div>`
+      }
       for (const name of folderEntries) {
         const color = (getFolderMeta()[name]?.color || '')
         mHtml += `<div class="ctx-item" data-action="move-to" data-folder="${name}"><i data-lucide="folder" class="ctx-icon"${color ? ` style="color:${color}"` : ''}></i> Move to ${name}</div>`
@@ -219,6 +251,11 @@ document.getElementById('ctxMenu').addEventListener('click', (e) => {
   if (a === 'delete' && ctxBookmark && !ctxTarget) {
     let bms = getBookmarks().filter(b => b.id !== ctxBookmark)
     saveBookmarks(bms); renderSidebar()
+  }
+  if (a === 'delete' && ctxNote && !ctxTarget && !ctxBookmark) {
+    let ns = getNotes().filter(n => n.id !== ctxNote)
+    saveNotes(ns); renderSidebar()
+    if (currentNoteId === ctxNote) { currentNoteId = null; closeNoteView() }
   }
   if (a === 'archive' && ctxTarget) {
     const fs = getFolders(); for (const ids of Object.values(fs)) { const i = ids.indexOf(ctxTarget); if (i > -1) ids.splice(i, 1) }
@@ -282,6 +319,18 @@ document.getElementById('ctxMenu').addEventListener('click', (e) => {
       if (!fs[target].includes(ctxTarget)) fs[target].push(ctxTarget)
       saveFolders(fs); renderSidebar()
     }
+    if (a === 'move-to' && ctxNote && !ctxTarget) {
+      const target = item.dataset.folder
+      if (!target) return
+      const notes = getNotes()
+      const n = notes.filter(x => x.id === ctxNote)[0]
+      if (n) { n.folder = target; saveNotes(notes); renderSidebar() }
+    }
+    if (a === 'unassign-folder' && ctxNote) {
+      const notes = getNotes()
+      const n = notes.filter(x => x.id === ctxNote)[0]
+      if (n) { delete n.folder; saveNotes(notes); renderSidebar() }
+    }
     document.getElementById('ctxMenu').classList.remove('open')
   })
 
@@ -326,12 +375,57 @@ async function addBookmark() {
   const bms = getBookmarks()
   const id = '_bm_' + Date.now()
   const bm = { id, url, title: bookmarkTitleInput.value.trim() || url, added: Date.now() }
-  // Try to fetch og:image
-  try {
-    const html = await (await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`)).text()
-    const m = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i) || html.match(/<link\s+rel="image_src"\s+href="([^"]+)"/i)
-    if (m) bm.image = m[1]
-  } catch (_) {}
+  // Try to fetch preview image from page meta tags or API
+  const proxyUrls = [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    `https://corsproxy.io/?url=${encodeURIComponent(url)}`
+  ]
+  // Twitter/X: try dedicated API that returns media URLs
+  const twMatch = url.match(/https?:\/\/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/i)
+  if (twMatch) {
+    proxyUrls.push(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.vxtwitter.com/Twitter/status/${twMatch[1]}`)}`)
+  }
+  const imgPatterns = [
+    /<meta\s+property="og:image"\s+content="([^"]+)"/i,
+    /<meta\s+property="og:image:secure_url"\s+content="([^"]+)"/i,
+    /<meta\s+name="twitter:image"\s+content="([^"]+)"/i,
+    /<meta\s+name="twitter:image:src"\s+content="([^"]+)"/i,
+    /<link\s+rel="image_src"\s+href="([^"]+)"/i,
+    /<meta\s+property="og:image"[^>]+content="([^"]+)"/i
+  ]
+  for (const proxyUrl of proxyUrls) {
+    try {
+      const ctrl = new AbortController()
+      const t = setTimeout(() => ctrl.abort(), 5000)
+      const text = await (await fetch(proxyUrl, { signal: ctrl.signal })).text()
+      clearTimeout(t)
+      // Try as JSON (vxtwitter API)
+      try {
+        const json = JSON.parse(text)
+        const mediaUrl = json?.media_extended?.[0]?.url || json?.media?.[0]?.url
+        if (mediaUrl) { bm.image = mediaUrl; break }
+      } catch (_) {}
+      // Try as HTML meta tags
+      for (const pat of imgPatterns) {
+        const m = text.match(pat)
+        if (m) { bm.image = m[1].replace(/&amp;/g, '&'); break }
+      }
+      if (bm.image) break
+    } catch (_) {}
+  }
+  for (const proxyUrl of proxyUrls) {
+    try {
+      const ctrl = new AbortController()
+      const t = setTimeout(() => ctrl.abort(), 5000)
+      const html = await (await fetch(proxyUrl, { signal: ctrl.signal })).text()
+      clearTimeout(t)
+      for (const pat of imgPatterns) {
+        const m = html.match(pat)
+        if (m) { bm.image = m[1].replace(/&amp;/g, '&'); break }
+      }
+      if (bm.image) break
+    } catch (_) {}
+  }
   bms.push(bm)
   saveBookmarks(bms)
   bookmarkUrlInput.value = ''; bookmarkTitleInput.value = ''
@@ -354,6 +448,94 @@ bookmarkUrlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') boo
 bookmarkTitleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addBookmark(); if (e.key === 'Escape') bookmarkDialog.classList.remove('open') })
 bookmarkDialog.addEventListener('mousedown', (e) => { if (e.target === bookmarkDialog) bookmarkDialog.classList.remove('open') })
 
+// ─── Notes ──────────────────────────────────────────────
+const noteDialog = document.getElementById('noteDialog')
+const noteTitleInput = document.getElementById('noteTitleInput')
+const noteContentInput = document.getElementById('noteContentInput')
+
+function openNote(id) {
+  currentNoteId = id
+  const notes = getNotes()
+  const n = notes.filter(x => x.id === id)[0]
+  if (!n) return
+  document.querySelector('.container').style.display = 'none'
+  document.getElementById('noteView').style.display = 'flex'
+  document.getElementById('noteViewTitle').value = n.title || ''
+  document.getElementById('noteViewContent').value = n.content || ''
+  document.getElementById('noteViewFooter').textContent = `Last edited ${new Date(n.updated || n.added).toLocaleString()}`
+  renderSidebar()
+}
+
+function closeNoteView() {
+  currentNoteId = null
+  document.getElementById('noteView').style.display = 'none'
+  document.querySelector('.container').style.display = ''
+  renderSidebar()
+}
+
+// Auto-save note on input
+let noteSaveTimer = null
+document.getElementById('noteViewTitle').addEventListener('input', () => {
+  clearTimeout(noteSaveTimer)
+  noteSaveTimer = setTimeout(() => {
+    if (!currentNoteId) return
+    const notes = getNotes()
+    const n = notes.filter(x => x.id === currentNoteId)[0]
+    if (!n) return
+    n.title = document.getElementById('noteViewTitle').value
+    n.content = document.getElementById('noteViewContent').value
+    n.updated = Date.now()
+    saveNotes(notes)
+    document.getElementById('noteViewFooter').textContent = `Last edited ${new Date().toLocaleString()}`
+    renderSidebar()
+  }, 500)
+})
+document.getElementById('noteViewContent').addEventListener('input', () => {
+  clearTimeout(noteSaveTimer)
+  noteSaveTimer = setTimeout(() => {
+    if (!currentNoteId) return
+    const notes = getNotes()
+    const n = notes.filter(x => x.id === currentNoteId)[0]
+    if (!n) return
+    n.title = document.getElementById('noteViewTitle').value
+    n.content = document.getElementById('noteViewContent').value
+    n.updated = Date.now()
+    saveNotes(notes)
+    document.getElementById('noteViewFooter').textContent = `Last edited ${new Date().toLocaleString()}`
+    renderSidebar()
+  }, 500)
+})
+document.getElementById('noteDeleteBtn').addEventListener('click', () => {
+  if (!currentNoteId) return
+  let notes = getNotes().filter(x => x.id !== currentNoteId)
+  saveNotes(notes)
+  closeNoteView()
+  renderSidebar()
+})
+document.getElementById('noteCloseBtn').addEventListener('click', closeNoteView)
+
+// Note dialog
+document.getElementById('newNoteBtn').addEventListener('click', () => {
+  noteTitleInput.value = ''; noteContentInput.value = ''
+  noteDialog.classList.add('open')
+  setTimeout(() => noteTitleInput.focus(), 100)
+})
+document.getElementById('noteDialogCancel').addEventListener('click', () => noteDialog.classList.remove('open'))
+document.getElementById('noteDialogConfirm').addEventListener('click', () => {
+  const title = noteTitleInput.value.trim() || 'Untitled'
+  const content = noteContentInput.value
+  const notes = getNotes()
+  const id = '_nt_' + Date.now()
+  notes.push({ id, title, content, added: Date.now() })
+  saveNotes(notes)
+  noteTitleInput.value = ''; noteContentInput.value = ''
+  noteDialog.classList.remove('open')
+  renderSidebar()
+  openNote(id)
+})
+noteTitleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); noteContentInput.focus() } })
+noteDialog.addEventListener('mousedown', (e) => { if (e.target === noteDialog) noteDialog.classList.remove('open') })
+
 // ─── Grid view ─────────────────────────────────────────
 function renderGridView() {
   const el = document.getElementById('gridView')
@@ -361,6 +543,12 @@ function renderGridView() {
   const folders = getFolders()
   const meta = getFolderMeta()
   const videos = getVideos()
+  html = `<div class="grid-toolbar">
+    <button class="menu-btn" id="gridMenuBtn"><i data-lucide="panel-left" class="menu-btn-icon"></i></button>
+    <span class="grid-toolbar-title">Vault</span>
+    <button class="menu-btn" id="gridBookmarkBtn"><i data-lucide="bookmark" style="width:18px;height:18px"></i></button>
+    <button class="menu-btn active" id="gridCloseBtn"><i data-lucide="grid-3x3" style="width:18px;height:18px"></i></button>
+  </div>`
   for (const [name, ids] of Object.entries(folders)) {
     if (!ids.length) continue
     const color = meta[name]?.color || ''
@@ -371,6 +559,11 @@ function renderGridView() {
       const thumb = v.thumbnail || `https://img.youtube.com/vi/${id}/maxresdefault.jpg`
       html += `<div class="grid-item" data-video-id="${id}"><img class="grid-item-img" src="${thumb}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${id}/hqdefault.jpg'" /><div class="grid-item-info"><div class="grid-item-title">${v.title}</div><div class="grid-item-sublabel">${v.channel}</div></div></div>`
     }
+    // Folder notes in grid
+    for (const n of getNotes().filter(x => x.folder === name)) {
+      const preview = (n.content || '').replace(/\n/g, ' ').substring(0, 80)
+      html += `<div class="grid-item note" data-note-id="${n.id}"><div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;aspect-ratio:auto;height:60px"><i data-lucide="file-text" style="width:24px;height:24px;color:#8e8e93"></i></div><div class="grid-item-info"><div class="grid-item-title">${n.title || 'Untitled'}</div><div class="grid-item-sublabel">${preview}${(n.content || '').length > 80 ? '…' : ''}</div></div></div>`
+    }
     html += '</div></div>'
   }
   const bms = getBookmarks()
@@ -378,6 +571,16 @@ function renderGridView() {
     html += `<div class="grid-section"><div class="grid-section-header"><i data-lucide="bookmark" style="width:16px;height:16px;flex-shrink:0"></i> Bookmarks</div><div class="grid-items">`
     for (const bm of bms) {
       html += `<div class="grid-item bm" data-bookmark-id="${bm.id}">${bm.image ? `<img class="grid-item-img" src="${bm.image}" loading="lazy" />` : '<div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed"><i data-lucide="external-link" style="width:24px;height:24px;color:#8e8e93"></i></div>'}<div class="grid-item-info"><div class="grid-item-title">${bm.title || bm.url}</div><div class="grid-item-sublabel">${bm.url}</div></div></div>`
+    }
+    html += '</div></div>'
+  }
+  // Notes in grid (unassigned only)
+  const notes = getNotes().filter(x => !x.folder)
+  if (notes.length) {
+    html += `<div class="grid-section"><div class="grid-section-header"><i data-lucide="file-text" style="width:16px;height:16px;flex-shrink:0"></i> Notes</div><div class="grid-items">`
+    for (const n of notes) {
+      const preview = (n.content || '').replace(/\n/g, ' ').substring(0, 80)
+      html += `<div class="grid-item note" data-note-id="${n.id}"><div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;aspect-ratio:auto;height:60px"><i data-lucide="file-text" style="width:24px;height:24px;color:#8e8e93"></i></div><div class="grid-item-info"><div class="grid-item-title">${n.title || 'Untitled'}</div><div class="grid-item-sublabel">${preview}${(n.content || '').length > 80 ? '…' : ''}</div></div></div>`
     }
     html += '</div></div>'
   }
@@ -397,12 +600,28 @@ function renderGridView() {
       if (bm?.url) window.open(bm.url)
     })
   })
+  el.querySelectorAll('[data-note-id]').forEach(item => {
+    item.addEventListener('click', () => {
+      const nid = item.dataset.noteId
+      if (nid) { openNote(nid); document.getElementById('gridBtn').click() }
+    })
+  })
 }
 document.getElementById('gridBtn').addEventListener('click', function () {
   const open = this.classList.toggle('active')
   document.getElementById('gridView').classList.toggle('open', open)
   document.querySelector('.content').style.display = open ? 'none' : ''
-  if (open) renderGridView()
+  document.querySelector('.top-bar').style.display = open ? 'none' : ''
+  if (open) { if (currentNoteId) closeNoteView(); renderGridView() }
+})
+
+// Grid toolbar event delegation
+document.getElementById('gridView').addEventListener('click', function (e) {
+  const btn = e.target.closest('button')
+  if (!btn) return
+  if (btn.id === 'gridMenuBtn') document.getElementById('sidebar').classList.toggle('closed')
+  else if (btn.id === 'gridBookmarkBtn') document.getElementById('bookmarkDialog').classList.add('open')
+  else if (btn.id === 'gridCloseBtn') document.getElementById('gridBtn').click()
 })
 
 // ─── Sidebar toolbar ──────────────────────────────────
@@ -421,6 +640,7 @@ function loadVideoById(id) {
   document.getElementById('channelName').textContent = v.channel
   if (v.pubDate) setPublishedDate(new Date(v.pubDate))
   updatePrivacy(v.privacy || 'PUBLIC')
+  if (currentNoteId) closeNoteView()
   hideWelcome(); renderSidebar(); updateCardAddBtn()
 }
 
@@ -512,7 +732,10 @@ async function loadVideo(videoId) {
     ]
     for (const proxyUrl of proxies) {
       try {
-        const html = await (await fetch(proxyUrl)).text()
+        const controller = new AbortController()
+        const t = setTimeout(() => controller.abort(), 5000)
+        const html = await (await fetch(proxyUrl, { signal: controller.signal })).text()
+        clearTimeout(t)
         const s = parseInt((html.match(/"lengthSeconds":"?(\d+)"?/) || [])[1] || '0')
         if (s) { sec = s }
         const ds = (html.match(/"uploadDate":"([^"]+)"/) || html.match(/<meta\s+itemprop="datePublished"\s+content="([^"]+)"/) || [])[1]
@@ -582,7 +805,7 @@ document.querySelectorAll('#pane-history .settings-toggle').forEach((t, i) => {
   t.addEventListener('click', function () { if (i === 0 && !this.classList.contains('on')) saveHistory([]) })
 })
 document.querySelector('.settings-clear-btn')?.addEventListener('click', () => {
-  if (confirm('Clear all saved data?')) { localStorage.removeItem('ytVideos'); localStorage.removeItem('ytFolders'); localStorage.removeItem('ytFolderMeta'); localStorage.removeItem('linkHistory'); localStorage.removeItem('ytBookmarks'); renderSidebar(); clearCard() }
+  if (confirm('Clear all saved data?')) { localStorage.removeItem('ytVideos'); localStorage.removeItem('ytFolders'); localStorage.removeItem('ytFolderMeta'); localStorage.removeItem('linkHistory'); localStorage.removeItem('ytBookmarks'); localStorage.removeItem('ytNotes'); renderSidebar(); clearCard() }
 })
 window.addEventListener('beforeunload', () => { const t = document.querySelector('#pane-history .settings-toggle:last-child'); if (t?.classList.contains('on')) localStorage.removeItem('linkHistory') })
 

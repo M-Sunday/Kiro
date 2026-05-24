@@ -44,6 +44,10 @@
                 <i data-lucide="folder-plus" class="footer-icon"></i>
                 New folder
             </button>
+            <button class="sidebar-footer-btn" id="newBookmarkBtn">
+                <i data-lucide="bookmark" class="footer-icon"></i>
+                Add bookmark
+            </button>
         </div>
     </div>
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -55,6 +59,9 @@
                 <i data-lucide="panel-left" class="menu-btn-icon"></i>
             </button>
             <div class="top-bar-center">YouTube</div>
+            <button class="menu-btn" id="bookmarkBtn" style="margin-right:6px">
+                <i data-lucide="bookmark" style="width:18px;height:18px"></i>
+            </button>
             <div class="top-bar-input">
                 <input type="text" id="ytInput" placeholder="Paste YouTube link" spellcheck="false" />
                 <button id="ytBtn">
@@ -115,6 +122,19 @@
             <div class="folder-dialog-actions">
                 <button class="dialog-btn cancel" id="folderDialogCancel">Cancel</button>
                 <button class="dialog-btn confirm" id="folderDialogConfirm">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bookmark dialog -->
+    <div class="folder-dialog-overlay" id="bookmarkDialog">
+        <div class="folder-dialog">
+            <h3>Add bookmark</h3>
+            <input type="text" id="bookmarkUrlInput" placeholder="https://..." spellcheck="false" />
+            <input type="text" id="bookmarkTitleInput" placeholder="Title (optional)" spellcheck="false" />
+            <div class="folder-dialog-actions">
+                <button class="dialog-btn cancel" id="bookmarkDialogCancel">Cancel</button>
+                <button class="dialog-btn confirm" id="bookmarkDialogConfirm">Add</button>
             </div>
         </div>
     </div>

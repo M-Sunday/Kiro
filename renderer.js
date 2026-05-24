@@ -7,6 +7,8 @@ function getFolderMeta() { try { return JSON.parse(localStorage.getItem('ytFolde
 function saveFolderMeta(m) { localStorage.setItem('ytFolderMeta', JSON.stringify(m)) }
 function getPins() { try { return JSON.parse(localStorage.getItem('ytPins') || '[]') } catch { return [] } }
 function savePins(p) { localStorage.setItem('ytPins', JSON.stringify(p)) }
+function getBookmarks() { try { return JSON.parse(localStorage.getItem('ytBookmarks') || '[]') } catch { return [] } }
+function saveBookmarks(b) { localStorage.setItem('ytBookmarks', JSON.stringify(b)) }
 
 let currentVideo = null
 let dragVideoId = null
@@ -39,6 +41,16 @@ function renderSidebar() {
       if (query && !v.title.toLowerCase().includes(query) && !v.channel.toLowerCase().includes(query)) continue
       const isPinned = pins.includes(id)
       html += `<div class="tree-item" data-video-id="${id}" draggable="true"><div class="tree-file${currentVideo?.id === id ? ' active' : ''}${isPinned ? ' pinned' : ''}"><i data-lucide="file-video-2" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">${v.title}</span><span class="tree-sublabel">${v.channel}</span></div></div></div>`
+    }
+    html += '</div></div>'
+  }
+  // Bookmarks
+  const bookmarks = getBookmarks()
+  if (bookmarks.length) {
+    html += `<div class="tree-item expanded" data-bookmarks="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="bookmark" class="tree-folder-icon"></i><span class="tree-label">Bookmarks</span></div><div class="tree-children">`
+    for (const bm of bookmarks) {
+      if (query && !bm.title.toLowerCase().includes(query) && !bm.url.toLowerCase().includes(query)) continue
+      html += `<div class="tree-item" data-bookmark-id="${bm.id}"><div class="tree-file"><i data-lucide="external-link" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">${bm.title || bm.url}</span><span class="tree-sublabel">${bm.url}</span></div></div></div>`
     }
     html += '</div></div>'
   }
@@ -76,6 +88,11 @@ function bindSidebarEvents() {
     file.addEventListener('click', () => {
       const id = file.closest('[data-video-id]')?.dataset.videoId
       if (id && id !== 'placeholder') { const v = getVideos()[id]; if (v) { loadVideoById(id); if (window.innerWidth <= 640) document.getElementById('sidebar').classList.add('closed') } }
+      const bm = file.closest('[data-bookmark-id]')
+      if (bm) {
+        const bms = getBookmarks().filter(b => b.id === bm.dataset.bookmarkId)
+        if (bms[0]?.url) { window.open(bms[0].url); if (window.innerWidth <= 640) document.getElementById('sidebar').classList.add('closed') }
+      }
     })
   })
 
@@ -90,8 +107,9 @@ function bindSidebarEvents() {
   document.querySelectorAll('.tree-file').forEach(file => {
     file.addEventListener('contextmenu', (e) => {
       e.preventDefault()
-      const entry = file.closest('.tree-item'), folder = file.closest('[data-folder]')
-      showContextMenu(e.clientX, e.clientY, entry?.dataset.videoId, folder?.dataset.folder)
+      const entry = file.closest('[data-video-id]'), folder = file.closest('[data-folder]'), bm = file.closest('[data-bookmark-id]')
+      if (bm) showContextMenu(e.clientX, e.clientY, null, null, bm.dataset.bookmarkId)
+      else if (entry) showContextMenu(e.clientX, e.clientY, entry?.dataset.videoId, folder?.dataset.folder)
     })
   })
   document.querySelectorAll('.tree-folder').forEach(folder => {
@@ -111,10 +129,11 @@ function bindSidebarEvents() {
       longTimer = setTimeout(() => {
         longPressed = true
         const touch = e.touches[0]
-        const item = el.closest('[data-folder]')
-        const video = el.closest('[data-video-id]')
+        const item = el.closest('[data-folder]'), video = el.closest('[data-video-id]'), bm = el.closest('[data-bookmark-id]')
         if (video) {
           showContextMenu(touch.clientX, touch.clientY, video.dataset.videoId, item?.dataset.folder || null)
+        } else if (bm) {
+          showContextMenu(touch.clientX, touch.clientY, null, null, bm.dataset.bookmarkId)
         } else if (item && item.dataset.folder !== 'Videos' && item.dataset.folder !== 'Archived') {
           showContextMenu(touch.clientX, touch.clientY, null, item.dataset.folder)
         }
@@ -128,26 +147,32 @@ function bindSidebarEvents() {
 }
 
 // ─── Context menu ─────────────────────────────────────
-let ctxTarget = null, ctxFolder = null
-function showContextMenu(x, y, videoId, folderName) {
+let ctxTarget = null, ctxFolder = null, ctxBookmark = null
+function showContextMenu(x, y, videoId, folderName, bookmarkId) {
   const menu = document.getElementById('ctxMenu')
-  ctxTarget = videoId; ctxFolder = folderName
+  ctxTarget = videoId; ctxFolder = folderName; ctxBookmark = bookmarkId
   const isTouch = 'ontouchstart' in window
   menu.style.left = (isTouch ? x - 40 : x) + 'px'
   menu.style.top = (isTouch ? y - 40 : y) + 'px'
   menu.classList.add('open')
-  menu.querySelector('[data-action="rename-folder"]').style.display = videoId ? 'none' : ''
-  menu.querySelector('[data-action="delete-folder"]').style.display = videoId ? 'none' : ''
+  const isBm = bookmarkId !== null && bookmarkId !== undefined
   const showVideo = videoId !== null && videoId !== undefined
-  menu.querySelector('[data-action="open-link"]').style.display = showVideo ? '' : 'none'
+  menu.querySelector('[data-action="rename-folder"]').style.display = videoId ? 'none' : isBm ? 'none' : ''
+  menu.querySelector('[data-action="delete-folder"]').style.display = videoId ? 'none' : isBm ? 'none' : ''
+  menu.querySelector('[data-action="open-link"]').style.display = (showVideo || isBm) ? '' : 'none'
   menu.querySelector('[data-action="archive"]').style.display = showVideo ? '' : 'none'
   menu.querySelector('[data-action="pin"]').style.display = showVideo ? '' : 'none'
   menu.querySelector('[data-action="move-up"]').style.display = showVideo ? '' : 'none'
   menu.querySelector('[data-action="move-down"]').style.display = showVideo ? '' : 'none'
-  menu.querySelector('[data-action="delete"]').style.display = showVideo ? '' : 'none'
-  document.getElementById('ctxDiv1').style.display = videoId ? '' : 'none'
-  document.getElementById('ctxDiv2').style.display = videoId ? '' : 'none'
+  menu.querySelector('[data-action="delete"]').style.display = (showVideo || isBm) ? '' : 'none'
+  const delItem = menu.querySelector('[data-action="delete"]')
+  delItem.innerHTML = `<i data-lucide="trash-2" class="ctx-icon"></i> ${isBm ? 'Delete bookmark' : 'Delete'}`
+  delItem.className = isBm ? 'ctx-item ctx-danger' : 'ctx-item ctx-danger'
+  document.getElementById('ctxDiv1').style.display = (videoId || isBm) ? '' : 'none'
+  document.getElementById('ctxDiv2').style.display = showVideo ? '' : 'none'
   document.getElementById('ctxDiv3').style.display = showVideo ? '' : 'none'
+  document.getElementById('ctxMoveTo').classList.remove('show')
+  document.getElementById('ctxDiv4').style.display = 'none'
   if (videoId) {
     const pinItem = menu.querySelector('[data-action="pin"]')
     const isPinned = getPins().includes(videoId)
@@ -191,6 +216,10 @@ document.getElementById('ctxMenu').addEventListener('click', (e) => {
     saveFolders(fs); const vs = getVideos(); delete vs[ctxTarget]; saveVideos(vs)
     renderSidebar(); if (currentVideo?.id === ctxTarget) { currentVideo = null; clearCard() }
   }
+  if (a === 'delete' && ctxBookmark && !ctxTarget) {
+    let bms = getBookmarks().filter(b => b.id !== ctxBookmark)
+    saveBookmarks(bms); renderSidebar()
+  }
   if (a === 'archive' && ctxTarget) {
     const fs = getFolders(); for (const ids of Object.values(fs)) { const i = ids.indexOf(ctxTarget); if (i > -1) ids.splice(i, 1) }
     if (!fs['Archived']) fs['Archived'] = []; fs['Archived'].push(ctxTarget); saveFolders(fs); renderSidebar()
@@ -225,6 +254,10 @@ document.getElementById('ctxMenu').addEventListener('click', (e) => {
       const vs = getVideos()
       const v = vs[ctxTarget]
       if (v?.url) window.open(v.url)
+    }
+    if (a === 'open-link' && ctxBookmark && !ctxTarget) {
+      const bm = getBookmarks().filter(b => b.id === ctxBookmark)[0]
+      if (bm?.url) window.open(bm.url)
     }
     if ((a === 'move-up' || a === 'move-down') && ctxTarget) {
       const fs = getFolders()
@@ -281,6 +314,38 @@ document.querySelectorAll('.folder-color').forEach(c => c.addEventListener('clic
   document.querySelectorAll('.folder-color').forEach(x => x.classList.remove('active')); this.classList.add('active')
 }))
 folderDialog.addEventListener('mousedown', (e) => { if (e.target === folderDialog) folderDialog.classList.remove('open') })
+
+// ─── Bookmark dialog ──────────────────────────────────
+const bookmarkDialog = document.getElementById('bookmarkDialog')
+const bookmarkUrlInput = document.getElementById('bookmarkUrlInput')
+const bookmarkTitleInput = document.getElementById('bookmarkTitleInput')
+
+function addBookmark() {
+  const url = bookmarkUrlInput.value.trim()
+  if (!url) return
+  const bms = getBookmarks()
+  const id = '_bm_' + Date.now()
+  bms.push({ id, url, title: bookmarkTitleInput.value.trim() || url, added: Date.now() })
+  saveBookmarks(bms)
+  bookmarkUrlInput.value = ''; bookmarkTitleInput.value = ''
+  bookmarkDialog.classList.remove('open')
+  renderSidebar()
+}
+document.getElementById('newBookmarkBtn').addEventListener('click', () => {
+  bookmarkUrlInput.value = ''; bookmarkTitleInput.value = ''
+  bookmarkDialog.classList.add('open')
+  setTimeout(() => bookmarkUrlInput.focus(), 100)
+})
+document.getElementById('bookmarkBtn').addEventListener('click', () => {
+  bookmarkUrlInput.value = ''; bookmarkTitleInput.value = ''
+  bookmarkDialog.classList.add('open')
+  setTimeout(() => bookmarkUrlInput.focus(), 100)
+})
+document.getElementById('bookmarkDialogCancel').addEventListener('click', () => bookmarkDialog.classList.remove('open'))
+document.getElementById('bookmarkDialogConfirm').addEventListener('click', addBookmark)
+bookmarkUrlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') bookmarkTitleInput.focus() })
+bookmarkTitleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addBookmark(); if (e.key === 'Escape') bookmarkDialog.classList.remove('open') })
+bookmarkDialog.addEventListener('mousedown', (e) => { if (e.target === bookmarkDialog) bookmarkDialog.classList.remove('open') })
 
 // ─── Sidebar toolbar ──────────────────────────────────
 document.getElementById('pinBtn').addEventListener('click', function () { this.classList.toggle('pinned') })
@@ -483,7 +548,7 @@ document.querySelectorAll('#pane-history .settings-toggle').forEach((t, i) => {
   t.addEventListener('click', function () { if (i === 0 && !this.classList.contains('on')) saveHistory([]) })
 })
 document.querySelector('.settings-clear-btn')?.addEventListener('click', () => {
-  if (confirm('Clear all saved data?')) { localStorage.removeItem('ytVideos'); localStorage.removeItem('ytFolders'); localStorage.removeItem('ytFolderMeta'); localStorage.removeItem('linkHistory'); renderSidebar(); clearCard() }
+  if (confirm('Clear all saved data?')) { localStorage.removeItem('ytVideos'); localStorage.removeItem('ytFolders'); localStorage.removeItem('ytFolderMeta'); localStorage.removeItem('linkHistory'); localStorage.removeItem('ytBookmarks'); renderSidebar(); clearCard() }
 })
 window.addEventListener('beforeunload', () => { const t = document.querySelector('#pane-history .settings-toggle:last-child'); if (t?.classList.contains('on')) localStorage.removeItem('linkHistory') })
 

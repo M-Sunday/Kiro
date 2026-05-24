@@ -17,8 +17,6 @@
           // Copy class and inline styles from placeholder
           const cls = el.getAttribute('class') || ''
           svgEl.setAttribute('class', cls)
-          // Default to inherit so theme colors propagate
-          svgEl.style.color = 'inherit'
           if (el.style.width) svgEl.setAttribute('width', el.style.width)
           if (el.style.height) svgEl.setAttribute('height', el.style.height)
           if (el.style.color) svgEl.style.color = el.style.color

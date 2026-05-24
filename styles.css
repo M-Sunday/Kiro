@@ -281,3 +281,18 @@ body.theme-obsidian .folder-dialog input { background: #2a2a30; border-color: #2
 body.theme-obsidian .folder-dialog input:focus { border-color: #e8e8ec; }
 body.theme-obsidian .dialog-btn.cancel { background: #2a2a30; border-color: #2a2a30; color: #e8e8ec; }
 body.theme-obsidian .folder-color.active { border-color: #e8e8ec; }
+
+/* ─── MOBILE / PWA ───────────────────────────────────── */
+@media (max-width: 640px) {
+  body { padding: 0; gap: 0; flex-direction: column; }
+  .sidebar { width: 100%; min-width: 0; height: auto; max-height: 40vh; border-radius: 0; border: none; border-bottom: 1px solid #e8e8ed; }
+  .sidebar.closed { transform: none; margin-right: 0; max-height: 0; overflow: hidden; padding: 0; border: none; }
+  .main-area { height: 60vh; border-radius: 0; border: none; }
+  .top-bar { padding: 6px 10px; gap: 6px; }
+  .top-bar-center { display: none; }
+  .top-bar-input { min-width: 0; flex: 1; }
+  .top-bar-input input { width: 100%; font-size: 13px; }
+  .content { padding: 16px 12px; }
+  .card-body h1 { font-size: 16px; }
+  .calendar { padding: 12px 16px 16px; }
+}

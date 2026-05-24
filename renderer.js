@@ -291,15 +291,19 @@ async function loadVideo(videoId) {
   document.getElementById('durationBadge').textContent = '...'
   document.getElementById('videoTitle').textContent = 'Loading...'; document.getElementById('channelName').textContent = ''
   try {
-    const html = await (await fetch(`https://www.youtube.com/watch?v=${videoId}`)).text()
-    const title = (html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/) || [])[1]?.replace(/&amp;/g, '&') || 'Unknown'
-    const channel = (html.match(/<link\s+itemprop="name"\s+content="([^"]+)"/) || [])[1]?.replace(/&amp;/g, '&') || ''
-    const sec = parseInt((html.match(/"lengthSeconds":"?(\d+)"?/) || [])[1] || '0')
+    const data = await (await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)).json()
+    const title = data.title || 'Unknown'
+    const channel = data.author_name || ''
+    let sec = 0, dateStr = '', privacy = 'PUBLIC'
+    try {
+      const html = await (await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${videoId}`)}`)).text()
+      sec = parseInt((html.match(/"lengthSeconds":"?(\d+)"?/) || [])[1] || '0')
+      dateStr = (html.match(/"uploadDate":"([^"]+)"/) || html.match(/<meta\s+itemprop="datePublished"\s+content="([^"]+)"/) || [])[1]
+      privacy = (html.match(/"privacyStatus":"([^"]+)"/) || [])[1] || 'PUBLIC'
+    } catch (_) {}
     const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60
     const duration = sec ? (h ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}:${String(s).padStart(2,'0')}`) : ''
-    const dateStr = (html.match(/"uploadDate":"([^"]+)"/) || html.match(/<meta\s+itemprop="datePublished"\s+content="([^"]+)"/) || [])[1]
     const pubDate = dateStr ? new Date(dateStr) : null
-    const privacy = (html.match(/"privacyStatus":"([^"]+)"/) || [])[1] || 'PUBLIC'
     currentVideo = { id: videoId, title, channel, duration, pubDate, privacy }
     document.getElementById('durationBadge').textContent = duration || '–'
     document.getElementById('videoTitle').textContent = title; document.getElementById('channelName').textContent = channel

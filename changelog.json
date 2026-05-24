@@ -1,0 +1,32 @@
+[
+  {
+    "version": "1.1.0",
+    "date": "2026-05-24",
+    "title": "Notes, Icons, and Polish",
+    "changes": [
+      "Notes feature with image paste support",
+      "Grid view with rounded toolbar",
+      "Local icon system (no CDN dependency)",
+      "Undo/Redo buttons for note editor",
+      "Dark theme icon color fixes",
+      "Contenteditable note editor (native paste & undo)",
+      "Organized project into css/, js/, icons/ folders",
+      "Rounded toolbar in notes view too",
+      "Welcome page cleaner layout"
+    ]
+  },
+  {
+    "version": "1.0.0",
+    "date": "2026-05-01",
+    "title": "Initial Release",
+    "changes": [
+      "YouTube video saving and folder organization",
+      "Bookmark management with preview images",
+      "Calendar view for video publish dates",
+      "Multiple themes (White, Black, Obsidian)",
+      "Search and filter vault content",
+      "Drag-and-drop folder organization",
+      "Pin important videos"
+    ]
+  }
+]

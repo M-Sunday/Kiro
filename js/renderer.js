@@ -680,9 +680,11 @@ function clearCard() {
 // ─── Welcome screen ────────────────────────────────────
 function showWelcome() {
   document.getElementById('welcome').style.display = 'flex'
-  document.getElementById('imageWrap').style.display = 'none'
-  document.querySelector('.card-body').style.display = 'none'
-  document.querySelector('.calendar').style.display = 'none'
+  document.getElementById('videoCard').classList.add('welcome-only')
+}
+function hideWelcome() {
+  document.getElementById('welcome').style.display = 'none'
+  document.getElementById('videoCard').classList.remove('welcome-only')
 }
 function hideWelcome() {
   document.getElementById('welcome').style.display = 'none'
@@ -888,3 +890,29 @@ if (history.length) {
   for (const h of history) { if (!fs['Videos'].includes(h.id)) fs['Videos'].push(h.id) }
   saveFolders(fs); renderSidebar()
 }
+
+// ─── Update check ──────────────────────────────────────
+const APP_VERSION = '1.1.0'
+const lastSeen = localStorage.getItem('ytLastVersion')
+if (lastSeen !== APP_VERSION) {
+  fetch('changelog.json').then(r => r.json()).then(log => {
+    const updates = log.filter(e => {
+      if (!lastSeen) return e.version === APP_VERSION
+      const v = e.version.split('.').map(Number)
+      const last = lastSeen.split('.').map(Number)
+      return v[0] > last[0] || v[1] > last[1]
+    })
+    if (!updates.length) return
+    const el = document.getElementById('updateBody')
+    el.innerHTML = updates.map(u => `
+      <div class="update-version">${u.version} — ${u.date}</div>
+      <div class="update-title">${u.title}</div>
+      <ul class="update-changes">${u.changes.map(c => `<li>${c}</li>`).join('')}</ul>
+    `).join('')
+    document.getElementById('updateOverlay').classList.add('open')
+  }).catch(() => {})
+  localStorage.setItem('ytLastVersion', APP_VERSION)
+}
+document.getElementById('updateCloseBtn').addEventListener('click', () => {
+  document.getElementById('updateOverlay').classList.remove('open')
+})

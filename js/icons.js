@@ -14,11 +14,11 @@
           div.innerHTML = svg
           const svgEl = div.querySelector('svg')
           if (!svgEl) return
-          // Copy over class and style from the placeholder
-          const w = el.getAttribute('style') || el.style.cssText
+          // Copy class and inline styles from placeholder
           const cls = el.getAttribute('class') || ''
           svgEl.setAttribute('class', cls)
-          // Apply inline styles from the placeholder
+          // Default to inherit so theme colors propagate
+          svgEl.style.color = 'inherit'
           if (el.style.width) svgEl.setAttribute('width', el.style.width)
           if (el.style.height) svgEl.setAttribute('height', el.style.height)
           if (el.style.color) svgEl.style.color = el.style.color
@@ -31,7 +31,6 @@
 
   window.loadIcons = loadIcons
 
-  // Auto-load on DOMContentLoaded if lucide is not present
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => loadIcons())
   } else {

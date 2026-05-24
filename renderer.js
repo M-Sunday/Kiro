@@ -222,20 +222,36 @@ function loadVideoById(id) {
   document.getElementById('channelName').textContent = v.channel
   if (v.pubDate) setPublishedDate(new Date(v.pubDate))
   updatePrivacy(v.privacy || 'PUBLIC')
-  renderSidebar(); updateCardAddBtn()
+  hideWelcome(); renderSidebar(); updateCardAddBtn()
 }
 
 function clearCard() {
   document.getElementById('thumbnail').src = ''
   document.getElementById('durationBadge').textContent = '–'
-  document.getElementById('videoTitle').textContent = 'Paste a video link above'
+  document.getElementById('videoTitle').textContent = 'Paste a YouTube link above'
   document.getElementById('channelName').textContent = ''
   document.getElementById('cardAddRow').style.display = 'none'
+  showWelcome()
+}
+
+// ─── Welcome screen ────────────────────────────────────
+function showWelcome() {
+  document.getElementById('welcome').style.display = 'flex'
+  document.getElementById('imageWrap').style.display = 'none'
+  document.querySelector('.card-body').style.display = 'none'
+  document.querySelector('.calendar').style.display = 'none'
+}
+function hideWelcome() {
+  document.getElementById('welcome').style.display = 'none'
+  document.getElementById('imageWrap').style.display = 'block'
+  document.querySelector('.card-body').style.display = 'block'
+  document.querySelector('.calendar').style.display = 'block'
 }
 
 // ─── Thumbnail drag ────────────────────────────────────
 const miniThumb = document.getElementById('miniThumb')
 document.getElementById('imageWrap').addEventListener('mousedown', (e) => {
+  if ('ontouchstart' in window) return
   if (!currentVideo || e.button !== 0 || !document.getElementById('thumbnail').src) return
   e.preventDefault()
   document.getElementById('miniImg').src = document.getElementById('thumbnail').src
@@ -315,6 +331,7 @@ function getVideoId(url) {
   return null
 }
 async function loadVideo(videoId) {
+  hideWelcome()
   const url = `https://www.youtube.com/watch?v=${videoId}`
   document.getElementById('thumbnail').src = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
   document.getElementById('durationBadge').textContent = '...'
@@ -339,7 +356,7 @@ async function loadVideo(videoId) {
     document.getElementById('videoTitle').textContent = title; document.getElementById('channelName').textContent = channel
     if (pubDate) setPublishedDate(pubDate)
     updatePrivacy(privacy)
-    renderSidebar(); updateCardAddBtn()
+    hideWelcome(); renderSidebar(); updateCardAddBtn()
   } catch (e) { document.getElementById('durationBadge').textContent = '–'; document.getElementById('videoTitle').textContent = 'Could not load video info'; document.getElementById('channelName').textContent = 'Try again or check the link' }
 }
 document.getElementById('ytBtn').addEventListener('click', () => {
@@ -428,8 +445,18 @@ document.addEventListener('keydown', (e) => {
 })
 
 // ─── Init ──────────────────────────────────────────────
-lucide.createIcons(); renderCalendar(); renderSidebar()
+lucide.createIcons(); renderCalendar(); renderSidebar(); showWelcome()
 
+// Service worker update
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const toast = document.getElementById('updateToast')
+      toast.classList.add('show')
+      setTimeout(() => toast.classList.remove('show'), 3000)
+    })
+  })
+}
 const history = loadHistory()
 if (history.length) {
   const vs = getVideos(); const fs = getFolders()
@@ -439,5 +466,3 @@ if (history.length) {
   for (const h of history) { if (!fs['Videos'].includes(h.id)) fs['Videos'].push(h.id) }
   saveFolders(fs); renderSidebar()
 }
-
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js')

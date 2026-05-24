@@ -66,6 +66,16 @@
         <div class="content">
             <div class="container">
                 <div class="card" id="videoCard">
+                    <div class="welcome" id="welcome">
+                        <div class="welcome-icon"><i data-lucide="youtube" style="width:48px;height:48px;color:#ff0000"></i></div>
+                        <h2 class="welcome-title">YouTube Vault</h2>
+                        <p class="welcome-desc">Save and organize your favorite YouTube videos.</p>
+                        <div class="welcome-steps">
+                            <div class="welcome-step"><i data-lucide="link" class="welcome-step-icon"></i><span>Paste a YouTube link above</span></div>
+                            <div class="welcome-step"><i data-lucide="download" class="welcome-step-icon"></i><span>Load video info with the arrow button</span></div>
+                            <div class="welcome-step"><i data-lucide="folder-plus" class="welcome-step-icon"></i><span>Add to your vault and organize with folders</span></div>
+                        </div>
+                    </div>
                     <div class="image-wrap" id="imageWrap">
                         <div class="badge" id="durationBadge">–</div>
                         <img id="thumbnail" src="" alt="Video thumbnail">
@@ -120,6 +130,9 @@
         <div class="ctx-divider" id="ctxDiv2"></div>
         <div class="ctx-item ctx-danger" data-action="delete"><i data-lucide="trash-2" class="ctx-icon"></i> Delete</div>
     </div>
+
+    <!-- Update toast -->
+    <div class="update-toast" id="updateToast">Updating app…</div>
 
     <!-- Settings -->
     <div class="settings-overlay" id="settingsOverlay">

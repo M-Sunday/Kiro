@@ -556,7 +556,7 @@ function openNote(id) {
   if (!n) return
   const gridBtn = document.getElementById('gridBtn')
   if (gridBtn.classList.contains('active')) gridBtn.click()
-  document.querySelector('.container').style.display = 'none'
+  document.querySelector('.content').style.display = 'none'
   document.getElementById('noteView').style.display = 'flex'
   document.getElementById('noteViewTitle').value = n.title || ''
   document.getElementById('noteViewContent').innerHTML = sanitizeHtml(n.content || '')
@@ -567,7 +567,7 @@ function openNote(id) {
 function closeNoteView() {
   currentNoteId = null
   document.getElementById('noteView').style.display = 'none'
-  document.querySelector('.container').style.display = ''
+  document.querySelector('.content').style.display = ''
   renderSidebar()
 }
 
@@ -1078,7 +1078,7 @@ document.addEventListener('keydown', (e) => {
 // ─── Updcheck / version ──────────────────────────────
 const APP_VERSION = '1.2.0'
 
-// ─── Debug color toggle ────────────────────────────────
+// ─── Debug inspect mode (hover) ────────────────────────
 let debugOn = false
 const debugColorCache = new Map()
 const DEBUG_PALETTE = [
@@ -1094,33 +1094,98 @@ function hashColor(str) {
 function debugLabelFor(el) {
   return el.id || Array.from(el.classList).join('.') || el.tagName.toLowerCase()
 }
+
+let _debugOverlay = null
+let _debugLabel = null
+function _ensureDebugEls() {
+  if (!_debugOverlay) {
+    _debugOverlay = document.createElement('div')
+    _debugOverlay.className = '__debug-overlay'
+    _debugOverlay.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;pointer-events:none;z-index:99999;border:2px solid #ff453a;border-radius:4px;transition:all 0.05s;display:none'
+    document.body.appendChild(_debugOverlay)
+  }
+  if (!_debugLabel) {
+    _debugLabel = document.createElement('div')
+    _debugLabel.className = '__debug-label'
+    _debugLabel.style.cssText = 'position:fixed;pointer-events:none;z-index:100000;font-size:10px;font-family:monospace;background:#ff453a;color:#fff;padding:2px 6px;border-radius:4px;line-height:1.4;display:none'
+    document.body.appendChild(_debugLabel)
+  }
+}
+
+function _showDebug(el, e) {
+  _ensureDebugEls()
+  const rect = el.getBoundingClientRect()
+  _debugOverlay.style.cssText = `position:fixed;top:${rect.top}px;left:${rect.left}px;width:${rect.width}px;height:${rect.height}px;pointer-events:none;z-index:99999;border:2px solid #ff453a;border-radius:4px;display:block`
+  const label = debugLabelFor(el)
+  let color = debugColorCache.get(label)
+  if (!color) { color = hashColor(label); debugColorCache.set(label, color) }
+  _debugLabel.textContent = label
+  _debugLabel.style.background = color
+  _debugLabel.style.display = 'block'
+  const lx = Math.min(e.clientX + 12, window.innerWidth - _debugLabel.offsetWidth - 8)
+  const ly = Math.max(e.clientY - _debugLabel.offsetHeight - 8, 4)
+  _debugLabel.style.left = lx + 'px'
+  _debugLabel.style.top = ly + 'px'
+}
+
+function _hideDebug() {
+  if (_debugOverlay) _debugOverlay.style.display = 'none'
+  if (_debugLabel) _debugLabel.style.display = 'none'
+}
+
+let _debugTarget = null
+function _onDebugMove(e) {
+  const el = document.elementFromPoint(e.clientX, e.clientY)
+  if (!el || el === _debugTarget || el.closest('.__debug-overlay,.__debug-label')) return
+  _debugTarget = el
+  _showDebug(el, e)
+}
+
+let _lockedEl = null
+function _onDebugClick(e) {
+  const el = document.elementFromPoint(e.clientX, e.clientY)
+  if (!el || el.closest('.__debug-overlay,.__debug-label')) return
+  _lockedEl = el
+  const label = debugLabelFor(el)
+  let color = debugColorCache.get(label)
+  if (!color) { color = hashColor(label); debugColorCache.set(label, color) }
+  el.style.outline = `2px solid ${color}`
+  el.title = label
+  if (navigator.clipboard) navigator.clipboard.writeText(label)
+}
+
 function toggleDebug() {
   debugOn = !debugOn
-  const els = document.querySelectorAll('body *:not(.debug-label):not(svg):not(svg *)')
   if (!debugOn) {
-    els.forEach(el => {
-      el.style.outline = ''
-      el.style.position = ''
-      const label = el.querySelector('.debug-label')
-      if (label) label.remove()
+    _hideDebug()
+    document.removeEventListener('mousemove', _onDebugMove)
+    document.removeEventListener('click', _onDebugClick)
+    document.removeEventListener('keydown', _onDebugKey)
+    document.body.style.cursor = ''
+    const badge = document.getElementById('__debug-badge')
+    if (badge) badge.remove()
+    document.querySelectorAll('[style*="outline"]').forEach(el => {
+      if (el.style.outline && el.style.outline.includes('px solid')) el.style.outline = ''
     })
+    _debugTarget = null; _lockedEl = null
     return
   }
-  els.forEach(el => {
-    const labelText = debugLabelFor(el)
-    if (!labelText) return
-    let color = debugColorCache.get(labelText)
-    if (!color) { color = hashColor(labelText); debugColorCache.set(labelText, color) }
-    el.style.outline = `1.5px solid ${color}`
-    el.style.position = 'relative'
-    if (!el.querySelector('.debug-label')) {
-      const label = document.createElement('div')
-      label.className = 'debug-label'
-      label.textContent = labelText
-      label.style.cssText = `position:absolute;top:0;left:0;font-size:9px;font-family:monospace;background:${color};color:#fff;padding:1px 4px;border-radius:0 0 3px 0;z-index:99999;pointer-events:none;line-height:1.2;`
-      el.appendChild(label)
-    }
-  })
+  _ensureDebugEls()
+  document.body.style.cursor = 'crosshair'
+  if (!document.getElementById('__debug-badge')) {
+    const b = document.createElement('div')
+    b.id = '__debug-badge'
+    b.textContent = 'Inspect active — Esc to exit'
+    b.style.cssText = 'position:fixed;bottom:12px;right:12px;z-index:100001;font-size:11px;font-family:monospace;background:#ff453a;color:#fff;padding:4px 10px;border-radius:6px;line-height:1.3;pointer-events:none;opacity:0.9'
+    document.body.appendChild(b)
+  }
+  document.addEventListener('mousemove', _onDebugMove)
+  document.addEventListener('click', _onDebugClick)
+  document.addEventListener('keydown', _onDebugKey)
+}
+
+function _onDebugKey(e) {
+  if (e.key === 'Escape') toggleDebug()
 }
 
 // ─── Init ──────────────────────────────────────────────

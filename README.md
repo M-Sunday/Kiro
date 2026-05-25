@@ -31,4 +31,4 @@ Save, organize, and manage your favorite YouTube videos, bookmarks, and notes in
 
 All data is stored locally in your browser's localStorage. Nothing is sent to any server.
 
-(pls ignore this, this is just a test to do a git pull)
+(deleted the text in windows)

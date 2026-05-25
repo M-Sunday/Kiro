@@ -1185,13 +1185,15 @@ document.getElementById('updateCloseBtn').addEventListener('click', () => {
     setTimeout(function(){ splash.style.display = 'none' }, 500)
   }
 
+  setTimeout(fadeOut, 7000)
+
   function trackWorker(w) {
     splashText.textContent = 'Updating\u2026'
     if (w.state === 'installed' && navigator.serviceWorker.controller) {
       w.postMessage({ action: 'skipWaiting' })
     }
     w.addEventListener('statechange', function() {
-      if (this.state === 'activated') fadeOut()
+      if (this.state === 'activated' || this.state === 'redundant') fadeOut()
     })
   }
 

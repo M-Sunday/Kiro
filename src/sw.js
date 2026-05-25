@@ -1,14 +1,12 @@
-var CACHE = 'yt-vault-1.2.0'
+var CACHE = 'yt-vault-1.3.0'
 var URLS = [
-  '../index.html',
   'index.html',
   'css/styles.css',
   'js/icons.js',
   'js/renderer.js',
   'assets/icons/app-icon-192.svg',
   'assets/icons/app-icon-512.svg',
-  'assets/icons/anthropic-symbol.svg',
-  'assets/icons/anthropic-logotype.svg',
+  'assets/changelog.json',
   'assets/manifest.json'
 ]
 self.addEventListener('message', function (e) {

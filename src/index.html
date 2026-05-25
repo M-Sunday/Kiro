@@ -9,6 +9,9 @@
     <link rel="icon" href="assets/icons/app-icon-192.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/app-icon-192.svg">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -16,8 +19,10 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-header-left">
-                <i data-lucide="library" class="sidebar-header-icon"></i>
-                <span class="sidebar-title">Vault</span>
+                <div class="sidebar-logo">
+                    <img src="assets/icons/anthropic-symbol.svg" alt="" class="sidebar-logo-symbol" />
+                    <img src="assets/icons/anthropic-logotype.svg" alt="" class="sidebar-logo-type" />
+                </div>
             </div>
             <div class="sidebar-header-right">
                 <button class="sidebar-icon-btn" id="settingsBtn">
@@ -215,6 +220,7 @@
                         <div class="theme-option active" data-theme="white"><div class="theme-preview theme-white"></div><span>White</span></div>
                         <div class="theme-option" data-theme="black"><div class="theme-preview theme-black"></div><span>Black</span></div>
                         <div class="theme-option" data-theme="obsidian"><div class="theme-preview theme-obsidian"></div><span>Obsidian Black</span></div>
+                        <div class="theme-option" data-theme="anthropic"><div class="theme-preview theme-anthropic"></div><span>Anthropic</span></div>
                     </div>
                     <label class="settings-checkbox"><input type="checkbox" id="systemTheme" /><span class="settings-checkbox-mark"></span><span>Have system theme</span></label>
                 </div>

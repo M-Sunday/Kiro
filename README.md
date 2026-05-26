@@ -1,12 +1,13 @@
 # YouTube Vault
 
-A local-first desktop + PWA app for saving, organizing, and browsing YouTube videos, bookmarks, notes, and direct-access links. All data stays in your browser — no servers, no login.
+A local-first desktop + PWA app for saving, organizing, and downloading YouTube videos, bookmarks, notes, and direct-access links. All data stays in your browser — no servers, no login.
 
 Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android, and iOS.
 
 ## Features
 
 - **YouTube videos** — Paste a link, fetch metadata (title, channel, duration, thumbnail), save to folders
+- **Download videos** — Download via yt-dlp (desktop) or redirect to cobalt.tools (PWA/mobile). Supports quality selection, codec, audio format, and bitrate settings
 - **Bookmarks** — Save any URL with auto-fetched preview image, organized separately
 - **Notes** — Rich-text notes with image paste, assignable to folders
 - **Direct Access** — Quick-launch links with thumbnail previews
@@ -17,7 +18,7 @@ Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android,
 - **Drag to folder** — Drag sidebar items between folders
 - **Context menus** — Right-click, long-press (mobile), or three-dot button on any item
 - **Keyboard shortcuts** — Press `?` to view all shortcuts
-- **Settings panel** — Theme, toolbar toggles, file/link history options, NSFW filters, patch notes
+- **Settings panel** — Theme, toolbar toggles, file/link history options, NSFW filters, download options, patch notes
 - **Themes** — White, Black, and Obsidian Black
 - **Calendar view** — Browse videos by publish date
 - **Search** — Filter sidebar items by title
@@ -35,7 +36,8 @@ Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android,
 5. **Context menu** — Right-click any item, or tap the three-dot (⋯) button, or long-press on mobile
 6. **Bulk select** — Ctrl+click multiple grid items, then use the batch bar at the bottom
 7. **Reorder** — Drag grid items within a section to reorder them; drag sidebar items to move between folders
-8. **Settings** — Click the gear icon in the sidebar header
+8. **Download** — Open a saved video, click the Download button below the player. On desktop (Electron) it uses yt-dlp; on mobile/browser it opens cobalt.tools
+9. **Settings** — Click the gear icon in the sidebar header
 
 ## Keyboard shortcuts
 
@@ -67,17 +69,29 @@ Storage keys:
 - `ytNSFW` — NSFW domain list
 - `linkHistory` — recently opened links
 - `ytLastVersion` — last seen app version (for changelog)
+- `ytSwVersion` — applied service worker version (tracks updates)
+- `dlType`, `dlVideoQuality`, `dlAudioFormat`, `dlAudioBitrate`, `dlVideoCodec` — download preferences
+
+## Download feature (Desktop only)
+
+- **yt-dlp** is auto-downloaded from GitHub on first use (stored in `~/.youtube-vault/bin/`)
+- **ffmpeg** is auto-downloaded from gyan.dev when 1080p+ or Max quality is requested
+- With ffmpeg: uses `bestvideo[height<=?Q]+bestaudio` for full quality
+- Without ffmpeg: falls back to `best[height<=?Q]` (720p max)
+- A folder picker dialog lets you choose where to save downloaded files
+- On completion, Explorer/Finder opens showing the downloaded file
+- Real-time progress bar with percentage shown under the video card
 
 ## Project structure
 
 ```
 src/
-├── main.js              # Electron main process
-├── index.html           # App shell
+├── main.js              # Electron main process (window, menu, IPC)
+├── index.html           # App shell with inline splash script
 ├── css/
-│   └── styles.css       # All styling (~850 lines)
+│   └── styles.css       # All styling (~870 lines)
 ├── js/
-│   ├── renderer.js      # All application logic (~1750 lines)
+│   ├── renderer.js      # All application logic (~2000 lines)
 │   └── icons.js         # Local SVG icon loader
 ├── assets/
 │   ├── changelog.json   # Version history
@@ -85,8 +99,7 @@ src/
 │   ├── icons/
 │   │   ├── app-icon-*.svg
 │   │   ├── app-icon-splash.svg
-│   │   └── ui/          # 35 Lucide-style SVG icons
-│   └── anthropic-*.svg  # Legacy branding (to be replaced)
+│   │   └── ui/          # 36 Lucide-style SVG icons (including download.svg)
 ├── sw.js                # Service worker (cache-first strategy)
 ```
 
@@ -97,6 +110,7 @@ src/
 - **Video metadata** requires a network fetch to load
 - **Search bar** is disabled when offline
 - The online indicator in the top-bar shows connection status (green/yellow/red badge)
+- **Download** — disabled/redirected when offline
 
 ## Development
 
@@ -113,4 +127,6 @@ Requires Electron. The app auto-opens in grid view by default.
 - **Vanilla JS** — no frameworks
 - **localStorage** — persistence
 - **Service Worker** — offline caching + update detection
-- **Custom SVG icons** — 35 local icons (no CDN)
+- **Custom SVG icons** — 36 local icons (no CDN)
+- **yt-dlp** — video download engine (auto-downloaded on first use)
+- **ffmpeg** — audio/video processing for high-quality downloads (auto-downloaded when needed)

@@ -7,7 +7,7 @@ Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android,
 ## Features
 
 - **YouTube videos** — Paste a link, fetch metadata (title, channel, duration, thumbnail), save to folders
-- **Download videos** — Download via yt-dlp (desktop) or redirect to cobalt.tools (PWA/mobile). Supports quality selection, codec, audio format, and bitrate settings
+- **Download videos** — Download via yt-dlp (desktop only). Supports quality selection, codec, audio format, and bitrate settings. Output is forced to MP4 (h264 preferred).
 - **Bookmarks** — Save any URL with auto-fetched preview image, organized separately
 - **Notes** — Rich-text notes with image paste, assignable to folders
 - **Direct Access** — Quick-launch links with thumbnail previews
@@ -36,7 +36,7 @@ Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android,
 5. **Context menu** — Right-click any item, or tap the three-dot (⋯) button, or long-press on mobile
 6. **Bulk select** — Ctrl+click multiple grid items, then use the batch bar at the bottom
 7. **Reorder** — Drag grid items within a section to reorder them; drag sidebar items to move between folders
-8. **Download** — Open a saved video, click the Download button below the player. On desktop (Electron) it uses yt-dlp; on mobile/browser it opens cobalt.tools
+8. **Download** — Open a saved video, click the Download button below the player (desktop Electron only — uses yt-dlp)
 9. **Settings** — Click the gear icon in the sidebar header
 
 ## Keyboard shortcuts
@@ -72,14 +72,16 @@ Storage keys:
 - `ytSwVersion` — applied service worker version (tracks updates)
 - `dlType`, `dlVideoQuality`, `dlAudioFormat`, `dlAudioBitrate`, `dlVideoCodec` — download preferences
 
-## Download feature (Desktop only)
+## Download feature
 
+- **Desktop only** — download button is hidden on mobile/PWA
 - **yt-dlp** is auto-downloaded from GitHub on first use (stored in `~/.youtube-vault/bin/`)
 - **ffmpeg** is auto-downloaded from gyan.dev when 1080p+ or Max quality is requested
-- With ffmpeg: uses `bestvideo[height<=?Q]+bestaudio` for full quality
-- Without ffmpeg: falls back to `best[height<=?Q]` (720p max)
+- With ffmpeg: uses `bestvideo[height<=?Q]+bestaudio` merged to MP4
+- Without ffmpeg: falls back to single-file `best[height<=?Q]` (720p max)
+- Codec sorting: when h264 is selected, yt-dlp prefers h264 streams
 - A folder picker dialog lets you choose where to save downloaded files
-- On completion, Explorer/Finder opens showing the downloaded file
+- On completion, Explorer opens showing the downloaded file
 - Real-time progress bar with percentage shown under the video card
 
 ## Project structure
@@ -110,7 +112,7 @@ src/
 - **Video metadata** requires a network fetch to load
 - **Search bar** is disabled when offline
 - The online indicator in the top-bar shows connection status (green/yellow/red badge)
-- **Download** — disabled/redirected when offline
+- **Download** — button is hidden on mobile; requires Electron desktop
 
 ## Development
 

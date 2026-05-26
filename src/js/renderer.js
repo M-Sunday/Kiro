@@ -1192,7 +1192,7 @@ function updateCardAddBtn() {
     }
     btn.onclick = (e) => { e.stopPropagation(); if (currentVideo) unlinkCurrentVideo() }
     copyBtn.style.display = 'inline-flex'
-    if (dlBtn) dlBtn.style.display = 'inline-flex'
+    if (isElectron && dlBtn) dlBtn.style.display = 'inline-flex'
     loadIcons()
   } else {
     row.style.display = 'flex'
@@ -1313,11 +1313,7 @@ document.getElementById('dlBtn')?.addEventListener('click', async (e) => {
   if (!currentVideo?.url) return
   const prefs = getDownloadPrefs()
 
-  if (!isElectron) {
-    window.open('https://cobalt.tools/?u=' + encodeURIComponent(currentVideo.url), '_blank')
-    return
-  }
-
+  if (!isElectron) return
   const toast = document.getElementById('updateToast')
   const toastText = document.getElementById('updateToastText')
   const progress = document.getElementById('dlProgress')
@@ -1358,18 +1354,22 @@ document.getElementById('dlBtn')?.addEventListener('click', async (e) => {
       args.push('-x')
       if (prefs.audioFormat !== 'best') args.push('--audio-format', prefs.audioFormat)
       if (bitrate) args.push('--audio-quality', bitrate)
-    } else if (hasFfmpeg) {
-      if (isNaN(quality)) {
-        args.push('-f', 'bestvideo+bestaudio/best')
-      } else {
-        args.push('-f', `bestvideo[height<=?${quality}]+bestaudio/best[height<=?${quality}]`)
-      }
     } else {
-      if (isNaN(quality)) {
-        args.push('-f', 'best')
+      if (hasFfmpeg) {
+        if (isNaN(quality)) {
+          args.push('-f', 'bestvideo+bestaudio/best')
+        } else {
+          args.push('-f', `bestvideo[height<=?${quality}]+bestaudio/best[height<=?${quality}]`)
+        }
+        args.push('--merge-output-format', 'mp4')
       } else {
-        args.push('-f', `best[height<=?${quality}]`)
+        if (isNaN(quality)) {
+          args.push('-f', 'best')
+        } else {
+          args.push('-f', `best[height<=?${quality}]`)
+        }
       }
+      if (prefs.videoCodec === 'h264') args.push('-S', 'vcodec:h264')
     }
     args.push('-o', require('path').join(folder, '%(title)s.%(ext)s'))
     args.push('--no-playlist', '--newline', '--no-warnings', '--restrict-filenames', currentVideo.url)

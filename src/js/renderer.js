@@ -857,6 +857,7 @@ function renderGridView() {
     })
     let longTimer = null, longPressed = false
     item.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'touch') return
       longPressed = false
       longTimer = setTimeout(() => {
         longPressed = true
@@ -1039,7 +1040,8 @@ document.getElementById('gridBtn').addEventListener('click', function () {
   if (open) {
     document.getElementById('ytInput').value = ''
     document.getElementById('searchLanding').style.display = 'none'
-    if (currentNoteId) closeNoteView(); renderGridView()
+    if (currentNoteId) { closeNoteView(); document.querySelector('.content').style.display = 'none' }
+    renderGridView()
   } else {
     selectedGridItems.clear(); updateBatchBar()
     if (!currentVideo) clearCard()
@@ -1547,7 +1549,6 @@ function showHistoryDropdown() {
   loadIcons(dd)
   dd.classList.add('open')
 }
-document.getElementById('ytInput').addEventListener('focus', () => { showCardView(); clearCard() })
 document.getElementById('ytInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { document.getElementById('ytBtn').click() }; if (e.key === 'Escape') document.getElementById('ytInput').blur() })
 
 // ─── Settings ─────────────────────────────────────────

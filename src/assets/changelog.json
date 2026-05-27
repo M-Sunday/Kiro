@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.4.5",
+    "date": "2026-05-27",
+    "title": "NSFW Chip UI, Auto-Apply, Disabled Unblur When Auto-Blurred",
+    "changes": [
+      "NSFW keywords shown as chips with X to delete + Add input",
+      "Default keywords pre-populated (pornhub.com, xvideos.com, etc.)",
+      "autoApplyNSFW persists blurred flag on matching items across reloads",
+      "Unblur option greyed out in context menu when NSFW toggle is on and item matches",
+      "NSFW defaults use full domain names to avoid substring over-matching"
+    ]
+  },
+  {
     "version": "1.4.4",
     "date": "2026-05-27",
     "title": "NSFW Blur Fix, Auto-Apply, Splash on Toggle",

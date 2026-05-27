@@ -28,10 +28,13 @@ function showContextMenu(x, y, videoId, folderName, bookmarkId, noteId, daId) {
   menu.querySelector('[data-action="blur"]').style.display = (showVideo && hasUrl) || isBm || isDA ? '' : 'none'
   if ((showVideo && hasUrl) || isBm || isDA) {
     let blurred = false
-    if (showVideo) { const v = getVideos()[videoId]; blurred = v?.blurred || isNSFW(v) }
-    else if (isBm) { const b = getBookmarks().filter(x => x.id === bookmarkId)[0]; blurred = b?.blurred || isNSFW(b) }
-    else if (isDA) { const d = getDirectAccess().filter(x => x.id === daId)[0]; blurred = d?.blurred || isNSFW(d) }
-    menu.querySelector('[data-action="blur"]').innerHTML = `<i data-lucide="${blurred ? 'eye-off' : 'eye'}" class="ctx-icon"></i> ${blurred ? 'Unblur' : 'Blur'}`
+    let isAutoBlurred = false
+    if (showVideo) { const v = getVideos()[videoId]; blurred = v?.blurred || isNSFW(v); isAutoBlurred = getBlurAllNSFW() && v && isNSFW(v) }
+    else if (isBm) { const b = getBookmarks().filter(x => x.id === bookmarkId)[0]; blurred = b?.blurred || isNSFW(b); isAutoBlurred = getBlurAllNSFW() && b && isNSFW(b) }
+    else if (isDA) { const d = getDirectAccess().filter(x => x.id === daId)[0]; blurred = d?.blurred || isNSFW(d); isAutoBlurred = getBlurAllNSFW() && d && isNSFW(d) }
+    const blurEl = menu.querySelector('[data-action="blur"]')
+    blurEl.innerHTML = `<i data-lucide="${blurred ? 'eye-off' : 'eye'}" class="ctx-icon"></i> ${blurred ? 'Unblur' : 'Blur'}`
+    if (isAutoBlurred) blurEl.classList.add('disabled'); else blurEl.classList.remove('disabled')
   }
   menu.querySelector('[data-action="pin"]').style.display = showVideo ? '' : 'none'
   menu.querySelector('[data-action="move-up"]').style.display = showVideo ? '' : 'none'
@@ -116,6 +119,7 @@ document.getElementById('ctxMenu').addEventListener('click', (e) => {
     savePins(pins); renderSidebar(); if (currentVideo?.id === ctxTarget) updatePinBadge(ctxTarget)
   }
   if (a === 'blur') {
+    if (item.classList.contains('disabled')) return
     if (ctxTarget) {
       const vs = getVideos(); const v = vs[ctxTarget]
       if (v) { v.blurred = !v.blurred; saveVideos(vs); renderSidebar(); if (currentVideo?.id === ctxTarget) loadVideoById(ctxTarget) }

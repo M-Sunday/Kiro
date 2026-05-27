@@ -65,6 +65,7 @@
 .ctx-item:hover { background: #f5f5f7; }
 .ctx-item.ctx-danger { color: #ff453a; }
 .ctx-item.ctx-danger:hover { background: #fff0f0; }
+.ctx-item.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 .ctx-divider { height: 1px; background: #e8e8ed; margin: 4px 8px; }
 
 /* ─── SETTINGS ────────────────────────────────────────── */

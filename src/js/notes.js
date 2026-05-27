@@ -26,7 +26,7 @@ document.getElementById('noteViewContent').addEventListener('blur', function () 
 function autoLinkNoteContent() {
   const el = document.getElementById('noteViewContent')
   const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false)
-  const urlRegex = /https?:\/\/[^\s<>"']+/g
+  const urlRegex = /https?:\/\/[^\s<>"']+|\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}(?:\/[^\s<>"']*)?/gi
   const textNodes = []
   while (walker.nextNode()) textNodes.push(walker.currentNode)
   let changed = false
@@ -41,8 +41,10 @@ function autoLinkNoteContent() {
     let match
     while ((match = urlRegex.exec(text)) !== null) {
       if (match.index > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, match.index)))
+      let url = match[0]
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url
       const a = document.createElement('a')
-      a.href = match[0]
+      a.href = url
       a.target = '_blank'
       a.rel = 'noopener'
       a.textContent = match[0]

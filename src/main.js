@@ -66,14 +66,18 @@ function createWindow() {
         { type: 'separator' },
         {
           label: 'Start Over',
-          click: () => win.webContents.executeJavaScript(`
-            if (confirm('Start over? This will clear all your saved videos, bookmarks, notes, and settings.')) {
-              var keys = ['ytVideos','ytFolders','ytFolderMeta','ytPins','ytBookmarks','ytNotes','ytNSFW','ytBlurAllNSFW','ytSettings','linkHistory','ytCollapsed','ytSwVersion','ytLastVersion','dlType','dlVideoQuality','dlAudioFormat','dlAudioBitrate','dlVideoCodec','ytDirectAccess'];
-              keys.forEach(function(k) { localStorage.removeItem(k) });
-              localStorage.removeItem('theme');
-              location.reload();
-            }
-          `)
+          click: () => {
+            var fresh = new BrowserWindow({
+              width: 800, height: 600,
+              webPreferences: {
+                nodeIntegration: true,
+                contextIsolation: false,
+                webSecurity: false,
+                partition: 'temp'
+              }
+            })
+            fresh.loadFile('src/index.html')
+          }
         }
       ]
     },

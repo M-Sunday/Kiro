@@ -41,6 +41,28 @@ function isNSFW(item) {
     return false
   } catch { return false }
 }
+function autoApplyNSFW() {
+  if (!getBlurAllNSFW()) return
+  if (!getNSFW().filter(Boolean).length) return
+  var changed = false
+  var vs = getVideos()
+  for (var id in vs) {
+    if (!vs[id].blurred && isNSFW(vs[id])) { vs[id].blurred = true; changed = true }
+  }
+  if (changed) saveVideos(vs)
+  changed = false
+  var bms = getBookmarks()
+  for (var i = 0; i < bms.length; i++) {
+    if (!bms[i].blurred && isNSFW(bms[i])) { bms[i].blurred = true; changed = true }
+  }
+  if (changed) saveBookmarks(bms)
+  changed = false
+  var das = getDirectAccess()
+  for (var i = 0; i < das.length; i++) {
+    if (!das[i].blurred && isNSFW(das[i])) { das[i].blurred = true; changed = true }
+  }
+  if (changed) saveDirectAccess(das)
+}
 let selectedGridItems = new Set()
 function updateBatchBar() {
   const bar = document.getElementById('batchBar')

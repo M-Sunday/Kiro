@@ -105,7 +105,7 @@ if (nsfwTextarea) {
   nsfwTextarea.value = getNSFW().join('\n')
   nsfwTextarea.addEventListener('input', () => {
     const domains = nsfwTextarea.value.split('\n').map(s => s.trim().toLowerCase()).filter(Boolean)
-    saveNSFW(domains); renderSidebar(); renderGridView()
+    saveNSFW(domains); autoApplyNSFW(); renderSidebar(); renderGridView()
   })
 }
 const blurAllToggle = document.getElementById('blurAllNSFWToggle')
@@ -113,6 +113,7 @@ if (blurAllToggle) {
   blurAllToggle.classList.toggle('on', getBlurAllNSFW())
   blurAllToggle.addEventListener('click', () => {
     saveBlurAllNSFW(blurAllToggle.classList.contains('on'))
+    autoApplyNSFW()
     settingsOverlay.classList.remove('open')
     var s = document.getElementById('splash')
     if (s) { s.style.display = ''; s.classList.remove('fade') }

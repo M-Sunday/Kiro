@@ -1,5 +1,21 @@
 [
   {
+    "version": "1.4.2",
+    "date": "2026-05-27",
+    "title": "Modular Codebase, Debug Inspector, Hierarchy Sidebar",
+    "changes": [
+      "CSS split into 5 modular files: base, layout, components, themes, mobile",
+      "JS split into 15 modules: data, views, calendar, settings, sidebar, etc.",
+      "Debug inspector (Ctrl+D): colored element overlay with title label and fill",
+      "Hierarchy sidebar (Ctrl+Shift+H): indented ancestry tree, click to lock and copy selector",
+      "Network simulation in Debug menu (Online / 2G / Offline)",
+      "Mobile menu button no longer closes sidebar immediately after opening",
+      "Focusing YouTube search input opens search landing; blurring returns to grid",
+      "Drag grid items directly onto sidebar folders to move them",
+      "Search bar expansion only triggers on actual search input focus (not toolbar buttons)"
+    ]
+  },
+  {
     "version": "1.4.1",
     "date": "2026-05-26",
     "title": "Update Toast Fixes, Paste & Note Improvements",

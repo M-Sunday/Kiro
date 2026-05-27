@@ -19,12 +19,51 @@ let noteSaveTimer = null
 let pendingNoteId = null
 document.getElementById('noteViewTitle').addEventListener('input', noteSaveContent)
 document.getElementById('noteViewContent').addEventListener('input', noteSaveContent)
+document.getElementById('noteViewContent').addEventListener('blur', function () {
+  if (autoLinkNoteContent()) noteSaveContent()
+})
+
+function autoLinkNoteContent() {
+  const el = document.getElementById('noteViewContent')
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false)
+  const urlRegex = /https?:\/\/[^\s<>"']+/g
+  const textNodes = []
+  while (walker.nextNode()) textNodes.push(walker.currentNode)
+  let changed = false
+  for (const node of textNodes) {
+    const text = node.textContent
+    if (!urlRegex.test(text)) continue
+    const parent = node.parentNode
+    if (parent && parent.tagName === 'A') continue
+    urlRegex.lastIndex = 0
+    const frag = document.createDocumentFragment()
+    let lastIndex = 0
+    let match
+    while ((match = urlRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, match.index)))
+      const a = document.createElement('a')
+      a.href = match[0]
+      a.target = '_blank'
+      a.rel = 'noopener'
+      a.textContent = match[0]
+      frag.appendChild(a)
+      lastIndex = urlRegex.lastIndex
+    }
+    if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)))
+    if (frag.childNodes.length > 0) {
+      parent.replaceChild(frag, node)
+      changed = true
+    }
+  }
+  return changed
+}
 
 function noteSaveContent() {
   clearTimeout(noteSaveTimer)
   pendingNoteId = currentNoteId
   noteSaveTimer = setTimeout(() => {
     if (!pendingNoteId || pendingNoteId !== currentNoteId) return
+    autoLinkNoteContent()
     const notes = getNotes()
     const n = notes.filter(x => x.id === pendingNoteId)[0]
     if (!n) return

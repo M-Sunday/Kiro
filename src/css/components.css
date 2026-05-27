@@ -188,6 +188,7 @@
 .note-view-btn:hover { background: #f5f5f7; }
 .note-view-content { flex: 1; border: none; background: transparent; outline: none; font-size: 14px; line-height: 1.6; color: #3a3a3c; font-family: inherit; padding: 16px 20px; white-space: pre-wrap; word-break: break-word; overflow-y: auto; min-height: 0; }
 .note-view-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 8px 0; display: block; }
+.note-view-content a { color: #007aff; text-decoration: underline; }
 .note-view-footer { font-size: 11px; color: #8e8e93; padding: 6px 20px 10px; margin: 0 10px; border-top: 1px solid #e8e8ed; }
 
 .tree-item[data-note-id] .tree-file .tree-file-icon { margin-top: 3px; }

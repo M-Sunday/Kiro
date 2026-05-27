@@ -18,8 +18,10 @@
   var yesBtn = document.getElementById('onbYes')
   var noBtn = document.getElementById('onbNo')
 
-  setTimeout(function() { welcomeText.classList.add('onb-visible') }, 600)
-  setTimeout(function() { next0.classList.add('onb-visible') }, 1200)
+  requestAnimationFrame(function() {
+    welcomeText.classList.add('onb-visible')
+    next0.classList.add('onb-visible')
+  })
 
   function goToStep1() {
     welcomeText.classList.remove('onb-visible')

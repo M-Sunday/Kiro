@@ -27,10 +27,10 @@ function showContextMenu(x, y, videoId, folderName, bookmarkId, noteId, daId) {
   const hasUrl = showVideo ? !!getVideos()[videoId]?.url : isBm ? !!getBookmarks().filter(b => b.id === bookmarkId)[0]?.url : isDA ? true : false
   menu.querySelector('[data-action="blur"]').style.display = (showVideo && hasUrl) || isBm || isDA ? '' : 'none'
   if ((showVideo && hasUrl) || isBm || isDA) {
-    let blurred = false, url = ''
-    if (showVideo) { const v = getVideos()[videoId]; url = v?.url || ''; blurred = v?.blurred || isNSFW(url) }
-    else if (isBm) { const b = getBookmarks().filter(x => x.id === bookmarkId)[0]; url = b?.url || ''; blurred = b?.blurred || isNSFW(url) }
-    else if (isDA) { const d = getDirectAccess().filter(x => x.id === daId)[0]; url = d?.url || ''; blurred = d?.blurred || isNSFW(url) }
+    let blurred = false
+    if (showVideo) { const v = getVideos()[videoId]; blurred = v?.blurred || isNSFW(v) }
+    else if (isBm) { const b = getBookmarks().filter(x => x.id === bookmarkId)[0]; blurred = b?.blurred || isNSFW(b) }
+    else if (isDA) { const d = getDirectAccess().filter(x => x.id === daId)[0]; blurred = d?.blurred || isNSFW(d) }
     menu.querySelector('[data-action="blur"]').innerHTML = `<i data-lucide="${blurred ? 'eye-off' : 'eye'}" class="ctx-icon"></i> ${blurred ? 'Unblur' : 'Blur'}`
   }
   menu.querySelector('[data-action="pin"]').style.display = showVideo ? '' : 'none'

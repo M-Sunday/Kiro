@@ -105,14 +105,14 @@ if (nsfwTextarea) {
   nsfwTextarea.value = getNSFW().join('\n')
   nsfwTextarea.addEventListener('input', () => {
     const domains = nsfwTextarea.value.split('\n').map(s => s.trim().toLowerCase()).filter(Boolean)
-    saveNSFW(domains)
+    saveNSFW(domains); renderSidebar(); renderGridView()
   })
 }
 const blurAllToggle = document.getElementById('blurAllNSFWToggle')
 if (blurAllToggle) {
   blurAllToggle.classList.toggle('on', getBlurAllNSFW())
   blurAllToggle.addEventListener('click', () => {
-    saveBlurAllNSFW(blurAllToggle.classList.contains('on'))
+    saveBlurAllNSFW(blurAllToggle.classList.contains('on')); renderSidebar(); renderGridView()
   })
 }
 const dlTypeEl = document.getElementById('dlType')

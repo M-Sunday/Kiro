@@ -43,7 +43,7 @@ function renderSidebar() {
     html += `<div class="tree-item ${bmCollapsed ? '' : 'expanded'}" data-bookmarks="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="bookmark-fill" class="tree-folder-icon"></i><span class="tree-label">Bookmarks</span></div><div class="tree-children">`
     for (const bm of bookmarks) {
       if (query && !bm.title.toLowerCase().includes(query) && !bm.url.toLowerCase().includes(query)) continue
-      const bmNsfw = isNSFW(bm.url) || bm.blurred
+      const bmNsfw = isNSFW(bm) || bm.blurred
       html += `<div class="tree-item" data-bookmark-id="${bm.id}" draggable="true"><div class="tree-file"><div class="bm-thumb-wrap">${bm.image ? `<img class="bm-thumb${bmNsfw ? ' nsfw-blur' : ''}" src="${bm.image}" onerror="this.style.display='none'" />` : `<i data-lucide="external-link" class="tree-file-icon" style="margin:4px"></i>`}</div><div class="tree-file-meta"><span class="tree-label">${bm.title || bm.url}</span><span class="tree-sublabel">${bm.url}</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>`
     }
     html += '</div></div>'
@@ -65,7 +65,7 @@ function renderSidebar() {
     html += `<div class="tree-item ${daCollapsed ? '' : 'expanded'}" data-directaccess="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="link" class="tree-folder-icon"></i><span class="tree-label">Direct Access</span></div><div class="tree-children">`
     for (const d of da) {
       if (query && !d.title.toLowerCase().includes(query) && !d.url.toLowerCase().includes(query)) continue
-      const nsfw = isNSFW(d.url) || d.blurred
+      const nsfw = isNSFW(d) || d.blurred
       html += `<div class="tree-item" data-da-id="${d.id}" draggable="true"><div class="tree-file"><div class="bm-thumb-wrap">${d.image ? `<img class="bm-thumb${nsfw ? ' nsfw-blur' : ''}" src="${d.image}" onerror="this.style.display='none'" />` : `<i data-lucide="external-link" class="tree-file-icon" style="margin:4px"></i>`}</div><div class="tree-file-meta"><span class="tree-label">${d.title}</span><span class="tree-sublabel">${d.url}</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>`
     }
     html += '</div></div>'

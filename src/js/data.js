@@ -15,15 +15,30 @@ function getNSFW() { try { return JSON.parse(localStorage.getItem('ytNSFW') || '
 function saveNSFW(n) { safeSetItem('ytNSFW', JSON.stringify(n)) }
 function getBlurAllNSFW() { return localStorage.getItem('ytBlurAllNSFW') === 'true' }
 function saveBlurAllNSFW(v) { safeSetItem('ytBlurAllNSFW', v ? 'true' : 'false') }
-function isNSFW(url) {
+function isNSFW(item) {
   try {
     if (!getBlurAllNSFW()) return false
-    let fullUrl = url
-    if (!/^https?:\/\//i.test(url)) {
-      fullUrl = 'https://' + url.replace(/^\/+/, '')
+    const words = getNSFW().filter(Boolean)
+    if (!words.length) return false
+    const url = item?.url || ''
+    const title = item?.title || ''
+    const channel = item?.channel || ''
+
+    if (url) {
+      let fullUrl = url
+      if (!/^https?:\/\//i.test(url)) {
+        fullUrl = 'https://' + url.replace(/^\/+/, '')
+      }
+      try {
+        const domain = new URL(fullUrl).hostname.replace(/^www\./, '').toLowerCase()
+        if (words.some(n => domain === n || domain.endsWith('.' + n))) return true
+      } catch {}
     }
-    const domain = new URL(fullUrl).hostname.replace(/^www\./, '').toLowerCase()
-    return getNSFW().some(n => domain === n || domain.endsWith('.' + n))
+
+    const text = (title + ' ' + channel).toLowerCase()
+    if (words.some(n => text.includes(n))) return true
+
+    return false
   } catch { return false }
 }
 let selectedGridItems = new Set()

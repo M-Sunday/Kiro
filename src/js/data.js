@@ -11,7 +11,8 @@ function getBookmarks() { try { return JSON.parse(localStorage.getItem('ytBookma
 function saveBookmarks(b) { safeSetItem('ytBookmarks', JSON.stringify(b)) }
 function getDirectAccess() { try { return JSON.parse(localStorage.getItem('ytDirectAccess') || '[]') } catch { return [] } }
 function saveDirectAccess(d) { safeSetItem('ytDirectAccess', JSON.stringify(d)) }
-function getNSFW() { try { return JSON.parse(localStorage.getItem('ytNSFW') || '[]') } catch { return [] } }
+var NSFW_DEFAULTS = ['pornhub.com', 'xvideos.com', 'xnxx.com', 'redtube.com', 'youporn.com', 'xhamster.com', 'stripchat.com', 'chaturbate.com', 'onlyfans.com']
+function getNSFW() { try { var v = localStorage.getItem('ytNSFW'); if (v === null) { safeSetItem('ytNSFW', JSON.stringify(NSFW_DEFAULTS)); return NSFW_DEFAULTS.slice() }; return JSON.parse(v) } catch { return [] } }
 function saveNSFW(n) { safeSetItem('ytNSFW', JSON.stringify(n)) }
 function getBlurAllNSFW() { return localStorage.getItem('ytBlurAllNSFW') === 'true' }
 function saveBlurAllNSFW(v) { safeSetItem('ytBlurAllNSFW', v ? 'true' : 'false') }

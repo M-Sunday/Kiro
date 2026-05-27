@@ -146,7 +146,10 @@ body.theme-black .shortcuts-header { border-color: #3a3a3c; }
 body.theme-black .shortcuts-header h2 { color: #f5f5f7; }
 body.theme-black .shortcuts-close:hover { background: #3a3a3c; }
 body.theme-black .shortcut-keys kbd { background: #3a3a3c; border-color: #48484a; color: #f5f5f7; }
-body.theme-black #nsfwDomains { background: #3a3a3c; border-color: #3a3a3c; color: #f5f5f7; }
+body.theme-black .nsfw-chip { background: #3a3a3c; color: #f5f5f7; }
+body.theme-black .nsfw-chip button { background: #636366; color: #f5f5f7; }
+body.theme-black .nsfw-chip button:hover { background: #8e8e93; }
+body.theme-black #nsfwAddInput { background: #3a3a3c; border-color: #3a3a3c; color: #f5f5f7; }
 body.theme-black .ctx-item.ctx-danger { color: #ff453a; }
 
 /* ─── THEME: OBSIDIAN ────────────────────────────────── */
@@ -293,7 +296,10 @@ body.theme-obsidian .shortcuts-header { border-color: #2a2a30; }
 body.theme-obsidian .shortcuts-header h2 { color: #e8e8ec; }
 body.theme-obsidian .shortcuts-close:hover { background: #2a2a30; }
 body.theme-obsidian .shortcut-keys kbd { background: #2a2a30; border-color: #3a3a44; color: #e8e8ec; }
-body.theme-obsidian #nsfwDomains { background: #2a2a30; border-color: #2a2a30; color: #e8e8ec; }
+body.theme-obsidian .nsfw-chip { background: #2a2a30; color: #e8e8ec; }
+body.theme-obsidian .nsfw-chip button { background: #3a3a40; color: #e8e8ec; }
+body.theme-obsidian .nsfw-chip button:hover { background: #5a5a60; }
+body.theme-obsidian #nsfwAddInput { background: #2a2a30; border-color: #2a2a30; color: #e8e8ec; }
 body.theme-obsidian .ctx-item.ctx-danger { color: #ff453a; }
 body.theme-obsidian #splashText { color: #7e7e8c; }
 

@@ -100,14 +100,31 @@ document.querySelectorAll('#pane-history .settings-toggle').forEach((t, i) => {
     if (document.getElementById('searchLanding').style.display === 'flex') renderSearchLanding()
   })
 })
-const nsfwTextarea = document.getElementById('nsfwDomains')
-if (nsfwTextarea) {
-  nsfwTextarea.value = getNSFW().join('\n')
-  nsfwTextarea.addEventListener('input', () => {
-    const domains = nsfwTextarea.value.split('\n').map(s => s.trim().toLowerCase()).filter(Boolean)
-    saveNSFW(domains); autoApplyNSFW(); renderSidebar(); renderGridView()
+function renderNSFWChips() {
+  var el = document.getElementById('nsfwChips')
+  if (!el) return
+  var words = getNSFW()
+  el.innerHTML = words.map(function(w) { return '<span class="nsfw-chip">' + w + '<button data-word="' + w + '">×</button></span>' }).join('')
+  el.querySelectorAll('.nsfw-chip button').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var word = this.dataset.word
+      var list = getNSFW().filter(function(w) { return w !== word })
+      saveNSFW(list); renderNSFWChips(); autoApplyNSFW(); renderSidebar(); renderGridView()
+    })
   })
 }
+renderNSFWChips()
+document.getElementById('nsfwAddBtn').addEventListener('click', function() {
+  var input = document.getElementById('nsfwAddInput')
+  var word = input.value.trim().toLowerCase()
+  if (!word) return
+  var list = getNSFW()
+  if (!list.includes(word)) { list.push(word); saveNSFW(list) }
+  input.value = ''; renderNSFWChips(); autoApplyNSFW(); renderSidebar(); renderGridView()
+})
+document.getElementById('nsfwAddInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('nsfwAddBtn').click()
+})
 const blurAllToggle = document.getElementById('blurAllNSFWToggle')
 if (blurAllToggle) {
   blurAllToggle.classList.toggle('on', getBlurAllNSFW())

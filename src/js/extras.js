@@ -299,11 +299,10 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(reg => {
     _swReg = reg
     function applyUpdate(sw) {
-      if (localStorage.getItem('ytSwVersion') === APP_VERSION) return
       showSplashForUpdate()
       sw.postMessage({ action: 'skipWaiting' })
     }
-    if (reg.waiting && localStorage.getItem('ytSwVersion') !== APP_VERSION) applyUpdate(reg.waiting)
+    if (reg.waiting && navigator.serviceWorker.controller) applyUpdate(reg.waiting)
     reg.addEventListener('updatefound', () => {
       var sw = reg.installing || reg.waiting
       if (!sw) return

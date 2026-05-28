@@ -1,0 +1,14 @@
+{
+  "appId": "com.youtubevault.app",
+  "appName": "YouTube Vault",
+  "webDir": "src",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#1c1c1e"
+    }
+  }
+}

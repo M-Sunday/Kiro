@@ -1,5 +1,34 @@
 [
   {
+    "version": "1.5.1",
+    "date": "2026-05-28",
+    "title": "Todo Lists, About User Pane, Grid Cascade Animation, Drag Improvements",
+    "changes": [
+      "Todo list feature: add/check/uncheck items in notes with editable contenteditable text",
+      "Custom SVG circle-check / circle-x toggle icons replacing native checkboxes",
+      "Green flash on checking todo (180ms delay), red X hover when checked",
+      "Lightweight firework particle burst (12 dots, random colors, glow) on todo toggle",
+      "All-red particles when unchecking a todo",
+      "Grid view shows list-todo icon and todo preview (up to 3 items) for notes with todos",
+      "Sidebar tree also shows list-todo icon for notes with todos",
+      "About User settings pane with editable username (edit-on-hover pencil), version, device, reset account",
+      "Reset account button with confirmation dialog — clears all localStorage and reloads",
+      "Grid cascade animation: sections stagger in (220ms apart), items cascade within (60ms apart)",
+      "Workbench header ('{username}'s Workbench') always visible at top of grid view",
+      "Grid section headers accept drops: drop note on folder header to assign, drop video to move",
+      "Sidebar folder drag-drop now accepts notes (not just videos)",
+      "Hidden folders with only notes now show in grid view (was filtering them out)",
+      "Splash sequence simplified: removed separate welcome back overlay, integrated into splash",
+      "Splash shows 'Checking for updates...' -> 'Up to date' -> 'Welcome, {username}' -> fade",
+      "Theme color overrides for all todo elements across black, obsidian, and anthropic themes",
+      "SanitizeHtml now allows <input> tags for todo rendering",
+      "New SVG icons: list-checks, list-todo, circle-check, circle-x, user-icon",
+      "Settings sidebar reordered: About User is now first/active category",
+      "Onboarding step transition cleaned up: removed zoom circle, uses clean fade",
+      "Fixed particle closure bug (switched var to let in loop)"
+    ]
+  },
+  {
     "version": "1.5.0",
     "date": "2026-05-27",
     "title": "Onboarding Flow, Welcome Back, Zoom Animation, User Name",

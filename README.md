@@ -9,17 +9,17 @@ Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android,
 - **YouTube videos** — Paste a link, fetch metadata (title, channel, duration, thumbnail), save to folders
 - **Download videos** — Download via yt-dlp (desktop only). Supports quality selection, codec, audio format, and bitrate settings. Output is forced to MP4 (h264 preferred).
 - **Bookmarks** — Save any URL with auto-fetched preview image, organized separately
-- **Notes** — Rich-text notes with image paste, assignable to folders
+- **Notes** — Rich-text notes with image paste, assignable to folders. Built-in todo lists with editable checkboxes, custom SVG circle-check/circle-x toggle icons, particle burst animations on completion
 - **Direct Access** — Quick-launch links with thumbnail previews
-- **Grid view** — Browse all content in a visual grid with sections per type
+- **Grid view** — Browse all content in a visual grid with sections per type. Cascade animation on load (sections stagger in 220ms apart, items within at 60ms). Workbench header always visible at top.
 - **Search landing** — Centered search prompt with recent history miniatures (click to reload). Shows when focusing the YouTube URL input or the sidebar search.
 - **Bulk select** — Ctrl+click grid items for batch delete, move, pin, or blur
 - **Drag to reorder** — Reorder grid items within sections (videos, bookmarks, notes, DAs) with blue drop-line indicators. Touch drag via long-press on mobile.
-- **Drag to folder** — Drag video grid items onto sidebar folders to move them. Also drag sidebar items between folders.
+- **Drag to folder** — Drag video grid items onto sidebar folders to move them. Also drag sidebar items between folders. Grid section headers also accept drops (videos and notes).
 - **Context menus** — Right-click, long-press (mobile), or three-dot button on any item
 - **Keyboard shortcuts** — Press `?` to view all shortcuts
-- **Settings panel** — Theme, toolbar toggles, file/link history options, NSFW filters, download options, patch notes
-- **Themes** — White, Black, and Obsidian Black
+- **Settings panel** — Theme, toolbar toggles, file/link history options, NSFW filters, download options, patch notes. About User pane with editable username, version, device info, and Reset Account.
+- **Themes** — White, Black, Obsidian Black, and Anthropic
 - **Calendar view** — Browse videos by publish date
 - **Search** — Filter sidebar items by title
 - **Pin items** — Pin important videos to the top
@@ -102,13 +102,13 @@ src/
 │   ├── themes.css       # All body.theme-* + body.compact rules
 │   └── mobile.css       # @media (max-width: 640px) responsive overrides
 ├── js/
-│   ├── data.js          # localStorage CRUD helpers, selectedGridItems, APP_VERSION
+│   ├── data.js          # localStorage CRUD helpers, selectedGridItems, APP_VERSION (1.5.1)
 │   ├── views.js         # setView(), showCardView(), clearCard(), renderSearchLanding()
 │   ├── calendar.js      # Calendar rendering, published date, privacy
-│   ├── settings.js      # Settings panel, load/save history, toolbar toggles
+│   ├── settings.js      # Settings panel, load/save history, toolbar toggles, About User, Reset Account
 │   ├── sidebar.js       # Sidebar tree, folder drag, toolbar events
 │   ├── context-menu.js  # Context menu positioning and actions
-│   ├── notes.js         # Rich-text editor, undo/redo, paste handler
+│   ├── notes.js         # Rich-text editor, undo/redo, paste handler, todo lists with particles
 │   ├── dialogs.js       # Create folder, bookmark dialog
 │   ├── grid.js          # Grid view, batch actions, drag/touch reorder
 │   ├── card.js          # Video card view, add/unlink, pin badge
@@ -116,6 +116,7 @@ src/
 │   ├── search.js        # YouTube link fetch, Direct Access dialog
 │   ├── extras.js        # Patch notes, keyboard shortcuts, debug inspector, SW update, online indicator
 │   ├── icons.js         # Local SVG icon loader
+│   ├── onboarding.js    # First-time user onboarding flow
 │   └── app.js           # Bootstrap init sequence
 ├── assets/
 │   ├── changelog.json   # Version history
@@ -151,6 +152,6 @@ Requires Electron. The app auto-opens in grid view by default.
 - **Vanilla JS** — no frameworks (15 modular JS files)
 - **localStorage** — persistence
 - **Service Worker** — offline caching + update detection
-- **Custom SVG icons** — 36 local icons (no CDN)
+- **Custom SVG icons** — 40 local icons (no CDN)
 - **yt-dlp** — video download engine (auto-downloaded on first use)
 - **ffmpeg** — audio/video processing for high-quality downloads (auto-downloaded when needed)

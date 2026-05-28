@@ -107,19 +107,24 @@ body.theme-black .note-view-btn { border-color: #3a3a3c; color: #a1a1a6; }
 body.theme-black .note-view-btn:hover { background: #3a3a3c; }
 body.theme-black .note-view-content { color: #a1a1a6; }
 body.theme-black .note-view-content a { color: #5a9eff; }
-body.theme-black .splash-title { color: #f5f5f7; }
 body.theme-black .onb-welcome { color: #a1a1a6; }
 body.theme-black .onb-label { color: #a1a1a6; }
 body.theme-black .onb-input { color: #f5f5f7; border-color: #3a3a3c; }
 body.theme-black .onb-input::placeholder { color: #48484a; }
 body.theme-black .onb-input:focus { border-color: #5a9eff; }
 body.theme-black .onb-name-display { color: #f5f5f7; }
-body.theme-black .grid-empty-text { color: #636366; }
-body.theme-black .wb-text { color: #f5f5f7; }
-body.theme-black .wb-btn { background: #5a9eff; }
-body.theme-black .wb-btn:hover { background: #3a8aff; }
+body.theme-black .grid-workbench-text { color: #636366; }
 body.theme-black #onboarding { background: var(--splash-bg, #1c1c1e); }
 body.theme-black .note-view-footer { border-color: #3a3a3c; color: #a1a1a6; }
+body.theme-black .todo-row .todo-text { color: #a1a1a6; }
+body.theme-black .todo-cb .todo-cb-check { color: #48484a; }
+body.theme-black .todo-cb.checked .todo-cb-check { color: #5a9eff; }
+body.theme-black .todo-cb .todo-cb-x { color: #ff453a; }
+body.theme-black .todo-add-btn { color: #636366; }
+body.theme-black .todo-add-btn:hover { color: #5a9eff; }
+body.theme-black .grid-item-todo { color: #636366; }
+body.theme-black .grid-item-todo .todo-check { color: #48484a; }
+body.theme-black .grid-item-todo .todo-check.done { color: #5a9eff; }
 body.theme-black .image-wrap img { background: #3a3a3c; }
 body.theme-black .settings-select { background: #3a3a3c; border-color: #48484a; color: #f5f5f7; }
 body.theme-black .settings-history-item-title { color: #f5f5f7; }
@@ -149,6 +154,7 @@ body.theme-black .theme-preview { border-color: #48484a; }
 body.theme-black .settings-clear-btn { background: #3a3a3c; border-color: #3a3a3c; color: #f5f5f7; }
 body.theme-black .settings-clear-btn:hover { background: #48484a; border-color: #f5f5f7; }
 body.theme-black .settings-field-label { color: #a1a1a6; }
+body.theme-black .settings-user-value { color: #f5f5f7; }
 body.theme-black .settings-text-input { background: #3a3a3c; border-color: #3a3a3c; color: #f5f5f7; }
 body.theme-black .settings-text-input:focus { border-color: #5a9eff; }
 body.theme-black .settings-footer-info { border-color: #3a3a3c; }
@@ -275,19 +281,24 @@ body.theme-obsidian .note-view-btn { border-color: #2a2a30; color: #8e8e9a; }
 body.theme-obsidian .note-view-btn:hover { background: #2a2a30; }
 body.theme-obsidian .note-view-content { color: #a1a1a6; }
 body.theme-obsidian .note-view-content a { color: #5a9eff; }
-body.theme-obsidian .splash-title { color: #e8e8ec; }
 body.theme-obsidian .onb-welcome { color: #7e7e8c; }
 body.theme-obsidian .onb-label { color: #7e7e8c; }
 body.theme-obsidian .onb-input { color: #e8e8ec; border-color: #3a3a44; }
 body.theme-obsidian .onb-input::placeholder { color: #484854; }
 body.theme-obsidian .onb-input:focus { border-color: #5a9eff; }
 body.theme-obsidian .onb-name-display { color: #e8e8ec; }
-body.theme-obsidian .grid-empty-text { color: #63636e; }
-body.theme-obsidian .wb-text { color: #e8e8ec; }
-body.theme-obsidian .wb-btn { background: #5a9eff; }
-body.theme-obsidian .wb-btn:hover { background: #3a8aff; }
+body.theme-obsidian .grid-workbench-text { color: #63636e; }
 body.theme-obsidian #onboarding { background: var(--splash-bg, #19191e); }
 body.theme-obsidian .note-view-footer { border-color: #2a2a30; color: #7e7e8c; }
+body.theme-obsidian .todo-row .todo-text { color: #a1a1a6; }
+body.theme-obsidian .todo-cb .todo-cb-check { color: #484854; }
+body.theme-obsidian .todo-cb.checked .todo-cb-check { color: #5a9eff; }
+body.theme-obsidian .todo-cb .todo-cb-x { color: #ff453a; }
+body.theme-obsidian .todo-add-btn { color: #63636e; }
+body.theme-obsidian .todo-add-btn:hover { color: #5a9eff; }
+body.theme-obsidian .grid-item-todo { color: #63636e; }
+body.theme-obsidian .grid-item-todo .todo-check { color: #484854; }
+body.theme-obsidian .grid-item-todo .todo-check.done { color: #5a9eff; }
 body.theme-obsidian .image-wrap img { background: #2a2a30; }
 body.theme-obsidian .settings-history-item-title { color: #e8e8ec; }
 body.theme-obsidian .update-modal { background: #1e1e24; border-color: #2a2a30; }
@@ -379,20 +390,25 @@ body.theme-anthropic .note-view-btn { border-color: #D4A27F; color: #7a7a7a; }
 body.theme-anthropic .note-view-btn:hover { background: #E8E0D8; }
 body.theme-anthropic .note-view-content { color: #191919; }
 body.theme-anthropic .note-view-content a { color: #D4A27F; }
-body.theme-anthropic .splash-title { color: #191919; }
 body.theme-anthropic .onb-welcome { color: #7a7a7a; }
 body.theme-anthropic .onb-label { color: #7a7a7a; }
 body.theme-anthropic .onb-input { color: #191919; border-color: #c4b8ab; }
 body.theme-anthropic .onb-input::placeholder { color: #b8aa9a; }
 body.theme-anthropic .onb-input:focus { border-color: #D4A27F; }
 body.theme-anthropic .onb-name-display { color: #191919; }
-body.theme-anthropic .grid-empty-text { color: #8a7e72; }
-body.theme-anthropic .wb-text { color: #191919; }
-body.theme-anthropic .wb-btn { background: #D4A27F; }
-body.theme-anthropic .wb-btn:hover { background: #b88966; }
+body.theme-anthropic .grid-workbench-text { color: #8a7e72; }
 body.theme-anthropic #onboarding { background: var(--splash-bg, #E8E0D8); }
 body.theme-anthropic .note-view-header { background: #FFFFFF; border-color: #D4A27F; }
 body.theme-anthropic .note-view-footer { border-color: #E8E0D8; color: #7a7a7a; }
+body.theme-anthropic .todo-row .todo-text { color: #191919; }
+body.theme-anthropic .todo-cb .todo-cb-check { color: #c4b8ab; }
+body.theme-anthropic .todo-cb.checked .todo-cb-check { color: #D4A27F; }
+body.theme-anthropic .todo-cb .todo-cb-x { color: #ff453a; }
+body.theme-anthropic .todo-add-btn { color: #8a7e72; }
+body.theme-anthropic .todo-add-btn:hover { color: #D4A27F; }
+body.theme-anthropic .grid-item-todo { color: #8a7e72; }
+body.theme-anthropic .grid-item-todo .todo-check { color: #c4b8ab; }
+body.theme-anthropic .grid-item-todo .todo-check.done { color: #D4A27F; }
 body.theme-anthropic .tree-folder:hover, body.theme-anthropic .tree-file:hover { background: #E8E0D8; color: #191919; }
 body.theme-anthropic .tree-file.active { background: #E8E0D8; color: #191919; }
 body.theme-anthropic .tree-file.pinned { border-color: #191919; background: #E8E0D8; }

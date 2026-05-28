@@ -33,7 +33,8 @@ function renderSidebar() {
       if (n.folder !== name) continue
       if (query && !n.title.toLowerCase().includes(query)) continue
       const preview = stripHtml(n.content || '').replace(/\n/g, ' ').substring(0, 50)
-      html += `<div class="tree-item" data-note-id="${n.id}" draggable="true"><div class="tree-file"><i data-lucide="file-text" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">${n.title || 'Untitled'}</span><span class="tree-sublabel">${preview}${stripHtml(n.content || '').length > 50 ? '…' : ''}</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>`
+      const noteIcon = n.todos && n.todos.length ? 'list-todo' : 'file-text'
+      html += `<div class="tree-item" data-note-id="${n.id}" draggable="true"><div class="tree-file"><i data-lucide="${noteIcon}" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">${n.title || 'Untitled'}</span><span class="tree-sublabel">${preview}${stripHtml(n.content || '').length > 50 ? '…' : ''}</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>`
     }
     html += '</div></div>'
   }
@@ -55,7 +56,8 @@ function renderSidebar() {
     for (const n of notes) {
       if (query && !n.title.toLowerCase().includes(query)) continue
       const preview = stripHtml(n.content || '').replace(/\n/g, ' ').substring(0, 50)
-      html += `<div class="tree-item" data-note-id="${n.id}" draggable="true"><div class="tree-file"><i data-lucide="file-text" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">${n.title || 'Untitled'}</span><span class="tree-sublabel">${preview}${stripHtml(n.content || '').length > 50 ? '…' : ''}</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>`
+      const noteIcon = n.todos && n.todos.length ? 'list-todo' : 'file-text'
+      html += `<div class="tree-item" data-note-id="${n.id}" draggable="true"><div class="tree-file"><i data-lucide="${noteIcon}" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">${n.title || 'Untitled'}</span><span class="tree-sublabel">${preview}${stripHtml(n.content || '').length > 50 ? '…' : ''}</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>`
     }
     html += '</div></div>'
   }
@@ -84,19 +86,30 @@ function bindSidebarEvents() {
       e.preventDefault(); item.querySelector('.tree-folder')?.classList.remove('drop-zone')
       const id = e.dataTransfer.getData('text/plain')
       const type = e.dataTransfer.getData('type')
-      if (!id || type !== 'video') return
+      if (!id) return
       const folderName = item.dataset.folder
       if (!folderName) return
-      const folders = getFolders()
-      for (const ids of Object.values(folders)) {
-        const idx = ids.indexOf(id)
-        if (idx > -1) ids.splice(idx, 1)
+      if (type === 'video') {
+        const folders = getFolders()
+        for (const ids of Object.values(folders)) {
+          const idx = ids.indexOf(id)
+          if (idx > -1) ids.splice(idx, 1)
+        }
+        if (!folders[folderName]) folders[folderName] = []
+        if (!folders[folderName].includes(id)) folders[folderName].push(id)
+        saveFolders(folders)
+        renderSidebar()
+        renderGridView()
+      } else if (type === 'note') {
+        let notes = getNotes()
+        const note = notes.find(n => n.id === id)
+        if (note) {
+          note.folder = folderName
+          saveNotes(notes)
+          renderSidebar()
+          renderGridView()
+        }
       }
-      if (!folders[folderName]) folders[folderName] = []
-      if (!folders[folderName].includes(id)) folders[folderName].push(id)
-      saveFolders(folders)
-      renderSidebar()
-      renderGridView()
     })
   })
   document.querySelectorAll('.tree-folder').forEach(f => {

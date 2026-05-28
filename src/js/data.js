@@ -79,7 +79,7 @@ function getCollapsed() { try { return JSON.parse(localStorage.getItem('ytCollap
 function saveCollapsed(c) { safeSetItem('ytCollapsed', JSON.stringify(c)) }
 function safeSetItem(key, val) { try { localStorage.setItem(key, val) } catch (e) { if (e.name === 'QuotaExceededError') { const t = document.getElementById('updateToast'); t.textContent = 'Storage full — clear some data'; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000) } } }
 function sanitizeHtml(str) {
-  const allowed = /^(b|i|u|em|strong|a|br|p|ul|ol|li|span|div|h[1-6]|pre|code|blockquote|img)$/i
+  const allowed = /^(b|i|u|em|strong|a|br|p|ul|ol|li|span|div|h[1-6]|pre|code|blockquote|img|input)$/i
   str = str.replace(/<script[\s\S]*?<\/script>/gi, '')
   str = str.replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
   str = str.replace(/\shref\s*=\s*["']javascript:[^"']*["']/gi, '')
@@ -103,4 +103,4 @@ let currentVideo = null
 let dragVideoId = null
 let currentNoteId = null
 
-const APP_VERSION = '1.5.0'
+const APP_VERSION = '1.5.1'

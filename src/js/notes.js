@@ -163,3 +163,102 @@ document.getElementById('noteDialogConfirm').addEventListener('click', () => {
 })
 noteTitleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); noteContentInput.focus() } })
 noteDialog.addEventListener('mousedown', (e) => { if (e.target === noteDialog) noteDialog.classList.remove('open') })
+
+// ─── Todos ──────────────────────────────────────────────
+function renderNoteTodos() {
+  var el = document.getElementById('noteViewTodos')
+  if (!el) return
+  var notes = getNotes()
+  var n = notes.find(function(x) { return x.id === currentNoteId })
+  if (!n || !n.todos || !n.todos.length) { el.innerHTML = ''; return }
+  var html = '<div style="border-top:1px solid #e8e8ed;padding-top:8px;margin-top:4px">'
+  n.todos.forEach(function(t, i) {
+    var checked = t.done ? ' checked' : ''
+    html += '<div class="todo-row"><span class="todo-cb' + checked + '" data-todo-id="' + t.id + '"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="todo-cb-icon todo-cb-check"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="todo-cb-icon todo-cb-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span><span class="todo-text' + (t.done ? ' done' : '') + '" contenteditable="true" data-todo-id="' + t.id + '">' + escapeHtml(t.text || '') + '</span></div>'
+  })
+  html += '<button class="todo-add-btn" id="todoAddBtn"><i data-lucide="plus" style="width:14px;height:14px"></i> Add todo</button></div>'
+  el.innerHTML = html
+  el.querySelectorAll('.todo-cb').forEach(function(cb) {
+    cb.addEventListener('click', function(e) {
+      var notes = getNotes()
+      var n = notes.find(function(x) { return x.id === currentNoteId })
+      if (!n || !n.todos) return
+      var t = n.todos.find(function(x) { return x.id === this.dataset.todoId }.bind(this))
+      if (!t) return
+      var becomingDone = !t.done
+      t.done = becomingDone
+      saveNotes(notes)
+      if (becomingDone) {
+        this.querySelector('.todo-cb-check').style.color = '#30d158'
+        var self = this
+        setTimeout(function() { renderNoteTodos(); renderSidebar() }, 180)
+      } else {
+        renderNoteTodos(); renderSidebar()
+      }
+      // firework burst
+      var colors = ['#007aff','#ff453a','#ffd60a','#30d158','#ff9f0a','#bf5af2']
+      for (let p = 0; p < 12; p++) {
+        let dot = document.createElement('div')
+        let size = 2 + Math.random() * 4
+        let color = colors[Math.floor(Math.random() * colors.length)]
+        if (t && !t.done) color = '#ff453a'
+        dot.className = 'todo-particle'
+        dot.style.cssText = 'position:fixed;width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:' + color + ';pointer-events:none;z-index:99999;left:' + (e.clientX - size/2) + 'px;top:' + (e.clientY - size/2) + 'px;box-shadow:0 0 ' + (size * 2) + 'px ' + color
+        document.body.appendChild(dot)
+        let angle = Math.random() * 360
+        let dist = 20 + Math.random() * 30
+        let dx = Math.cos(angle * Math.PI / 180) * dist
+        let dy = Math.sin(angle * Math.PI / 180) * dist
+        dot.style.transition = 'transform 0.45s cubic-bezier(0,.8,.5,1), opacity 0.45s ease'
+        requestAnimationFrame(function() {
+          dot.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(0)'
+          dot.style.opacity = '0'
+        })
+        setTimeout(function() { if (dot.parentNode) dot.parentNode.removeChild(dot) }, 500)
+      }
+    })
+  })
+  el.querySelectorAll('.todo-text').forEach(function(span) {
+    span.addEventListener('blur', function() {
+      var notes = getNotes()
+      var n = notes.find(function(x) { return x.id === currentNoteId })
+      if (!n || !n.todos) return
+      var t = n.todos.find(function(x) { return x.id === this.dataset.todoId }.bind(this))
+      if (t) { t.text = this.textContent.trim(); saveNotes(notes); renderSidebar() }
+    })
+    span.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); this.blur() }
+    })
+  })
+  document.getElementById('todoAddBtn')?.addEventListener('click', function() { addTodo() })
+  loadIcons(el)
+}
+
+function addTodo() {
+  if (!currentNoteId) return
+  var notes = getNotes()
+  var n = notes.find(function(x) { return x.id === currentNoteId })
+  if (!n) return
+  n.todos = n.todos || []
+  n.todos.push({ id: '_td_' + Date.now(), text: '', done: false })
+  n.updated = Date.now()
+  saveNotes(notes)
+  renderNoteTodos()
+  renderSidebar()
+  var lastText = document.querySelector('#noteViewTodos .todo-text:last-of-type')
+  if (lastText) { lastText.focus() }
+}
+
+document.getElementById('noteTodoBtn')?.addEventListener('click', function() { addTodo() })
+
+// Override openNote to also render todos
+var _origOpenNote = window.openNote || openNote
+openNote = function(id) {
+  if (_origOpenNote) _origOpenNote(id)
+  renderNoteTodos()
+}
+
+function escapeHtml(str) {
+  if (!str) return ''
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}

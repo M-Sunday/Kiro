@@ -7,9 +7,10 @@ function renderGridView() {
   const videos = getVideos()
   const pins = getPins()
   for (const [name, ids] of Object.entries(folders)) {
-    if (!ids.length) continue
+    const hasNotes = getNotes().filter(n => n.folder === name).length
+    if (!ids.length && !hasNotes) continue
     const color = meta[name]?.color || ''
-    const hasContents = ids.length || getNotes().filter(n => n.folder === name).length
+    const hasContents = ids.length || hasNotes
     html += `<div class="grid-section"><div class="grid-section-header"${color ? ` style="color:${color}"` : ''}><i data-lucide="${hasContents ? 'folder-fill' : 'folder'}" style="width:16px;height:16px;flex-shrink:0"></i> ${name}</div><div class="grid-items">`
     for (const id of ids) {
       const v = videos[id]
@@ -21,7 +22,10 @@ function renderGridView() {
     }
     for (const n of getNotes().filter(x => x.folder === name)) {
       const preview = stripHtml(n.content || '').replace(/\n/g, ' ').substring(0, 80)
-      html += `<div class="grid-item note" data-note-id="${n.id}"><button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button><div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;aspect-ratio:auto;height:60px"><i data-lucide="file-text" style="width:24px;height:24px;color:#8e8e93"></i></div><div class="grid-item-info"><div class="grid-item-title">${n.title || 'Untitled'}</div><div class="grid-item-sublabel">${preview}${stripHtml(n.content || '').length > 80 ? '…' : ''}</div></div></div>`
+      const hasTodos = n.todos && n.todos.length
+      var noteIcon = hasTodos ? 'list-todo' : 'file-text'
+      var todoHtml = renderNoteTodoPreview(n)
+      html += `<div class="grid-item note" data-note-id="${n.id}"><button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button><div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;aspect-ratio:auto;height:60px"><i data-lucide="${noteIcon}" style="width:24px;height:24px;color:#8e8e93"></i></div><div class="grid-item-info"><div class="grid-item-title">${n.title || 'Untitled'}</div><div class="grid-item-sublabel">${preview}${stripHtml(n.content || '').length > 80 ? '…' : ''}</div>${todoHtml}</div></div>`
     }
     html += '</div></div>'
   }
@@ -39,7 +43,10 @@ function renderGridView() {
     html += `<div class="grid-section"><div class="grid-section-header"><i data-lucide="file-text-fill" style="width:16px;height:16px;flex-shrink:0"></i> Notes</div><div class="grid-items">`
     for (const n of notes) {
       const preview = stripHtml(n.content || '').replace(/\n/g, ' ').substring(0, 80)
-      html += `<div class="grid-item note" data-note-id="${n.id}"><button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button><div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;aspect-ratio:auto;height:60px"><i data-lucide="file-text" style="width:24px;height:24px;color:#8e8e93"></i></div><div class="grid-item-info"><div class="grid-item-title">${n.title || 'Untitled'}</div><div class="grid-item-sublabel">${preview}${stripHtml(n.content || '').length > 80 ? '…' : ''}</div></div></div>`
+      const hasTodos = n.todos && n.todos.length
+      var noteIcon = hasTodos ? 'list-todo' : 'file-text'
+      var todoHtml = renderNoteTodoPreview(n)
+      html += `<div class="grid-item note" data-note-id="${n.id}"><button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button><div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;aspect-ratio:auto;height:60px"><i data-lucide="${noteIcon}" style="width:24px;height:24px;color:#8e8e93"></i></div><div class="grid-item-info"><div class="grid-item-title">${n.title || 'Untitled'}</div><div class="grid-item-sublabel">${preview}${stripHtml(n.content || '').length > 80 ? '…' : ''}</div>${todoHtml}</div></div>`
     }
     html += '</div></div>'
   }
@@ -52,7 +59,14 @@ function renderGridView() {
     }
     html += '</div></div>'
   }
-  el.innerHTML = html || function(){ var n = getUserName(); return '<div class="grid-empty"><div class="grid-empty-text">' + (n ? n + "'s Workbench" : 'Nothing to show yet') + '</div></div>' }()
+  var n = getUserName()
+  el.innerHTML = '<div class="grid-workbench"><div class="grid-workbench-text">' + (n ? n + "'s Workbench" : 'Nothing to show yet') + '</div></div>' + html
+  if (!window.__gridAnimDone) {
+    el.querySelectorAll('.grid-section').forEach(function(s) { s.classList.add('grid-section-anim') })
+    el.querySelectorAll('.grid-item').forEach(function(s) { s.classList.add('grid-item-anim') })
+    var wb = el.querySelector('.grid-workbench')
+    if (wb) wb.classList.add('grid-section-anim')
+  }
   loadIcons()
   el.querySelectorAll('[data-video-id]').forEach(item => {
     item.addEventListener('click', () => {
@@ -270,7 +284,67 @@ function renderGridView() {
     else { selectedGridItems.add(id); item.classList.add('selected') }
     updateBatchBar()
   })
+  // ─── Drop on section headers ─────────────────────
+  el.querySelectorAll('.grid-section-header').forEach(function(header) {
+    header.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('drop-zone') })
+    header.addEventListener('dragleave', function() { this.classList.remove('drop-zone') })
+    header.addEventListener('drop', function(e) {
+      e.preventDefault(); this.classList.remove('drop-zone')
+      var id = e.dataTransfer.getData('text/plain')
+      var type = e.dataTransfer.getData('type')
+      if (!id) return
+      var text = this.textContent.trim()
+      var folders = getFolders()
+      if (folders[text] !== undefined) {
+        if (type === 'video') {
+          for (var ids of Object.values(folders)) { var idx = ids.indexOf(id); if (idx > -1) ids.splice(idx, 1) }
+          if (!folders[text].includes(id)) folders[text].push(id)
+          saveFolders(folders); renderGridView(); renderSidebar()
+        } else if (type === 'note') {
+          var notes = getNotes(); var note = notes.find(function(n) { return n.id === id })
+          if (note) { note.folder = text; saveNotes(notes); renderGridView(); renderSidebar() }
+        }
+      } else if (text === 'Notes') {
+        if (type === 'note') {
+          var notes = getNotes(); var note = notes.find(function(n) { return n.id === id })
+          if (note) { note.folder = ''; saveNotes(notes); renderGridView(); renderSidebar() }
+        }
+      }
+    })
+  })
   updateBatchBar()
+}
+
+// ─── Cascade animation trigger ─────────────────────────
+window.startGridAnim = function() {
+  var el = document.getElementById('gridView')
+  if (!el) return
+  var sections = el.querySelectorAll('.grid-section-anim')
+  Array.from(sections).forEach(function(section, i) {
+    setTimeout(function() {
+      section.classList.add('visible')
+      var items = section.querySelectorAll('.grid-item-anim')
+      Array.from(items).forEach(function(item, j) {
+        setTimeout(function() { item.classList.add('visible') }, j * 60 + 120)
+      })
+    }, i * 220)
+  })
+  window.__gridAnimDone = true
+}
+
+// ─── Note todo preview for grid ─────────────────────────
+function renderNoteTodoPreview(n) {
+  if (!n || !n.todos || !n.todos.length) return ''
+  var html = '<div class="grid-item-todos">'
+  var shown = 0
+  n.todos.forEach(function(t) {
+    if (shown >= 3) return
+    html += '<div class="grid-item-todo"><span class="todo-check' + (t.done ? ' done' : '') + '"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span><span class="todo-text' + (t.done ? ' done' : '') + '">' + (t.text || '') + '</span></div>'
+    shown++
+  })
+  if (n.todos.length > 3) html += '<div style="font-size:9px;color:#8e8e93;padding-top:2px">+' + (n.todos.length - 3) + ' more</div>'
+  html += '</div>'
+  return html
 }
 
 // ─── Grid toggle ──────────────────────────────────────

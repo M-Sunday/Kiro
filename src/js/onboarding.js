@@ -4,7 +4,6 @@
 
   var splash = document.getElementById('splash')
   var splashIcon = document.getElementById('splashIcon')
-  var splashTitle = document.getElementById('splashTitle')
   var splashText = document.getElementById('splashText')
   var step0 = document.getElementById('onbStep0')
   var onboarding = document.getElementById('onboarding')
@@ -28,8 +27,6 @@
     welcomeText.classList.add('onb-fade-out')
     next0.classList.remove('onb-visible')
     next0.classList.add('onb-fade-out')
-    splashTitle.classList.add('onb-title-out')
-
     splashText.textContent = 'Getting set up'
     splashText.style.display = 'block'
     splashText.style.opacity = '1'

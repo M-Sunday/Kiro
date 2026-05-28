@@ -133,6 +133,7 @@
             <div class="note-view-header">
                 <input class="note-view-title" id="noteViewTitle" placeholder="Note title" spellcheck="false" />
                 <div class="note-view-actions">
+                    <button class="note-view-btn" id="noteTodoBtn" title="Add todo"><i data-lucide="list-checks" style="width:16px;height:16px"></i></button>
                     <button class="note-view-btn" id="noteUndoBtn"><i data-lucide="undo-2" style="width:16px;height:16px"></i></button>
                     <button class="note-view-btn" id="noteRedoBtn"><i data-lucide="redo-2" style="width:16px;height:16px"></i></button>
                     <button class="note-view-btn" id="noteDeleteBtn"><i data-lucide="trash-2" style="width:16px;height:16px;color:#ff453a"></i></button>
@@ -140,6 +141,7 @@
                 </div>
             </div>
             <div class="note-view-content" id="noteViewContent" contenteditable="true" spellcheck="false"></div>
+            <div class="note-view-todos" id="noteViewTodos"></div>
             <div class="note-view-footer" id="noteViewFooter"></div>
         </div>
         </div>
@@ -230,7 +232,8 @@
             <div class="settings-sidebar">
                 <div class="settings-sidebar-header">Settings</div>
                 <div class="settings-categories">
-                    <div class="settings-cat active" data-cat="theme"><i data-lucide="eye" style="width:16px;height:16px;flex-shrink:0"></i> Theme</div>
+                    <div class="settings-cat active" data-cat="user"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> About User</div>
+                    <div class="settings-cat" data-cat="theme"><i data-lucide="eye" style="width:16px;height:16px;flex-shrink:0"></i> Theme</div>
                     <div class="settings-cat" data-cat="basic"><i data-lucide="file-text" style="width:16px;height:16px;flex-shrink:0"></i> Basic info</div>
                     <div class="settings-cat" data-cat="toolbar"><i data-lucide="edit-3" style="width:16px;height:16px;flex-shrink:0"></i> Toolbar</div>
                     <div class="settings-cat" data-cat="files"><i data-lucide="folder" style="width:16px;height:16px;flex-shrink:0"></i> Files and links</div>
@@ -244,7 +247,30 @@
                 </div>
             </div>
             <div class="settings-content" id="settingsContent">
-                <div class="settings-pane" id="pane-theme">
+                <div class="settings-pane" id="pane-user">
+                    <div class="settings-pane-header"><h2>About User</h2><p class="settings-pane-desc">Your account information.</p></div>
+                    <div class="settings-field-row" style="margin-top:16px">
+                        <label class="settings-field-label">Name</label>
+                        <div class="settings-user-edit-wrap">
+                            <p class="settings-user-value" id="settingsUserNameDisplay">—</p>
+                            <button class="settings-user-edit-btn" id="settingsUserNameEditBtn"><i data-lucide="edit-3" style="width:14px;height:14px"></i></button>
+                            <input type="text" class="settings-user-edit-input" id="settingsUserNameEditInput" placeholder="Enter your name" maxlength="30" style="display:none" />
+                        </div>
+                    </div>
+                    <div class="settings-field-row" style="margin-top:12px">
+                        <label class="settings-field-label">Version</label>
+                        <p class="settings-user-value" id="appVersionLabel">1.5.1</p>
+                    </div>
+                    <div class="settings-field-row" style="margin-top:12px">
+                        <label class="settings-field-label">Device</label>
+                        <p class="settings-user-value" id="settingsDeviceName">—</p>
+                    </div>
+                    <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e8e8ed">
+                        <button class="settings-danger-btn" id="settingsResetBtn">Reset Account</button>
+                        <p style="font-size:11px;color:#8e8e93;margin-top:6px">This will permanently delete all your data and settings.</p>
+                    </div>
+                </div>
+                <div class="settings-pane" id="pane-theme" style="display:none">
                     <div class="settings-pane-header"><h2>Theme</h2><p class="settings-pane-desc">Choose your preferred appearance.</p></div>
                     <div class="theme-options">
                         <div class="theme-option" data-theme="white"><div class="theme-preview theme-white"></div><span>White</span></div>
@@ -375,13 +401,27 @@
         </div>
     </div>
 
+    <!-- Reset warning dialog -->
+    <div class="update-overlay" id="resetOverlay">
+        <div class="update-modal" style="max-width:400px">
+            <div class="update-modal-header">
+                <h2>Reset Account</h2>
+            </div>
+            <div class="update-modal-body">
+                <p style="font-size:14px;line-height:1.5;color:#3a3a3c">This will permanently delete <strong>all your data</strong> including videos, bookmarks, notes, settings, and user name. Your browser cookies (YouTube login, etc.) will also be cleared within this app.</p>
+                <p style="font-size:14px;line-height:1.5;color:#8e8e93;margin-top:12px">This action cannot be undone.</p>
+                <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+                    <button class="dialog-btn cancel" id="resetCancel">Cancel</button>
+                    <button class="dialog-btn confirm" id="resetConfirm" style="background:#ff453a;border-color:#ff453a">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Splash screen -->
     <div id="splash">
         <div class="splash-content">
-            <div class="splash-row" id="splashRow">
-                <img id="splashIcon" src="assets/icons/app-icon-splash.svg" width="94" height="94" alt="YouTube Vault" />
-                <span class="splash-title" id="splashTitle">Vault</span>
-            </div>
+            <img id="splashIcon" src="assets/icons/app-icon-splash.svg" width="94" height="94" alt="YouTube Vault" />
             <p id="splashText">Checking for updates...</p>
 
             <!-- Step 0 (first-time user) inside splash -->
@@ -411,17 +451,6 @@
         </div>
     </div>
 
-    <!-- Welcome back (returning user after splash) -->
-    <div id="welcomeBack" style="display:none">
-        <div class="splash-content">
-            <div class="splash-row">
-                <img src="assets/icons/app-icon-splash.svg" width="72" height="72" alt="" />
-            </div>
-            <p class="wb-text" id="wbText">Welcome back</p>
-            <button class="wb-btn" id="wbBtn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
-        </div>
-    </div>
-
     <script>
     ;(function(){
       var splash = document.getElementById('splash')
@@ -446,23 +475,23 @@
         splashText.style.display = 'none'
         document.getElementById('onbStep0').style.display = ''
       } else {
+        if (navigator.onLine) {
+          setTimeout(function(){ splashText.textContent = 'Up to date' }, 2000)
+          setTimeout(function(){ splashText.textContent = 'Welcome, ' + localStorage.getItem('ytUserName') }, 3400)
+        }
         function fadeOut() {
           if (faded) return; faded = true
+          if (window.startGridAnim) window.startGridAnim()
           splash.classList.add('fade')
           setTimeout(function(){
             splash.style.display = 'none'
-            var wb = document.getElementById('welcomeBack')
-            if (wb) {
-              document.getElementById('wbText').textContent = 'Welcome back, ' + localStorage.getItem('ytUserName')
-              wb.style.display = 'flex'
-              setTimeout(function(){ document.getElementById('wbText').classList.add('wb-visible'); setTimeout(function(){ document.getElementById('wbBtn').classList.add('wb-visible') }, 400) }, 200)
-            }
           }, 500)
         }
-        setTimeout(fadeOut, navigator.onLine ? 3000 : 2000)
+        setTimeout(fadeOut, navigator.onLine ? 4600 : 2000)
       }
       window.__splashFade = function() {
         if (faded) return; faded = true
+        if (window.startGridAnim) window.startGridAnim()
         splash.classList.add('fade')
         setTimeout(function(){ splash.style.display = 'none' }, 500)
       }

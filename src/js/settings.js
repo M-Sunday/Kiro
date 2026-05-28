@@ -12,7 +12,7 @@ document.querySelectorAll('.settings-cat').forEach(cat => {
     document.querySelectorAll('.settings-cat').forEach(c => c.classList.remove('active'))
     this.classList.add('active')
     document.querySelectorAll('.settings-pane').forEach(p => p.style.display = 'none')
-    document.getElementById({ theme: 'pane-theme', basic: 'pane-basic', toolbar: 'pane-toolbar', files: 'pane-files', history: 'pane-history', nsfw: 'pane-nsfw', download: 'pane-download', patchnotes: 'pane-patchnotes' }[this.dataset.cat]).style.display = 'block'
+    document.getElementById({ user: 'pane-user', theme: 'pane-theme', basic: 'pane-basic', toolbar: 'pane-toolbar', files: 'pane-files', history: 'pane-history', nsfw: 'pane-nsfw', download: 'pane-download', patchnotes: 'pane-patchnotes' }[this.dataset.cat]).style.display = 'block'
     if (this.dataset.cat === 'patchnotes') loadPatchNotes()
     if (this.dataset.cat === 'history') renderSettingsHistory()
   })
@@ -179,3 +179,77 @@ applyToolbarSettings()
 
 function loadHistory() { try { return JSON.parse(localStorage.getItem('linkHistory') || '[]') } catch { return [] } }
 function saveHistory(h) { safeSetItem('linkHistory', JSON.stringify(h)) }
+
+// ─── About User pane ───────────────────────────────────
+var userDisplay = document.getElementById('settingsUserNameDisplay')
+if (userDisplay) userDisplay.textContent = getUserName() || '—'
+
+var deviceEl = document.getElementById('settingsDeviceName')
+if (deviceEl) {
+  var ua = navigator.userAgent
+  if (/Windows/.test(ua)) deviceEl.textContent = 'Windows'
+  else if (/Mac/.test(ua)) deviceEl.textContent = 'macOS'
+  else if (/Android/.test(ua)) deviceEl.textContent = 'Android'
+  else if (/iPhone|iPad/.test(ua)) deviceEl.textContent = 'iOS'
+  else deviceEl.textContent = 'Unknown'
+}
+
+// ─── Edit username ─────────────────────────────────────
+var editBtn = document.getElementById('settingsUserNameEditBtn')
+var editInput = document.getElementById('settingsUserNameEditInput')
+if (editBtn && editInput && userDisplay) {
+  editBtn.addEventListener('click', function() {
+    userDisplay.style.display = 'none'
+    editBtn.style.display = 'none'
+    editInput.value = getUserName()
+    editInput.style.display = ''
+    editInput.focus()
+    editInput.select()
+  })
+  function saveUserName() {
+    var val = editInput.value.trim()
+    if (!val) return
+    safeSetItem('ytUserName', val)
+    userDisplay.textContent = val
+    userDisplay.style.display = ''
+    editBtn.style.display = ''
+    editInput.style.display = 'none'
+    showRenameSplash(val)
+  }
+  editInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') saveUserName() })
+  editInput.addEventListener('blur', saveUserName)
+}
+
+function showRenameSplash(name) {
+  var splash = document.getElementById('splash')
+  var splashText = document.getElementById('splashText')
+  if (!splash || !splashText) return
+  splash.style.display = 'flex'
+  splash.classList.remove('fade', 'offline', 'onboarding')
+  splashText.style.display = 'block'
+  splashText.textContent = 'Checking for updates...'
+  var icon = splash.querySelector('.splash-content img')
+  if (icon) { icon.style.filter = 'none'; icon.style.opacity = '1' }
+  setTimeout(function() { splashText.textContent = 'Up to date' }, 1200)
+  setTimeout(function() { splashText.textContent = 'Welcome, ' + name }, 2600)
+  setTimeout(function() {
+    splash.classList.add('fade')
+    setTimeout(function() { splash.style.display = 'none' }, 500)
+  }, 3800)
+}
+
+// ─── Reset account ────────────────────────────────────
+document.getElementById('settingsResetBtn')?.addEventListener('click', function() {
+  document.getElementById('resetOverlay').classList.add('open')
+})
+document.getElementById('resetCancel')?.addEventListener('click', function() {
+  document.getElementById('resetOverlay').classList.remove('open')
+})
+document.getElementById('resetConfirm')?.addEventListener('click', function() {
+  document.getElementById('resetOverlay').classList.remove('open')
+  localStorage.clear()
+  location.reload()
+})
+document.getElementById('resetOverlay')?.addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open')
+})

@@ -8,7 +8,7 @@
   "plugins": {
     "StatusBar": {
       "style": "DARK",
-      "backgroundColor": "#1c1c1e"
+      "backgroundColor": "#ffffff"
     }
   }
 }

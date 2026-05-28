@@ -356,6 +356,96 @@ document.getElementById('updateCloseBtn').addEventListener('click', () => {
   document.getElementById('updateOverlay').classList.remove('open')
 })
 
+// ─── Debug: 5-tap on version label to unlock debug pane ─
+;(function(){
+  var verEl = document.getElementById('appVersionLabel')
+  if (!verEl) return
+  var taps = [], tapTimer
+  verEl.addEventListener('click', function() {
+    var now = Date.now()
+    taps.push(now)
+    if (tapTimer) clearTimeout(tapTimer)
+    tapTimer = setTimeout(function() {
+      if (taps.length >= 5) {
+        taps = []
+        var pane = document.getElementById('pane-debug')
+        var cat = document.querySelector('.settings-cat[data-cat="debug"]')
+        if (pane && cat) {
+          if (pane.style.display !== 'none') { pane.style.display = 'none'; cat.remove() }
+          else document.querySelector('.settings-cat[data-cat="user"]').click()
+        } else {
+          showDebugUnlocked()
+        }
+      }
+      taps = []
+    }, 800)
+  })
+  function showDebugUnlocked() {
+    var sidebar = document.querySelector('.settings-categories')
+    if (!sidebar) return
+    var cat = document.createElement('div')
+    cat.className = 'settings-cat'
+    cat.dataset.cat = 'debug'
+    cat.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> Debug'
+    sidebar.appendChild(cat)
+    var content = document.getElementById('settingsContent')
+    var pane = document.createElement('div')
+    pane.className = 'settings-pane'
+    pane.id = 'pane-debug'
+    pane.style.display = 'none'
+    pane.innerHTML =
+      '<div class="settings-pane-header"><h2>Debug</h2><p class="settings-pane-desc">Inspect the app\'s inner workings.</p></div>' +
+      '<div class="settings-plugin-list" style="margin-top:20px">' +
+        '<div class="settings-plugin"><span class="settings-plugin-name">Inspect mode (hover)</span><div class="settings-toggle" id="debugInspectToggle"></div></div>' +
+        '<div class="settings-plugin"><span class="settings-plugin-name">Hierarchy mode</span><div class="settings-toggle" id="debugHierarchyToggle"></div></div>' +
+      '</div>' +
+      '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border-color,#e8e8ed)">' +
+        '<button class="settings-danger-btn" id="debugNotchBtn" style="margin-bottom:10px">Show notch area</button>' +
+        '<div style="font-size:11px;color:#8e8e93;line-height:1.5" id="debugInfo"></div>' +
+      '</div>'
+    content.appendChild(pane)
+    cat.addEventListener('click', function() {
+      document.querySelectorAll('.settings-cat').forEach(function(c){ return c.classList.remove('active') })
+      cat.classList.add('active')
+      document.querySelectorAll('.settings-pane').forEach(function(p){ return p.style.display = 'none' })
+      pane.style.display = 'block'
+      updateDebugInfo()
+    })
+    document.getElementById('debugInspectToggle')?.addEventListener('click', function() {
+      this.classList.toggle('on')
+      if (this.classList.contains('on')) toggleDebug(); else toggleDebug()
+    })
+    document.getElementById('debugHierarchyToggle')?.addEventListener('click', function() {
+      this.classList.toggle('on')
+      if (this.classList.contains('on')) toggleDebugHierarchy(); else toggleDebugHierarchy()
+    })
+    document.getElementById('debugNotchBtn')?.addEventListener('click', function() {
+      var nd = document.createElement('div')
+      nd.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#ff453a;color:#fff;font:12px monospace;text-align:center;padding:4px;pointer-events:none;opacity:0.85'
+      var safeTop = getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)').trim() || '0px'
+      nd.textContent = 'NOTCH AREA  |  viewport: ' + window.innerWidth + '\u00d7' + window.innerHeight + '  |  safe-top: ' + safeTop
+      document.body.appendChild(nd)
+      var nd2 = document.createElement('div')
+      nd2.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999998;background:rgba(255,69,58,0.12);pointer-events:none;height:' + Math.max(window.innerHeight * 0.08, 40) + 'px'
+      document.body.appendChild(nd2)
+      setTimeout(function(){ nd.remove(); nd2.remove() }, 5000)
+    })
+    document.querySelector('.settings-cat[data-cat="debug"]').click()
+  }
+  function updateDebugInfo() {
+    var el = document.getElementById('debugInfo')
+    if (!el) return
+    var isCap = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())
+    el.innerHTML =
+      'Viewport: ' + window.innerWidth + '\u00d7' + window.innerHeight + '<br>' +
+      'Safe area top: ' + (getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)').trim() || '0px') + '<br>' +
+      'Platform: ' + (isCap ? 'Capacitor' : navigator.standalone ? 'PWA' : 'Browser') + '<br>' +
+      'Online: ' + (navigator.onLine ? 'Yes' : 'No') + '<br>' +
+      'Theme: ' + (document.body.className.match(/theme-(\w+)/)?.[1] || 'default')
+  }
+  setInterval(updateDebugInfo, 2000)
+})()
+
 // ─── Online status indicator ──────────────────────────
 ;(function(){
   const ind = document.getElementById('onlineIndicator')

@@ -105,5 +105,4 @@ document.getElementById('imageWrap').addEventListener('click', () => {
   if (currentVideo?.url) window.open(currentVideo.url)
 })
 
-document.getElementById('addBtn').addEventListener('click', addCurrentVideo)
 document.getElementById('cardAddBtn').addEventListener('click', addCurrentVideo)

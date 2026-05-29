@@ -1,6 +1,6 @@
-# YouTube Vault
+# Vault
 
-A local-first desktop + PWA app for saving, organizing, and downloading YouTube videos, bookmarks, notes, and direct-access links. All data stays in your browser — no servers, no login.
+A creative operating system for chaotic minds. A local-first desktop + PWA app for capturing ideas, organizing thoughts, tracking goals, and exploring connections. Save YouTube videos, bookmarks, notes, and direct-access links alongside your creative universe. All data stays in your browser — no servers, no login.
 
 Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android, and iOS.
 

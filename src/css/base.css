@@ -75,9 +75,7 @@
     margin: 36px 0 48px;
 }
 
-/* ─── EMPTY GRID STATE ──────────────────────────────── */
-.grid-workbench { padding: 16px 20px 8px; text-align: center; }
-.grid-workbench-text { font-size: 13px; font-weight: 600; color: #8e8e93; letter-spacing: -0.2px; }
+
 
 /* ─── GRID CASCADE ANIMATION ─────────────────────────── */
 .grid-section-anim {

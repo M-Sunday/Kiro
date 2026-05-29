@@ -213,10 +213,11 @@ function renderNoteTodos() {
         let dist = 20 + Math.random() * 30
         let dx = Math.cos(angle * Math.PI / 180) * dist
         let dy = Math.sin(angle * Math.PI / 180) * dist
-        dot.style.transition = 'transform 0.45s cubic-bezier(0,.8,.5,1), opacity 0.45s ease'
+        dot.style.transition = 'transform 0.45s cubic-bezier(0,.8,.5,1), opacity 0.45s ease, box-shadow 0.45s ease'
         requestAnimationFrame(function() {
           dot.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(0)'
           dot.style.opacity = '0'
+          dot.style.boxShadow = 'none'
         })
         setTimeout(function() { if (dot.parentNode) dot.parentNode.removeChild(dot) }, 500)
       }

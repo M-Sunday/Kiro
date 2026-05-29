@@ -1,4 +1,15 @@
 // ─── Grid view ─────────────────────────────────────────
+function updateGridClock() {
+  var c = document.querySelector('.grid-clock')
+  if (!c) return
+  var d = new Date()
+  var h = d.getHours(), m = d.getMinutes()
+  var ampm = h >= 12 ? 'PM' : 'AM'
+  if (h > 12) h -= 12
+  if (h === 0) h = 12
+  var mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]
+  c.textContent = h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm + ' — ' + mon + ' ' + d.getDate() + ', ' + d.getFullYear()
+}
 function renderGridView() {
   const el = document.getElementById('gridView')
   let html = ''
@@ -59,8 +70,42 @@ function renderGridView() {
     }
     html += '</div></div>'
   }
+
+  // ─── Challenges section ───────────────────────────────
+  const vaultChallenges = getVaultChallenges()
+  const activeChallenges = vaultChallenges.filter(function(c) { return c.progress < c.target })
+  if (activeChallenges.length) {
+    html += '<div class="grid-section"><div class="grid-section-header"><i data-lucide="sparkles" style="width:16px;height:16px;flex-shrink:0"></i> Active Challenges</div><div class="grid-items">'
+    for (var ci = 0; ci < activeChallenges.length; ci++) {
+      var c = activeChallenges[ci]
+      var pct = Math.min(100, (c.progress / Math.max(c.target, 1)) * 100)
+      var todosHtml = ''
+      if (c.todos && c.todos.length) {
+        todosHtml = '<div class="grid-item-todos" style="margin-top:6px">'
+        for (var tgi = 0; tgi < c.todos.length; tgi++) {
+          var t = c.todos[tgi]
+          todosHtml += '<div class="grid-item-todo challenge-todo-item" data-challenge-id="' + c.id + '" data-todo-idx="' + tgi + '" style="cursor:pointer"><span class="todo-check' + (t.done ? ' done' : '') + '"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span><span class="todo-text' + (t.done ? ' done' : '') + '">' + escapeHtml(t.text || '') + '</span></div>'
+        }
+        todosHtml += '</div>'
+      }
+      html += '<div class="grid-item challenge" data-challenge-id="' + c.id + '"><div class="grid-item-info" style="padding:10px;width:100%;box-sizing:border-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span class="grid-item-title" style="font-size:13px">' + escapeHtml(c.name) + '</span></div>' + (c.desc ? '<div class="grid-item-sublabel" style="margin-bottom:6px">' + escapeHtml(c.desc) + '</div>' : '') + renderProgressBar(c.progress, c.target, c.progress + '/' + c.target + ' ' + c.unit) + todosHtml + '</div></div>'
+    }
+    html += '</div></div>'
+  }
+
+  // ─── Goals section ────────────────────────────────────
+  const vaultGoals = getVaultGoals()
+  const activeGoals = vaultGoals.filter(function(g) { return g.progress < g.target })
+  if (activeGoals.length) {
+    html += '<div class="grid-section"><div class="grid-section-header"><i data-lucide="rocket" style="width:16px;height:16px;flex-shrink:0"></i> Goals</div><div class="grid-items">'
+    for (var gi = 0; gi < activeGoals.length; gi++) {
+      var g = activeGoals[gi]
+      html += '<div class="grid-item goal" data-goal-id="' + g.id + '"><div class="grid-item-info" style="padding:10px;width:100%;box-sizing:border-box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span class="grid-item-title" style="font-size:13px">' + escapeHtml(g.name) + '</span></div>' + (g.desc ? '<div class="grid-item-sublabel" style="margin-bottom:6px">' + escapeHtml(g.desc) + '</div>' : '') + renderProgressBar(g.progress, g.target, g.progress + '/' + g.target + ' per week') + '</div></div>'
+    }
+    html += '</div></div>'
+  }
   var n = getUserName()
-  el.innerHTML = '<div class="grid-workbench"><div class="grid-workbench-text">' + (n ? n + "'s Workbench" : 'Nothing to show yet') + '</div></div>' + html
+  el.innerHTML = '<div class="grid-workbench"><div class="grid-workbench-text">' + (n ? n + "'s Workbench" : '') + '</div><div class="grid-clock"></div><div class="grid-workbench-actions"><button class="wb-btn" data-action="challenge" title="New Challenge"><i data-lucide="sparkles" style="width:15px;height:15px"></i> New Challenge</button><button class="wb-btn" data-action="goal" title="New Goal"><i data-lucide="rocket" style="width:15px;height:15px"></i> New Goal</button><button class="wb-btn wb-btn-planet" data-action="planet" title="Planet View"><i data-lucide="orbit" style="width:15px;height:15px"></i> Planet View</button></div></div>' + html
   if (!window.__gridAnimDone) {
     el.querySelectorAll('.grid-section').forEach(function(s) { s.classList.add('grid-section-anim') })
     el.querySelectorAll('.grid-item').forEach(function(s) { s.classList.add('grid-item-anim') })
@@ -68,6 +113,8 @@ function renderGridView() {
     if (wb) wb.classList.add('grid-section-anim')
   }
   loadIcons()
+  updateGridClock()
+  if (!window.__gridClockInterval) window.__gridClockInterval = setInterval(updateGridClock, 30000)
   el.querySelectorAll('[data-video-id]').forEach(item => {
     item.addEventListener('click', () => {
       const id = item.dataset.videoId
@@ -312,6 +359,34 @@ function renderGridView() {
       }
     })
   })
+  // ─── Challenge todo toggle clicks ─────────────
+  el.querySelectorAll('.challenge-todo-item').forEach(function(item) {
+    item.addEventListener('click', function(e) {
+      e.stopPropagation()
+      var cid = this.dataset.challengeId
+      var idx = parseInt(this.dataset.todoIdx)
+      if (!cid || isNaN(idx)) return
+      var challenges = getVaultChallenges()
+      var c = challenges.find(function(x) { return x.id === cid })
+      if (!c || !c.todos || !c.todos[idx]) return
+      c.todos[idx].done = !c.todos[idx].done
+      c.progress = c.todos.filter(function(t) { return t.done }).length
+      if (c.progress >= c.target) c.progress = c.target
+      saveVaultChallenges(challenges)
+      var rect = this.getBoundingClientRect()
+      var fakeEvent = { clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 }
+      todoBurst(fakeEvent)
+      checkAchievements()
+      renderGridView()
+    })
+  })
+  el.querySelectorAll('.grid-item.challenge').forEach(function(item) {
+    item.addEventListener('click', function(e) {
+      if (e.target.closest('.challenge-todo-item')) return
+      var cid = this.dataset.challengeId
+      if (cid) openChallengeEditDialog(cid)
+    })
+  })
   updateBatchBar()
 }
 
@@ -401,4 +476,327 @@ document.getElementById('batchMove')?.addEventListener('click', () => {
     })
   })
   loadIcons(dd); dd.style.display = 'block'
+})
+
+// ─── Workbench Actions ────────────────────────────────
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.wb-btn')
+  if (!btn) return
+  var action = btn.dataset.action
+  if (action === 'challenge') openChallengeDialog()
+  else if (action === 'achievement') openAchievementDialog()
+  else if (action === 'goal') openGoalDialog()
+})
+
+// ─── Challenge Dialog ────────────────────────────────
+var _challengeTodoIdx = 0
+
+function renderChallengeTodoList(containerId, todos, showChecks) {
+  var el = document.getElementById(containerId)
+  if (!el) return []
+  var items = todos || []
+  function render() {
+    var html = ''
+    if (showChecks) {
+      for (var i = 0; i < items.length; i++) {
+        var t = items[i]
+        var checked = t.done ? ' checked' : ''
+        var doneCls = t.done ? ' done' : ''
+        html += '<div class="todo-row" data-idx="' + i + '">' +
+          '<span class="todo-cb' + checked + '" data-idx="' + i + '">' +
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="todo-cb-icon todo-cb-check"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>' +
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="todo-cb-icon todo-cb-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>' +
+          '</span>' +
+          '<span class="todo-text' + doneCls + '" contenteditable="true" data-idx="' + i + '" spellcheck="false">' + escapeHtml(t.text || '') + '</span>' +
+          '<button class="challenge-todo-rm" data-idx="' + i + '" style="background:none;border:none;color:#ff453a;cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0">×</button>' +
+        '</div>'
+      }
+    } else {
+      for (var i = 0; i < items.length; i++) {
+        html += '<div class="challenge-todo-row" data-idx="' + i + '" style="display:flex;align-items:center;gap:6px;margin-top:4px">' +
+          '<input type="text" class="challenge-todo-input" value="' + escapeHtml(items[i].text || '') + '" placeholder="Goal..." spellcheck="false" style="flex:1;padding:5px 8px;border:1px solid #d2d2d7;border-radius:6px;font-size:12px;font-family:inherit;outline:none;background:#f5f5f7;color:#1d1d1f" />' +
+          '<button class="challenge-todo-rm" data-idx="' + i + '" style="background:none;border:none;color:#ff453a;cursor:pointer;font-size:16px;line-height:1;padding:0 2px">×</button></div>'
+      }
+    }
+    el.innerHTML = html
+    el.querySelectorAll('.challenge-todo-rm').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var idx = parseInt(this.dataset.idx)
+        items.splice(idx, 1)
+        render()
+      })
+    })
+    if (showChecks) {
+      el.querySelectorAll('.todo-cb').forEach(function(cb) {
+        cb.addEventListener('click', function() {
+          var idx = parseInt(this.dataset.idx)
+          items[idx].done = !items[idx].done
+          render()
+        })
+      })
+      el.querySelectorAll('.todo-text[contenteditable]').forEach(function(span) {
+        span.addEventListener('blur', function() {
+          var idx = parseInt(this.dataset.idx)
+          items[idx].text = this.textContent
+        })
+        span.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') { e.preventDefault(); this.blur() }
+        })
+      })
+    } else {
+      el.querySelectorAll('.challenge-todo-input').forEach(function(inp, i) {
+        inp.addEventListener('input', function() { items[i].text = this.value })
+        inp.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') { e.preventDefault(); addItem() }
+        })
+      })
+    }
+  }
+  function addItem() {
+    items.push({ id: '_cht_' + Date.now() + '_' + (_challengeTodoIdx++), text: '', done: false })
+    render()
+    if (showChecks) {
+      var lastSpan = el.querySelector('.todo-row:last-child .todo-text')
+      if (lastSpan) setTimeout(function() { lastSpan.focus() }, 50)
+    } else {
+      var lastInput = el.querySelector('.challenge-todo-input:last-child')
+      if (lastInput) setTimeout(function() { lastInput.focus() }, 50)
+    }
+  }
+  render()
+  return { items: items, add: addItem }
+}
+
+function openChallengeDialog() {
+  document.getElementById('challengeNameInput').value = ''
+  document.getElementById('challengeDescInput').value = ''
+  document.getElementById('challengeDialog').classList.add('open')
+  if (window._challengeTodoCtx) { window._challengeTodoCtx = null }
+  var ctx = renderChallengeTodoList('challengeTodoList', [])
+  window._challengeTodoCtx = ctx
+  setTimeout(function() { document.getElementById('challengeNameInput').focus() }, 100)
+}
+
+document.getElementById('challengeAddTodoBtn')?.addEventListener('click', function() {
+  if (window._challengeTodoCtx) window._challengeTodoCtx.add()
+})
+document.getElementById('challengeDialogCancel')?.addEventListener('click', function() {
+  document.getElementById('challengeDialog').classList.remove('open')
+})
+document.getElementById('challengeDialogConfirm')?.addEventListener('click', function() {
+  var name = document.getElementById('challengeNameInput').value.trim()
+  if (!name) return
+  var todos = (window._challengeTodoCtx ? window._challengeTodoCtx.items : []).filter(function(t) { return t.text.trim() })
+  var challenges = getVaultChallenges()
+  challenges.push({
+    id: '_ch_' + Date.now(),
+    name: name,
+    desc: document.getElementById('challengeDescInput').value.trim(),
+    target: Math.max(todos.length, 1),
+    unit: 'goals',
+    progress: 0,
+    created: Date.now(),
+    todos: todos
+  })
+  saveVaultChallenges(challenges)
+  document.getElementById('challengeDialog').classList.remove('open')
+  checkAchievements()
+  var rect = (document.querySelector('.wb-btn[data-action="challenge"]') || document.body).getBoundingClientRect()
+  renderGridView()
+  var pv = document.getElementById('planetView')
+  if (pv && !pv.classList.contains('hidden')) renderPlanetView()
+  burstParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#30d158')
+})
+
+document.getElementById('challengeNameInput')?.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('challengeDialogConfirm').click()
+  if (e.key === 'Escape') document.getElementById('challengeDialog').classList.remove('open')
+})
+document.getElementById('challengeDialog')?.addEventListener('mousedown', function(e) {
+  if (e.target === this) this.classList.remove('open')
+})
+
+// ─── Goal Dialog ─────────────────────────────────────
+function openGoalDialog() {
+  document.getElementById('goalNameInput').value = ''
+  document.getElementById('goalDescInput').value = ''
+  document.getElementById('goalTargetInput').value = 5
+  document.getElementById('goalDialog').classList.add('open')
+  setTimeout(function() { document.getElementById('goalNameInput').focus() }, 100)
+}
+
+document.getElementById('goalDialogCancel')?.addEventListener('click', function() {
+  document.getElementById('goalDialog').classList.remove('open')
+})
+document.getElementById('goalDialogConfirm')?.addEventListener('click', function() {
+  var name = document.getElementById('goalNameInput').value.trim()
+  if (!name) return
+  var goals = getVaultGoals()
+  goals.push({
+    id: '_gl_' + Date.now(),
+    name: name,
+    desc: document.getElementById('goalDescInput').value.trim(),
+    target: parseInt(document.getElementById('goalTargetInput').value) || 5,
+    progress: 0,
+    created: Date.now()
+  })
+  saveVaultGoals(goals)
+  document.getElementById('goalDialog').classList.remove('open')
+  checkAchievements()
+  renderGridView()
+  burstParticles(window.innerWidth / 2, window.innerHeight / 2, '#ff9f0a')
+})
+
+document.getElementById('goalNameInput')?.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('goalDialogConfirm').click()
+  if (e.key === 'Escape') document.getElementById('goalDialog').classList.remove('open')
+})
+document.getElementById('goalDialog')?.addEventListener('mousedown', function(e) {
+  if (e.target === this) this.classList.remove('open')
+})
+
+// ─── Achievements Dialog ─────────────────────────────
+function openAchievementDialog() {
+  renderAchievements()
+  document.getElementById('achievementDialog').classList.add('open')
+}
+
+document.getElementById('achievementDialogClose')?.addEventListener('click', function() {
+  document.getElementById('achievementDialog').classList.remove('open')
+})
+document.getElementById('achievementDialog')?.addEventListener('mousedown', function(e) {
+  if (e.target === this) this.classList.remove('open')
+})
+
+function renderAchievements() {
+  var el = document.getElementById('achievementList')
+  if (!el) return
+  var achievements = getVaultAchievements()
+
+  // default achievements
+  var defaultAchievements = [
+    { id: 'first_idea', name: 'First Idea', desc: 'Capture your first idea in the Void', icon: 'sparkle' },
+    { id: 'first_signal', name: 'Signal Detected', desc: 'Promote an idea to Signal stage', icon: 'radar' },
+    { id: 'first_star', name: 'Star System', desc: 'Link two ideas together', icon: 'telescope' },
+    { id: 'first_island', name: 'Island Found', desc: 'Create a structured Island', icon: 'moon-star' },
+    { id: 'first_launch', name: 'Active Creation', desc: 'Promote an idea to Active Creation', icon: 'rocket' },
+    { id: 'first_challenge', name: 'Challenger', desc: 'Complete your first challenge', icon: 'sparkles' },
+    { id: 'first_goal', name: 'Goal Setter', desc: 'Set your first goal', icon: 'target' },
+    { id: 'ten_ideas', name: 'Idea Garden', desc: 'Capture 10 ideas in the Void', icon: 'library' },
+    { id: 'five_connections', name: 'Networker', desc: 'Make 5 connections between ideas', icon: 'orbit' },
+    { id: 'challenge_5', name: '5 Challenges Done', desc: 'Complete 5 challenges', icon: 'star' }
+  ]
+
+  var html = ''
+  defaultAchievements.forEach(function(def) {
+    var unlocked = achievements.some(function(a) { return a.id === def.id })
+    html += '<div class="achievement-badge' + (unlocked ? '' : ' locked') + '">' +
+      '<span class="ab-icon">' + (unlocked ? '✦' : '○') + '</span>' +
+      '<div><div style="font-size:13px;font-weight:600">' + def.name + '</div>' +
+      '<div style="font-size:10px;opacity:0.7">' + def.desc + '</div></div></div>'
+  })
+
+  if (!html) html = '<div style="padding:20px;text-align:center;font-size:12px;color:#86868b">No achievements yet</div>'
+  el.innerHTML = html
+}
+
+// ─── Auto-check achievements ──────────────────────────
+function checkAchievements() {
+  var achievements = getVaultAchievements()
+  var ideas = getVaultIdeas()
+  var stages = getVaultStages()
+  var connections = getVaultConnections()
+  var challenges = getVaultChallenges()
+  var goals = getVaultGoals()
+
+  function unlock(id) {
+    if (!achievements.some(function(a) { return a.id === id })) {
+      achievements.push({ id: id, unlocked: Date.now() })
+      saveVaultAchievements(achievements)
+      return true
+    }
+    return false
+  }
+
+  if (ideas.length >= 1) unlock('first_idea')
+  if (Object.values(stages).some(function(s) { return s === 'signal' })) unlock('first_signal')
+  if (connections.length >= 1) unlock('first_star')
+  if (Object.values(stages).some(function(s) { return s === 'island' })) unlock('first_island')
+  if (Object.values(stages).some(function(s) { return s === 'active' })) unlock('first_launch')
+  if (challenges.some(function(c) { return c.progress >= c.target })) unlock('first_challenge')
+  if (goals.length >= 1) unlock('first_goal')
+  if (ideas.length >= 10) unlock('ten_ideas')
+  if (connections.length >= 5) unlock('five_connections')
+  if (challenges.filter(function(c) { return c.progress >= c.target }).length >= 5) unlock('challenge_5')
+}
+
+// ─── Progress bar helper ──────────────────────────────
+function renderProgressBar(current, target, label) {
+  var pct = Math.min(100, (current / Math.max(target, 1)) * 100)
+  var displayLabel = label || (current + '/' + target)
+  return '<div class="vault-progress"><div class="vault-progress-track segmented"><div class="vault-progress-fill' + (pct >= 100 ? ' glow' : '') + '" style="width:' + pct + '%"></div></div><span class="vault-progress-text">' + displayLabel + '</span></div>'
+}
+
+// ─── Challenge Edit Dialog ──────────────────────────
+var _challengeEditTodoCtx = null
+
+function openChallengeEditDialog(challengeId) {
+  var challenges = getVaultChallenges()
+  var c = challenges.find(function(x) { return x.id === challengeId })
+  if (!c) return
+
+  document.getElementById('challengeEditTitle').textContent = 'Edit: ' + escapeHtml(c.name)
+  document.getElementById('challengeEditNameInput').value = c.name
+  document.getElementById('challengeEditDescInput').value = c.desc || ''
+  document.getElementById('challengeEditDialog').dataset.challengeId = challengeId
+
+  c.todos = c.todos || []
+  var ctx = renderChallengeTodoList('challengeEditTodoList', c.todos.map(function(t) { return { id: t.id || '_cht_' + Date.now() + '_' + Math.random(), text: t.text, done: t.done } }), true)
+  _challengeEditTodoCtx = ctx
+
+  document.getElementById('challengeEditDialog').classList.add('open')
+  setTimeout(function() { document.getElementById('challengeEditNameInput').focus() }, 100)
+}
+
+document.getElementById('challengeEditAddTodoBtn')?.addEventListener('click', function() {
+  if (_challengeEditTodoCtx) _challengeEditTodoCtx.add()
+})
+document.getElementById('challengeEditCancel')?.addEventListener('click', function() {
+  document.getElementById('challengeEditDialog').classList.remove('open')
+})
+document.getElementById('challengeEditSaveBtn')?.addEventListener('click', function() {
+  var dialog = document.getElementById('challengeEditDialog')
+  var cid = dialog.dataset.challengeId
+  if (!cid) return
+  var challenges = getVaultChallenges()
+  var c = challenges.find(function(x) { return x.id === cid })
+  if (!c) return
+  var name = document.getElementById('challengeEditNameInput').value.trim()
+  if (!name) return
+  var todos = (_challengeEditTodoCtx ? _challengeEditTodoCtx.items : []).filter(function(t) { return t.text.trim() })
+  c.name = name
+  c.desc = document.getElementById('challengeEditDescInput').value.trim()
+  c.todos = todos
+  c.target = Math.max(todos.length, 1)
+  c.unit = 'goals'
+  c.progress = todos.filter(function(t) { return t.done }).length
+  if (c.progress > c.target) c.progress = c.target
+  saveVaultChallenges(challenges)
+  dialog.classList.remove('open')
+  checkAchievements()
+  renderGridView()
+  var rect = (document.querySelector('.grid-item.challenge[data-challenge-id="' + cid + '"]') || document.body).getBoundingClientRect()
+  burstParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#30d158')
+})
+document.getElementById('challengeEditDeleteBtn')?.addEventListener('click', function() {
+  var dialog = document.getElementById('challengeEditDialog')
+  var cid = dialog.dataset.challengeId
+  if (!cid || !confirm('Delete this challenge?')) return
+  var challenges = getVaultChallenges()
+  saveVaultChallenges(challenges.filter(function(x) { return x.id !== cid }))
+  dialog.classList.remove('open')
+  renderGridView()
+})
+document.getElementById('challengeEditDialog')?.addEventListener('mousedown', function(e) {
+  if (e.target === this) this.classList.remove('open')
 })

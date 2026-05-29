@@ -1,6 +1,6 @@
 {
-  "name": "youtube-vault",
-  "version": "1.5.3",
+  "name": "vault",
+  "version": "2.0.0",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",

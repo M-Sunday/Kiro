@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" style="-webkit-tap-highlight-color:transparent!important">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#1d1d1f">
-    <title>YouTube Vault</title>
+    <title>Vault</title>
     <link rel="manifest" href="assets/manifest.json">
     <link rel="icon" href="assets/icons/app-icon-192.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/app-icon-192.svg">
@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/themes.css">
     <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/vault.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -48,12 +49,6 @@
             <i data-lucide="search" class="search-icon"></i>
             <input type="text" id="searchInput" placeholder="Search files..." spellcheck="false" />
         </div>
-        <div class="sidebar-add">
-            <button id="addBtn">
-                <i data-lucide="plus" class="add-icon"></i>
-                <span>Add video</span>
-            </button>
-        </div>
         <div class="sidebar-tree" id="sidebarTree"></div>
         <div class="sidebar-footer">
             <button class="sidebar-footer-btn" id="newFolderBtn">
@@ -79,11 +74,11 @@
                 <i data-lucide="panel-left" class="menu-btn-icon"></i>
             </button>
 
-            <button class="menu-btn" id="bookmarkBtn" style="margin-right:6px">
-                <i data-lucide="bookmark" style="width:18px;height:18px"></i>
+            <button class="menu-btn mr-6" id="bookmarkBtn">
+                <i data-lucide="bookmark" class="icon-lg"></i>
             </button>
-            <button class="menu-btn" id="gridBtn" style="margin-right:6px">
-                <i data-lucide="layout-grid" style="width:18px;height:18px"></i>
+            <button class="menu-btn mr-6" id="gridBtn">
+                <i data-lucide="layout-grid" class="icon-lg"></i>
             </button>
             <div class="online-indicator badge" id="onlineIndicator"><span class="dot"></span><span class="online-indicator-text">Online</span></div>
             <div class="top-bar-input">
@@ -108,10 +103,10 @@
                     </div>
                     <div class="card-add-row" id="cardAddRow">
                         <button class="card-add-btn" id="cardAddBtn"><i data-lucide="plus" class="card-add-icon"></i> Add video</button>
-                        <button class="card-add-btn" id="dlBtn" style="display:none"><i data-lucide="download" class="card-add-icon"></i> Download</button>
-                        <button class="card-add-btn" id="copyLinkBtn" style="display:none"><i data-lucide="link" class="card-add-icon"></i> Copy link</button>
+                        <button class="card-add-btn hidden" id="dlBtn"><i data-lucide="download" class="card-add-icon"></i> Download</button>
+                        <button class="card-add-btn hidden" id="copyLinkBtn"><i data-lucide="link" class="card-add-icon"></i> Copy link</button>
                     </div>
-                    <div class="dl-progress" id="dlProgress" style="display:none">
+                    <div class="dl-progress hidden" id="dlProgress">
                         <div class="dl-progress-track"><div class="dl-progress-fill" id="dlProgressFill"></div></div>
                         <span class="dl-progress-text" id="dlProgressText">0%</span>
                     </div>
@@ -119,7 +114,7 @@
                 </div>
             </div>
         </div>
-        <div class="search-landing" id="searchLanding" style="display:none">
+        <div class="search-landing hidden" id="searchLanding">
             <div class="search-landing-content">
                 <h2 class="search-landing-title" id="searchLandingTitle">What do you want to search?</h2>
                 <div class="search-landing-divider"></div>
@@ -127,25 +122,25 @@
             </div>
         </div>
         <div class="grid-view" id="gridView"></div>
-        <div class="batch-bar" id="batchBar" style="display:none">
+        <div class="batch-bar hidden" id="batchBar">
             <span class="batch-count" id="batchCount">0 selected</span>
             <div class="batch-actions">
-                <button class="batch-btn" id="batchDelete"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Delete</button>
-                <button class="batch-btn" id="batchMove"><i data-lucide="folder" style="width:14px;height:14px"></i> Move</button>
-                <button class="batch-btn" id="batchPin"><i data-lucide="pin" style="width:14px;height:14px"></i> Pin</button>
-                <button class="batch-btn" id="batchBlur"><i data-lucide="eye-off" style="width:14px;height:14px"></i> Blur</button>
+                <button class="batch-btn" id="batchDelete"><i data-lucide="trash-2" class="icon-sm"></i> Delete</button>
+                <button class="batch-btn" id="batchMove"><i data-lucide="folder" class="icon-sm"></i> Move</button>
+                <button class="batch-btn" id="batchPin"><i data-lucide="pin" class="icon-sm"></i> Pin</button>
+                <button class="batch-btn" id="batchBlur"><i data-lucide="eye-off" class="icon-sm"></i> Blur</button>
             </div>
         </div>
-        <div class="batch-move-dropdown" id="batchMoveDropdown" style="display:none"></div>
-        <div class="note-view" id="noteView" style="display:none">
+        <div class="batch-move-dropdown hidden" id="batchMoveDropdown"></div>
+        <div class="note-view hidden" id="noteView">
             <div class="note-view-header">
                 <input class="note-view-title" id="noteViewTitle" placeholder="Note title" spellcheck="false" />
                 <div class="note-view-actions">
-                    <button class="note-view-btn" id="noteTodoBtn" title="Add todo"><i data-lucide="list-checks" style="width:16px;height:16px"></i></button>
-                    <button class="note-view-btn" id="noteUndoBtn"><i data-lucide="undo-2" style="width:16px;height:16px"></i></button>
-                    <button class="note-view-btn" id="noteRedoBtn"><i data-lucide="redo-2" style="width:16px;height:16px"></i></button>
-                    <button class="note-view-btn" id="noteDeleteBtn"><i data-lucide="trash-2" style="width:16px;height:16px;color:#ff453a"></i></button>
-                    <button class="note-view-btn" id="noteCloseBtn"><i data-lucide="x" style="width:16px;height:16px"></i></button>
+                    <button class="note-view-btn" id="noteTodoBtn" title="Add todo"><i data-lucide="list-checks" class="icon-md"></i></button>
+                    <button class="note-view-btn" id="noteUndoBtn"><i data-lucide="undo-2" class="icon-md"></i></button>
+                    <button class="note-view-btn" id="noteRedoBtn"><i data-lucide="redo-2" class="icon-md"></i></button>
+                    <button class="note-view-btn" id="noteDeleteBtn"><i data-lucide="trash-2" class="icon-md" style="color:#ff453a"></i></button>
+                    <button class="note-view-btn" id="noteCloseBtn"><i data-lucide="x" class="icon-md"></i></button>
                 </div>
             </div>
             <div class="note-view-content" id="noteViewContent" contenteditable="true" spellcheck="false"></div>
@@ -191,7 +186,7 @@
     <div class="folder-dialog-overlay" id="daDialog">
         <div class="folder-dialog">
             <h3>Add Direct Access</h3>
-            <p style="font-size:13px;color:#86868b;margin-bottom:10px" id="daUrlDisplay"></p>
+            <p class="da-url-display" id="daUrlDisplay"></p>
             <input type="text" id="daTitleInput" placeholder="Title (optional)" spellcheck="false" />
             <div class="folder-dialog-actions">
                 <button class="dialog-btn cancel" id="daDialogCancel">Cancel</button>
@@ -240,15 +235,15 @@
             <div class="settings-sidebar">
                 <div class="settings-sidebar-header">Settings</div>
                 <div class="settings-categories">
-                    <div class="settings-cat active" data-cat="user"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> About User</div>
-                    <div class="settings-cat" data-cat="theme"><i data-lucide="eye" style="width:16px;height:16px;flex-shrink:0"></i> Theme</div>
-                    <div class="settings-cat" data-cat="basic"><i data-lucide="file-text" style="width:16px;height:16px;flex-shrink:0"></i> Basic info</div>
-                    <div class="settings-cat" data-cat="toolbar"><i data-lucide="edit-3" style="width:16px;height:16px;flex-shrink:0"></i> Toolbar</div>
-                    <div class="settings-cat" data-cat="files"><i data-lucide="folder" style="width:16px;height:16px;flex-shrink:0"></i> Files and links</div>
-                    <div class="settings-cat" data-cat="history"><i data-lucide="history" style="width:16px;height:16px;flex-shrink:0"></i> Link history</div>
-                    <div class="settings-cat" data-cat="nsfw"><i data-lucide="eye-off" style="width:16px;height:16px;flex-shrink:0"></i> NSFW</div>
-                    <div class="settings-cat" data-cat="download"><i data-lucide="download" style="width:16px;height:16px;flex-shrink:0"></i> Download</div>
-                    <div class="settings-cat" data-cat="patchnotes"><i data-lucide="file-text-fill" style="width:16px;height:16px;flex-shrink:0"></i> Patch notes</div>
+                    <div class="settings-cat active" data-cat="user"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> About User</div>
+                    <div class="settings-cat" data-cat="theme"><i data-lucide="eye" class="icon-md flex-shrink-0"></i> Theme</div>
+                    <div class="settings-cat" data-cat="basic"><i data-lucide="file-text" class="icon-md flex-shrink-0"></i> Basic info</div>
+                    <div class="settings-cat" data-cat="toolbar"><i data-lucide="edit-3" class="icon-md flex-shrink-0"></i> Toolbar</div>
+                    <div class="settings-cat" data-cat="files"><i data-lucide="folder" class="icon-md flex-shrink-0"></i> Files and links</div>
+                    <div class="settings-cat" data-cat="history"><i data-lucide="history" class="icon-md flex-shrink-0"></i> Link history</div>
+                    <div class="settings-cat" data-cat="nsfw"><i data-lucide="eye-off" class="icon-md flex-shrink-0"></i> NSFW</div>
+                    <div class="settings-cat" data-cat="download"><i data-lucide="download" class="icon-md flex-shrink-0"></i> Download</div>
+                    <div class="settings-cat" data-cat="patchnotes"><i data-lucide="file-text-fill" class="icon-md flex-shrink-0"></i> Patch notes</div>
                 </div>
                 <div class="settings-sidebar-footer" id="settingsClose">
                     <i data-lucide="x" class="settings-close-icon"></i> Close
@@ -257,28 +252,28 @@
             <div class="settings-content" id="settingsContent">
                 <div class="settings-pane" id="pane-user">
                     <div class="settings-pane-header"><h2>About User</h2><p class="settings-pane-desc">Your account information.</p></div>
-                    <div class="settings-field-row" style="margin-top:16px">
+                    <div class="settings-field-row mt-16">
                         <label class="settings-field-label">Name</label>
                         <div class="settings-user-edit-wrap">
                             <p class="settings-user-value" id="settingsUserNameDisplay">—</p>
-                            <button class="settings-user-edit-btn" id="settingsUserNameEditBtn"><i data-lucide="edit-3" style="width:14px;height:14px"></i></button>
-                            <input type="text" class="settings-user-edit-input" id="settingsUserNameEditInput" placeholder="Enter your name" maxlength="30" style="display:none" />
+                            <button class="settings-user-edit-btn" id="settingsUserNameEditBtn"><i data-lucide="edit-3" class="icon-sm"></i></button>
+                            <input type="text" class="settings-user-edit-input hidden" id="settingsUserNameEditInput" placeholder="Enter your name" maxlength="30" />
                         </div>
                     </div>
-                    <div class="settings-field-row" style="margin-top:12px">
+                    <div class="settings-field-row mt-12">
                         <label class="settings-field-label">Version</label>
-                        <p class="settings-user-value" id="appVersionLabel">1.5.3</p>
+                        <p class="settings-user-value" id="appVersionLabel">2.0.0</p>
                     </div>
-                    <div class="settings-field-row" style="margin-top:12px">
+                    <div class="settings-field-row mt-12">
                         <label class="settings-field-label">Device</label>
                         <p class="settings-user-value" id="settingsDeviceName">—</p>
                     </div>
-                    <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e8e8ed">
+                    <div class="settings-reset-section">
                         <button class="settings-danger-btn" id="settingsResetBtn">Reset Account</button>
-                        <p style="font-size:11px;color:#8e8e93;margin-top:6px">This will permanently delete all your data and settings.</p>
+                        <p class="settings-warning">This will permanently delete all your data and settings.</p>
                     </div>
                 </div>
-                <div class="settings-pane" id="pane-theme" style="display:none">
+                <div class="settings-pane hidden" id="pane-theme">
                     <div class="settings-pane-header"><h2>Theme</h2><p class="settings-pane-desc">Choose your preferred appearance.</p></div>
                     <div class="theme-options">
                         <div class="theme-option" data-theme="white"><div class="theme-preview theme-white"></div><span>White</span></div>
@@ -288,62 +283,62 @@
                     </div>
                     <label class="settings-checkbox"><input type="checkbox" id="systemTheme" /><span class="settings-checkbox-mark"></span><span>Have system theme</span></label>
                 </div>
-                <div class="settings-pane" id="pane-basic" style="display:none">
+                <div class="settings-pane hidden" id="pane-basic">
                     <div class="settings-pane-header"><h2>Basic info</h2><p class="settings-pane-desc">About this app.</p></div>
-                    <div class="settings-field-row" style="margin-top:16px">
+                    <div class="settings-field-row mt-16">
                         <label class="settings-field-label">Your name</label>
                         <input type="text" id="settingsUserName" class="settings-text-input" placeholder="Enter your name" maxlength="30" />
                     </div>
-                    <div class="settings-footer-row" style="flex-direction:column;gap:6px;margin-top:20px">
-                        <span>Version 1.5.3</span><span>Language: English</span><span>Account: Not logged in</span><span>Commercial licence</span>
+                    <div class="settings-footer-row flex flex-col gap-6 mt-20">
+                        <span id="settingsBasicVersion">Version 2.0.0</span><span>Language: English</span><span>Account: Not logged in</span><span>Commercial licence</span>
                     </div>
                 </div>
-                <div class="settings-pane" id="pane-toolbar" style="display:none">
+                <div class="settings-pane hidden" id="pane-toolbar">
                     <div class="settings-pane-header"><h2>Toolbar</h2><p class="settings-pane-desc">Customize your toolbar.</p></div>
-                    <div class="settings-plugin-list" style="margin-top:20px">
+                    <div class="settings-plugin-list mt-20">
                         <div class="settings-plugin"><span class="settings-plugin-name">Show sidebar button</span><div class="settings-toggle on"></div></div>
                         <div class="settings-plugin"><span class="settings-plugin-name">Show YouTube input</span><div class="settings-toggle on"></div></div>
                         <div class="settings-plugin"><span class="settings-plugin-name">Compact mode</span><div class="settings-toggle"></div></div>
                     </div>
                 </div>
-                <div class="settings-pane" id="pane-files" style="display:none">
+                <div class="settings-pane hidden" id="pane-files">
                     <div class="settings-pane-header"><h2>Files and links</h2><p class="settings-pane-desc">How files and links are handled.</p></div>
-                    <div class="settings-plugin-list" style="margin-top:20px">
+                    <div class="settings-plugin-list mt-20">
                         <div class="settings-plugin"><span class="settings-plugin-name">Automatically update links</span><div class="settings-toggle on"></div></div>
                         <div class="settings-plugin"><span class="settings-plugin-name">Confirm file deletion</span><div class="settings-toggle on"></div></div>
                         <div class="settings-plugin"><span class="settings-plugin-name">Detect all file extensions</span><div class="settings-toggle"></div></div>
                     </div>
                 </div>
-                <div class="settings-pane" id="pane-history" style="display:none">
+                <div class="settings-pane hidden" id="pane-history">
                     <div class="settings-pane-header"><h2>Link history</h2><p class="settings-pane-desc">Recently opened YouTube links.</p></div>
-                    <div class="settings-plugin-list" style="margin-top:20px">
+                    <div class="settings-plugin-list mt-20">
                         <div class="settings-plugin"><span class="settings-plugin-name">Save link history</span><div class="settings-toggle on"></div></div>
                         <div class="settings-plugin"><span class="settings-plugin-name">Clear on exit</span><div class="settings-toggle"></div></div>
                     </div>
                     <div class="settings-footer-info"><button class="settings-clear-btn" id="settingsClearHistoryBtn">Clear history</button></div>
                     <div class="settings-history-list" id="settingsHistoryList"></div>
                 </div>
-                <div class="settings-pane" id="pane-nsfw" style="display:none">
+                <div class="settings-pane hidden" id="pane-nsfw">
                     <div class="settings-pane-header"><h2>NSFW</h2><p class="settings-pane-desc">Mark sites as NSFW to blur their thumbnails.</p></div>
-                    <div class="settings-plugin-list" style="margin-top:20px">
+                    <div class="settings-plugin-list mt-20">
                         <div class="settings-plugin"><span class="settings-plugin-name">Blur all NSFW</span><div class="settings-toggle" id="blurAllNSFWToggle"></div></div>
                     </div>
-                    <div style="margin-top:16px">
-                        <p style="font-size:12px;color:#86868b;margin-bottom:6px">Keywords to blur (title or URL contains any of these):</p>
-                        <div id="nsfwChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
-                        <div style="display:flex;gap:6px;margin-top:8px">
-                            <input id="nsfwAddInput" type="text" placeholder="Add keyword..." style="flex:1;min-width:0;padding:6px 10px;border:1px solid #e8e8ed;border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:#f5f5f7;color:#1d1d1f;box-sizing:border-box" />
-                            <button id="nsfwAddBtn" style="padding:6px 14px;border:none;border-radius:8px;background:#1d1d1f;color:#fff;font-size:12px;font-family:inherit;cursor:pointer;flex-shrink:0">Add</button>
+                    <div class="nsfw-section mt-16">
+                        <p class="nsfw-label">Keywords to blur (title or URL contains any of these):</p>
+                        <div class="nsfw-chips-wrap" id="nsfwChips"></div>
+                        <div class="nsfw-add-row">
+                            <input id="nsfwAddInput" type="text" placeholder="Add keyword..." class="nsfw-input" />
+                            <button id="nsfwAddBtn" class="nsfw-add-btn">Add</button>
                         </div>
                     </div>
                 </div>
-                    <div class="settings-pane" id="pane-patchnotes" style="display:none">
+                    <div class="settings-pane hidden" id="pane-patchnotes">
                     <div class="settings-pane-header"><h2>Patch notes</h2><p class="settings-pane-desc">Changelog history for this app.</p></div>
-                    <div id="patchNotesList" style="margin-top:20px"></div>
+                    <div id="patchNotesList" class="mt-20"></div>
                 </div>
-                <div class="settings-pane" id="pane-download" style="display:none">
+                <div class="settings-pane hidden" id="pane-download">
                     <div class="settings-pane-header"><h2>Download</h2><p class="settings-pane-desc">Media download preferences.</p></div>
-                    <div class="settings-plugin-list" style="margin-top:20px">
+                    <div class="settings-plugin-list mt-20">
                         <div class="settings-plugin"><span class="settings-plugin-name">Type</span>
                             <select class="settings-select" id="dlType">
                                 <option value="video">Video</option>
@@ -371,7 +366,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="settings-plugin-list dl-audio-settings" style="display:none">
+                    <div class="settings-plugin-list dl-audio-settings hidden">
                         <div class="settings-plugin"><span class="settings-plugin-name">Audio format</span>
                             <select class="settings-select" id="dlAudioFormat">
                                 <option value="mp3" selected>MP3</option>
@@ -398,12 +393,102 @@
         </div>
     </div>
 
+    <!-- Planet View -->
+    <div class="planet-view hidden" id="planetView">
+      <div class="planet-view-header">
+        <button class="planet-view-back" id="planetViewBack"><i data-lucide="arrow-left" class="icon-lg"></i> Back to Workbench</button>
+        <div class="planet-view-title">Planet View</div>
+      </div>
+      <div class="planet-view-canvas" id="planetCanvas">
+        <div class="planet-viewport" id="planetViewport">
+          <div class="planet-sun" id="planetSun">
+            <span id="planetSunLabel">✦</span>
+          </div>
+          <div class="planet-orbits" id="planetOrbits"></div>
+        </div>
+      </div>
+      <div class="planet-view-footer">
+        <div class="planet-void-input"><input type="text" id="planetVoidInput" placeholder="What idea is on your mind?" spellcheck="false" /><button id="planetAddBtn">Add to Void</button></div>
+        <div class="planet-zoom-controls">
+          <button class="planet-zoom-btn" id="planetZoomIn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+          <button class="planet-zoom-btn" id="planetZoomOut"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+          <button class="planet-zoom-btn" id="planetZoomReset"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Challenge dialog -->
+    <div class="folder-dialog-overlay" id="challengeDialog">
+      <div class="folder-dialog dialog-scroll">
+        <h3>New Challenge</h3>
+        <input type="text" id="challengeNameInput" placeholder="Challenge name" spellcheck="false" />
+        <textarea id="challengeDescInput" placeholder="Description..." class="dialog-textarea" spellcheck="false"></textarea>
+        <div class="milestone-header">GOALS / MILESTONES</div>
+        <div id="challengeTodoList"></div>
+        <button id="challengeAddTodoBtn" class="add-goal-btn">+ Add goal</button>
+        <div class="folder-dialog-actions compact">
+          <button class="dialog-btn cancel" id="challengeDialogCancel">Cancel</button>
+          <button class="dialog-btn confirm" id="challengeDialogConfirm">Start Challenge</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Challenge Edit dialog -->
+    <div class="folder-dialog-overlay" id="challengeEditDialog">
+      <div class="folder-dialog dialog-scroll">
+        <h3 id="challengeEditTitle">Edit Challenge</h3>
+        <input type="text" id="challengeEditNameInput" placeholder="Challenge name" spellcheck="false" />
+        <textarea id="challengeEditDescInput" placeholder="Description..." class="dialog-textarea" spellcheck="false"></textarea>
+        <div class="milestone-header">GOALS / MILESTONES</div>
+        <div id="challengeEditTodoList"></div>
+        <button id="challengeEditAddTodoBtn" class="add-goal-btn">+ Add goal</button>
+        <div class="dialog-action-row">
+          <div class="dialog-action-group">
+            <button class="dialog-btn danger" id="challengeEditDeleteBtn">Delete</button>
+          </div>
+          <div class="dialog-action-group">
+            <button class="dialog-btn cancel" id="challengeEditCancel">Cancel</button>
+            <button class="dialog-btn confirm" id="challengeEditSaveBtn">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Achievements dialog -->
+    <div class="folder-dialog-overlay" id="achievementDialog">
+      <div class="folder-dialog dialog-scroll-sm">
+        <h3>Achievements</h3>
+        <div id="achievementList" class="mt-12"></div>
+        <div class="folder-dialog-actions mt-12">
+          <button class="dialog-btn cancel" id="achievementDialogClose">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Goal dialog -->
+    <div class="folder-dialog-overlay" id="goalDialog">
+      <div class="folder-dialog">
+        <h3>New Goal</h3>
+        <input type="text" id="goalNameInput" placeholder="What do you want to achieve?" spellcheck="false" />
+        <textarea id="goalDescInput" placeholder="Why does this matter to you?" class="dialog-textarea-lg" spellcheck="false"></textarea>
+        <div class="flex gap-6 mt-12 items-center">
+          <label class="goal-label">Target:</label>
+          <input type="number" id="goalTargetInput" value="5" min="1" class="goal-input" />
+          <label class="goal-label">per week</label>
+        </div>
+        <div class="folder-dialog-actions mt-12">
+          <button class="dialog-btn cancel" id="goalDialogCancel">Cancel</button>
+          <button class="dialog-btn confirm" id="goalDialogConfirm">Set Goal</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Update dialog -->
     <div class="update-overlay" id="updateOverlay">
         <div class="update-modal">
             <div class="update-modal-header">
                 <h2>What's New</h2>
-                <button class="update-close-btn" id="updateCloseBtn"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+                <button class="update-close-btn" id="updateCloseBtn"><i data-lucide="x" class="icon-lg"></i></button>
             </div>
             <div class="update-modal-body" id="updateBody"></div>
         </div>
@@ -411,16 +496,16 @@
 
     <!-- Reset warning dialog -->
     <div class="update-overlay" id="resetOverlay">
-        <div class="update-modal" style="max-width:400px">
+        <div class="update-modal reset-modal">
             <div class="update-modal-header">
                 <h2>Reset Account</h2>
             </div>
             <div class="update-modal-body">
-                <p style="font-size:14px;line-height:1.5;color:#3a3a3c">This will permanently delete <strong>all your data</strong> including videos, bookmarks, notes, settings, and user name. Your browser cookies (YouTube login, etc.) will also be cleared within this app.</p>
-                <p style="font-size:14px;line-height:1.5;color:#8e8e93;margin-top:12px">This action cannot be undone.</p>
-                <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+                <p class="reset-warning">This will permanently delete <strong>all your data</strong> including videos, bookmarks, notes, settings, and user name. Your browser cookies (YouTube login, etc.) will also be cleared within this app.</p>
+                <p class="reset-sub">This action cannot be undone.</p>
+                <div class="reset-actions">
                     <button class="dialog-btn cancel" id="resetCancel">Cancel</button>
-                    <button class="dialog-btn confirm" id="resetConfirm" style="background:#ff453a;border-color:#ff453a">Continue</button>
+                    <button class="dialog-btn confirm" id="resetConfirm">Continue</button>
                 </div>
             </div>
         </div>
@@ -429,26 +514,27 @@
     <!-- Splash screen -->
     <div id="splash">
         <div class="splash-content">
-            <img id="splashIcon" src="assets/icons/app-icon-splash.svg" width="94" height="94" alt="YouTube Vault" />
+            <img id="splashIcon" src="assets/icons/app-icon-splash.svg" width="94" height="94" alt="Vault" />
             <p id="splashText">Checking for updates...</p>
 
             <!-- Step 0 (first-time user) inside splash -->
-            <div id="onbStep0" class="onb-step" style="display:none">
+            <div id="onbStep0" class="onb-step onb-hidden">
                 <p class="onb-welcome" id="onbWelcome">Hello and welcome to Vault</p>
+                <p class="onb-subtitle">A creative operating system for chaotic minds</p>
                 <button class="onb-btn" id="onbNext0">Next →</button>
             </div>
         </div>
     </div>
 
     <!-- Onboarding steps 1+2 (appears after splash zoom transition) -->
-    <div id="onboarding" style="display:none">
+    <div id="onboarding" class="onb-hidden">
         <div class="splash-content">
-            <div id="onbStep1" class="onb-step" style="display:none">
+            <div id="onbStep1" class="onb-step onb-hidden">
                 <p class="onb-label">What is your name?</p>
                 <input type="text" id="onbNameInput" class="onb-input" placeholder="Your name" maxlength="30" />
-                <button class="onb-btn" id="onbNext1" style="display:none">Next →</button>
+                <button class="onb-btn onb-hidden" id="onbNext1">Next →</button>
             </div>
-            <div id="onbStep2" class="onb-step" style="display:none">
+            <div id="onbStep2" class="onb-step onb-hidden">
                 <p class="onb-label">Is this your name?</p>
                 <p class="onb-name-display" id="onbNameDisplay"></p>
                 <div class="onb-btn-row">
@@ -509,11 +595,11 @@
     </script>
 
     <!-- Keyboard shortcuts overlay -->
-    <div class="shortcuts-overlay" id="shortcutsOverlay" style="display:none">
+    <div class="shortcuts-overlay hidden" id="shortcutsOverlay">
         <div class="shortcuts-modal">
             <div class="shortcuts-header">
                 <h2>Keyboard Shortcuts</h2>
-                <button class="shortcuts-close" id="shortcutsClose"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+                <button class="shortcuts-close" id="shortcutsClose"><i data-lucide="x" class="icon-lg"></i></button>
             </div>
             <div class="shortcuts-body">
                 <div class="shortcut-row"><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd></span><span class="shortcut-desc">Focus YouTube search bar</span></div>
@@ -542,6 +628,7 @@
     <script src="js/search.js"></script>
     <script src="js/icons.js"></script>
     <script src="js/extras.js"></script>
+    <script src="js/planet-view.js"></script>
     <script src="js/onboarding.js"></script>
     <script src="js/app.js"></script>
     <script>

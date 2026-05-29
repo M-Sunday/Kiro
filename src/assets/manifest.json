@@ -1,8 +1,8 @@
 {
-  "name": "YouTube Vault",
+  "name": "Vault — Creative OS for Chaotic Minds",
   "short_name": "Vault",
-  "version": "1.5.3",
-  "description": "Save and organize YouTube videos",
+  "version": "2.0.0",
+  "description": "A creative operating system for chaotic minds. Save ideas, build islands, track what matters.",
   "start_url": "../index.html",
   "scope": "../",
   "display": "standalone",

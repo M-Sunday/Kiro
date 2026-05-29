@@ -7,72 +7,79 @@ function renderSidebar() {
   const pins = getPins()
   const query = document.getElementById('searchInput').value.toLowerCase().trim()
 
-  let html = ''
+  var html = ''
   for (const [name, ids] of Object.entries(folders)) {
     if (name === 'Archived' && !ids.length) continue
+    var showAll = query && name.toLowerCase().includes(query)
+    // during search, skip folders with no matches unless name matches
+    if (query && !showAll) {
+      var folderHasMatch = ids.some(function(id) { var v = videos[id]; return v && (v.title.toLowerCase().includes(query) || v.channel.toLowerCase().includes(query)) })
+      if (!folderHasMatch) folderHasMatch = getNotes().some(function(n) { return n.folder === name && (n.title.toLowerCase().includes(query) || (n.content || '').toLowerCase().includes(query)) })
+      if (!folderHasMatch) continue
+    }
     const color = meta[name]?.color || ''
-    const hasContents = ids.length || getNotes().filter(n => n.folder === name).length
+    const hasContents = ids.length || getNotes().filter(function(n) { return n.folder === name }).length
     const icon = name === 'Archived' ? 'archive' : (hasContents ? 'folder-fill' : 'folder')
     const collapsed = getCollapsed()
     const isCollapsed = collapsed['folder:' + name]
-    html += `<div class="tree-item ${isCollapsed ? '' : 'expanded'}" data-folder="${name}"><div class="tree-folder" draggable="false"${color ? ` data-color="${color}" style="--folder-color:${color}"` : ''}><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="${icon}" class="tree-folder-icon"></i><span class="tree-label">${name}</span></div><div class="tree-children">`
+    html += '<div class="tree-item ' + (isCollapsed ? '' : 'expanded') + '" data-folder="' + name + '"><div class="tree-folder" draggable="false"' + (color ? ' data-color="' + color + '" style="--folder-color:' + color + '"' : '') + '><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="' + icon + '" class="tree-folder-icon"></i><span class="tree-label">' + name + '</span></div><div class="tree-children">'
 
     let entryIds = [...ids]
-    const pinned = entryIds.filter(id => pins.includes(id))
-    const unpinned = entryIds.filter(id => !pins.includes(id))
+    const pinned = entryIds.filter(function(id) { return pins.includes(id) })
+    const unpinned = entryIds.filter(function(id) { return !pins.includes(id) })
     entryIds = [...pinned, ...unpinned]
 
     for (const id of entryIds) {
       const v = videos[id]
       if (!v) continue
-      if (query && !v.title.toLowerCase().includes(query) && !v.channel.toLowerCase().includes(query)) continue
+      if (!showAll && query && !v.title.toLowerCase().includes(query) && !v.channel.toLowerCase().includes(query)) continue
       const isPinned = pins.includes(id)
-      html += `<div class="tree-item" data-video-id="${id}" draggable="true"><div class="tree-file${currentVideo?.id === id ? ' active' : ''}${isPinned ? ' pinned' : ''}"><i data-lucide="file-video-2" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">${v.title}</span><span class="tree-sublabel">${v.channel}</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>`
+      html += '<div class="tree-item" data-video-id="' + id + '" draggable="true"><div class="tree-file' + (currentVideo?.id === id ? ' active' : '') + (isPinned ? ' pinned' : '') + '"><i data-lucide="file-video-2" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">' + v.title + '</span><span class="tree-sublabel">' + v.channel + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
     }
     for (const n of getNotes()) {
       if (n.folder !== name) continue
-      if (query && !n.title.toLowerCase().includes(query)) continue
+      if (!showAll && query && !n.title.toLowerCase().includes(query) && !(n.content || '').toLowerCase().includes(query)) continue
       const preview = stripHtml(n.content || '').replace(/\n/g, ' ').substring(0, 50)
       const noteIcon = n.todos && n.todos.length ? 'list-todo' : 'file-text'
-      html += `<div class="tree-item" data-note-id="${n.id}" draggable="true"><div class="tree-file"><i data-lucide="${noteIcon}" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">${n.title || 'Untitled'}</span><span class="tree-sublabel">${preview}${stripHtml(n.content || '').length > 50 ? '…' : ''}</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>`
+      html += '<div class="tree-item" data-note-id="' + n.id + '" draggable="true"><div class="tree-file"><i data-lucide="' + noteIcon + '" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">' + (n.title || 'Untitled') + '</span><span class="tree-sublabel">' + preview + (stripHtml(n.content || '').length > 50 ? '…' : '') + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
     }
     html += '</div></div>'
   }
   const bookmarks = getBookmarks()
   if (bookmarks.length) {
     const bmCollapsed = getCollapsed()['section:bookmarks']
-    html += `<div class="tree-item ${bmCollapsed ? '' : 'expanded'}" data-bookmarks="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="bookmark-fill" class="tree-folder-icon"></i><span class="tree-label">Bookmarks</span></div><div class="tree-children">`
+    html += '<div class="tree-item ' + (bmCollapsed ? '' : 'expanded') + '" data-bookmarks="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="bookmark-fill" class="tree-folder-icon"></i><span class="tree-label">Bookmarks</span></div><div class="tree-children">'
     for (const bm of bookmarks) {
       if (query && !bm.title.toLowerCase().includes(query) && !bm.url.toLowerCase().includes(query)) continue
       const bmNsfw = isNSFW(bm) || bm.blurred
-      html += `<div class="tree-item" data-bookmark-id="${bm.id}" draggable="true"><div class="tree-file"><div class="bm-thumb-wrap">${bm.image ? `<img class="bm-thumb${bmNsfw ? ' nsfw-blur' : ''}" src="${bm.image}" onerror="this.style.display='none'" />` : `<i data-lucide="external-link" class="tree-file-icon" style="margin:4px"></i>`}</div><div class="tree-file-meta${bmNsfw ? ' nsfw-blur' : ''}"><span class="tree-label">${bm.title || bm.url}</span><span class="tree-sublabel">${bm.url}</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>`
+      html += '<div class="tree-item" data-bookmark-id="' + bm.id + '" draggable="true"><div class="tree-file"><div class="bm-thumb-wrap">' + (bm.image ? '<img class="bm-thumb' + (bmNsfw ? ' nsfw-blur' : '') + '" src="' + bm.image + '" onerror="this.style.display=\'none\'" />' : '<i data-lucide="external-link" class="tree-file-icon" style="margin:4px"></i>') + '</div><div class="tree-file-meta' + (bmNsfw ? ' nsfw-blur' : '') + '"><span class="tree-label">' + (bm.title || bm.url) + '</span><span class="tree-sublabel">' + bm.url + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
     }
     html += '</div></div>'
   }
   const notes = getNotes().filter(n => !n.folder)
   if (notes.length) {
     const nCollapsed = getCollapsed()['section:notes']
-    html += `<div class="tree-item ${nCollapsed ? '' : 'expanded'}" data-notes="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="file-text-fill" class="tree-folder-icon"></i><span class="tree-label">Notes</span></div><div class="tree-children">`
+    html += '<div class="tree-item ' + (nCollapsed ? '' : 'expanded') + '" data-notes="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="file-text-fill" class="tree-folder-icon"></i><span class="tree-label">Notes</span></div><div class="tree-children">'
     for (const n of notes) {
-      if (query && !n.title.toLowerCase().includes(query)) continue
+      if (query && !n.title.toLowerCase().includes(query) && !(n.content || '').toLowerCase().includes(query)) continue
       const preview = stripHtml(n.content || '').replace(/\n/g, ' ').substring(0, 50)
       const noteIcon = n.todos && n.todos.length ? 'list-todo' : 'file-text'
-      html += `<div class="tree-item" data-note-id="${n.id}" draggable="true"><div class="tree-file"><i data-lucide="${noteIcon}" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">${n.title || 'Untitled'}</span><span class="tree-sublabel">${preview}${stripHtml(n.content || '').length > 50 ? '…' : ''}</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>`
+      html += '<div class="tree-item" data-note-id="' + n.id + '" draggable="true"><div class="tree-file"><i data-lucide="' + noteIcon + '" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">' + (n.title || 'Untitled') + '</span><span class="tree-sublabel">' + preview + (stripHtml(n.content || '').length > 50 ? '…' : '') + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
     }
     html += '</div></div>'
   }
   const da = getDirectAccess()
   if (da.length) {
     const daCollapsed = getCollapsed()['section:directaccess']
-    html += `<div class="tree-item ${daCollapsed ? '' : 'expanded'}" data-directaccess="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="link" class="tree-folder-icon"></i><span class="tree-label">Direct Access</span></div><div class="tree-children">`
+    html += '<div class="tree-item ' + (daCollapsed ? '' : 'expanded') + '" data-directaccess="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="link" class="tree-folder-icon"></i><span class="tree-label">Direct Access</span></div><div class="tree-children">'
     for (const d of da) {
       if (query && !d.title.toLowerCase().includes(query) && !d.url.toLowerCase().includes(query)) continue
       const nsfw = isNSFW(d) || d.blurred
-      html += `<div class="tree-item" data-da-id="${d.id}" draggable="true"><div class="tree-file"><div class="bm-thumb-wrap">${d.image ? `<img class="bm-thumb${nsfw ? ' nsfw-blur' : ''}" src="${d.image}" onerror="this.style.display='none'" />` : `<i data-lucide="external-link" class="tree-file-icon" style="margin:4px"></i>`}</div><div class="tree-file-meta${nsfw ? ' nsfw-blur' : ''}"><span class="tree-label">${d.title}</span><span class="tree-sublabel">${d.url}</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>`
+      html += '<div class="tree-item" data-da-id="' + d.id + '" draggable="true"><div class="tree-file"><div class="bm-thumb-wrap">' + (d.image ? '<img class="bm-thumb' + (nsfw ? ' nsfw-blur' : '') + '" src="' + d.image + '" onerror="this.style.display=\'none\'" />' : '<i data-lucide="external-link" class="tree-file-icon" style="margin:4px"></i>') + '</div><div class="tree-file-meta' + (nsfw ? ' nsfw-blur' : '') + '"><span class="tree-label">' + d.title + '</span><span class="tree-sublabel">' + d.url + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
     }
     html += '</div></div>'
   }
-  tree.innerHTML = html || `<div style="padding:20px;text-align:center;font-size:12px;color:#8e8e93">No videos yet.<br>Add one with the button above.</div>`
+  tree.innerHTML = html || '<div style="padding:20px;text-align:center;font-size:12px;color:#8e8e93">' + (query ? 'Nothing matches your search.' : 'No videos yet.') + '</div>'
   loadIcons()
   bindSidebarEvents()
   if (document.getElementById('gridView').classList.contains('open')) renderGridView()
@@ -265,10 +272,7 @@ document.getElementById('sidebarBackdrop').addEventListener('click', () => {
   document.getElementById('sidebar').classList.add('closed')
 })
 document.getElementById('searchInput').addEventListener('input', renderSidebar)
-document.getElementById('searchInput').addEventListener('focus', () => {
-  setView('landing')
-  renderSearchLanding()
-})
+
 
 // ─── Mobile sidebar helper ────────────────────────────────
 function closeSidebarMobile() { if (window.innerWidth <= 640) document.getElementById('sidebar').classList.add('closed') }

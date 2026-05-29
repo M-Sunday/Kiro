@@ -1,5 +1,27 @@
 [
   {
+    "version": "2.0.0",
+    "date": "2026-05-29",
+    "title": "Vault — Creative Operating System for Chaotic Minds",
+    "changes": [
+      "Complete rebrand: YouTube Vault → Vault",
+      "The Void: raw idea capture with no judgment or structure",
+      "5-Stage evolution system: Void → Signal → Star System → Island → Active Creation",
+      "Planet View: solar system visualization with orbiting idea-nodes",
+      "Drag ideas onto each other to create connections (Star Systems)",
+      "Auto-promote: connected ideas move to Star System stage",
+      "Workbench action buttons: New Challenge, Achievements, New Goal, Planet View",
+      "Progress bars (boss-HP style) with segmented fill and glow effect",
+      "Challenges: flexible goals with +1 progress tracking per Island/life domain",
+      "Goals: weekly objectives with momentum-based progress bars",
+      "Achievement system: 10 unlockable badges with auto-detection",
+      "Particle burst effects on ideas creation, connection, and promotion",
+      "13 new SVG icons: telescope, rocket, orbit, radar, satellite, sparkle, etc.",
+      "New achievement/challenge/detail dialogs with stage controls",
+      "Retains all YouTube, bookmarks, notes, and download features"
+    ]
+  },
+  {
     "version": "1.5.1",
     "date": "2026-05-28",
     "title": "Todo Lists, About User Pane, Grid Cascade Animation, Drag Improvements",

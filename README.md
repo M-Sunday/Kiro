@@ -19,11 +19,10 @@ Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android,
 - **Context menus** — Right-click, long-press (mobile), or three-dot button on any item
 - **Keyboard shortcuts** — Press `?` to view all shortcuts
 - **Settings panel** — Theme, toolbar toggles, file/link history options, NSFW filters, download options, patch notes. About User pane with editable username, version, device info, and Reset Account.
-- **Themes** — White, Black, Obsidian Black, and Anthropic
+- **Themes** — White and Black
 - **Calendar view** — Browse videos by publish date
 - **Search** — Filter sidebar items by title
 - **Pin items** — Pin important videos to the top
-- **The Void** — Raw idea capture with no judgment or structure. Floating idea nodes with stage colors (Void, Signal, Star System, Island, Active Creation). Connection lines between related ideas. Zoom controls for navigation. Add ideas from the top-bar or dedicated input.
 - **Offline mode** — Detects connection status, greys search bar when offline, shows persistent online indicator (green/yellow/red badge in top-bar)
 - **Slow connection detection** — Shows yellow indicator when `effectiveType` is 2g/3g
 - **Patch notes** — In-app changelog shown on version updates and in Settings
@@ -103,7 +102,7 @@ src/
 │   ├── themes.css       # All body.theme-* + body.compact rules
 │   └── mobile.css       # @media (max-width: 640px) responsive overrides
 ├── js/
-│   ├── data.js          # localStorage CRUD helpers, selectedGridItems, APP_VERSION (1.5.1)
+│   ├── data.js          # localStorage CRUD helpers, selectedGridItems, APP_VERSION (3.0.0)
 │   ├── views.js         # setView(), showCardView(), clearCard(), renderSearchLanding()
 │   ├── calendar.js      # Calendar rendering, published date, privacy
 │   ├── settings.js      # Settings panel, load/save history, toolbar toggles, About User, Reset Account
@@ -117,7 +116,6 @@ src/
 │   ├── search.js        # YouTube link fetch, Direct Access dialog
 │   ├── extras.js        # Patch notes, keyboard shortcuts, debug inspector, SW update, online indicator
 │   ├── icons.js         # Local SVG icon loader
-│   ├── void-view.js     # The Void — idea node visualization, connections, zoom controls
 │   ├── onboarding.js    # First-time user onboarding flow
 │   └── app.js           # Bootstrap init sequence
 ├── assets/
@@ -151,7 +149,7 @@ Requires Electron. The app auto-opens in grid view by default.
 ## Tech stack
 
 - **Electron** — desktop wrapper
-- **Vanilla JS** — no frameworks (15 modular JS files)
+- **Vanilla JS** — no frameworks (14 modular JS files)
 - **localStorage** — persistence
 - **Service Worker** — offline caching + update detection
 - **Custom SVG icons** — 40 local icons (no CDN)

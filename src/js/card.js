@@ -46,7 +46,7 @@ function updateCardAddBtn() {
     }
     btn.onclick = (e) => { e.stopPropagation(); if (currentVideo) unlinkCurrentVideo() }
     copyBtn.style.display = 'inline-flex'
-    if (isElectron && dlBtn) dlBtn.style.display = 'inline-flex'
+    if (dlBtn) dlBtn.style.display = 'inline-flex'
     loadIcons()
   } else {
     row.style.display = 'flex'

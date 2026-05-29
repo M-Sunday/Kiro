@@ -105,7 +105,7 @@ function renderGridView() {
     html += '</div></div>'
   }
   var n = getUserName()
-  el.innerHTML = '<div class="grid-workbench"><div class="grid-workbench-text">' + (n ? n + "'s Workbench" : '') + '</div><div class="grid-clock"></div><div class="grid-workbench-actions"><button class="wb-btn" data-action="challenge" title="New Challenge"><i data-lucide="sparkles" style="width:15px;height:15px"></i> New Challenge</button><button class="wb-btn" data-action="goal" title="New Goal"><i data-lucide="rocket" style="width:15px;height:15px"></i> New Goal</button><button class="wb-btn wb-btn-void" data-action="void" title="The Void"><i data-lucide="sparkle" style="width:15px;height:15px"></i> The Void</button></div></div>' + html
+  el.innerHTML = '<div class="grid-workbench"><div class="grid-workbench-text">' + (n ? n + "'s Workbench" : '') + '</div><div class="grid-clock"></div><div class="grid-workbench-actions"><button class="wb-btn" data-action="note" title="New Note"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg> New Note</button><button class="wb-btn" data-action="challenge" title="New Challenge"><i data-lucide="sparkles" style="width:15px;height:15px"></i> New Challenge</button><button class="wb-btn" data-action="goal" title="New Goal"><i data-lucide="rocket" style="width:15px;height:15px"></i> New Goal</button></div></div>' + html
   if (!window.__gridAnimDone) {
     el.querySelectorAll('.grid-section').forEach(function(s) { s.classList.add('grid-section-anim') })
     el.querySelectorAll('.grid-item').forEach(function(s) { s.classList.add('grid-item-anim') })
@@ -483,7 +483,16 @@ document.addEventListener('click', function(e) {
   var btn = e.target.closest('.wb-btn')
   if (!btn) return
   var action = btn.dataset.action
-  if (action === 'challenge') openChallengeDialog()
+  if (action === 'note') {
+    const notes = getNotes()
+    const id = '_nt_' + Date.now()
+    notes.push({ id, title: 'Untitled', content: '', added: Date.now() })
+    saveNotes(notes)
+    renderSidebar()
+    openNote(id)
+    closeSidebarMobile()
+    setTimeout(function() { document.getElementById('noteViewTitle')?.focus(); document.getElementById('noteViewTitle')?.select() }, 100)
+  } else if (action === 'challenge') openChallengeDialog()
   else if (action === 'achievement') openAchievementDialog()
   else if (action === 'goal') openGoalDialog()
 })
@@ -603,8 +612,6 @@ document.getElementById('challengeDialogConfirm')?.addEventListener('click', fun
   checkAchievements()
   var rect = (document.querySelector('.wb-btn[data-action="challenge"]') || document.body).getBoundingClientRect()
   renderGridView()
-  var vv = document.getElementById('voidView')
-  if (vv && !vv.classList.contains('hidden')) renderVoidView()
   burstParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#30d158')
 })
 
@@ -675,15 +682,8 @@ function renderAchievements() {
 
   // default achievements
   var defaultAchievements = [
-    { id: 'first_idea', name: 'First Idea', desc: 'Capture your first idea in the Void', icon: 'sparkle' },
-    { id: 'first_signal', name: 'Signal Detected', desc: 'Promote an idea to Signal stage', icon: 'radar' },
-    { id: 'first_star', name: 'Star System', desc: 'Link two ideas together', icon: 'telescope' },
-    { id: 'first_island', name: 'Island Found', desc: 'Create a structured Island', icon: 'moon-star' },
-    { id: 'first_launch', name: 'Active Creation', desc: 'Promote an idea to Active Creation', icon: 'rocket' },
     { id: 'first_challenge', name: 'Challenger', desc: 'Complete your first challenge', icon: 'sparkles' },
     { id: 'first_goal', name: 'Goal Setter', desc: 'Set your first goal', icon: 'target' },
-    { id: 'ten_ideas', name: 'Idea Garden', desc: 'Capture 10 ideas in the Void', icon: 'library' },
-    { id: 'five_connections', name: 'Networker', desc: 'Make 5 connections between ideas', icon: 'orbit' },
     { id: 'challenge_5', name: '5 Challenges Done', desc: 'Complete 5 challenges', icon: 'star' }
   ]
 
@@ -703,9 +703,6 @@ function renderAchievements() {
 // ─── Auto-check achievements ──────────────────────────
 function checkAchievements() {
   var achievements = getVaultAchievements()
-  var ideas = getVaultIdeas()
-  var stages = getVaultStages()
-  var connections = getVaultConnections()
   var challenges = getVaultChallenges()
   var goals = getVaultGoals()
 
@@ -718,15 +715,8 @@ function checkAchievements() {
     return false
   }
 
-  if (ideas.length >= 1) unlock('first_idea')
-  if (Object.values(stages).some(function(s) { return s === 'signal' })) unlock('first_signal')
-  if (connections.length >= 1) unlock('first_star')
-  if (Object.values(stages).some(function(s) { return s === 'island' })) unlock('first_island')
-  if (Object.values(stages).some(function(s) { return s === 'active' })) unlock('first_launch')
   if (challenges.some(function(c) { return c.progress >= c.target })) unlock('first_challenge')
   if (goals.length >= 1) unlock('first_goal')
-  if (ideas.length >= 10) unlock('ten_ideas')
-  if (connections.length >= 5) unlock('five_connections')
   if (challenges.filter(function(c) { return c.progress >= c.target }).length >= 5) unlock('challenge_5')
 }
 
@@ -800,3 +790,37 @@ document.getElementById('challengeEditDeleteBtn')?.addEventListener('click', fun
 document.getElementById('challengeEditDialog')?.addEventListener('mousedown', function(e) {
   if (e.target === this) this.classList.remove('open')
 })
+
+// ─── Particle burst effect ────────────────────────────
+function todoBurst(e) {
+  var colors = ['#ffd60a', '#ff9f0a', '#30d158', '#007aff', '#ff375f']
+  for (var i = 0; i < 12; i++) {
+    var dot = document.createElement('div')
+    dot.className = 'vault-particle'
+    var color = colors[i % colors.length]
+    var size = 4 + Math.random() * 6
+    dot.style.width = size + 'px'
+    dot.style.height = size + 'px'
+    dot.style.background = color
+    dot.style.boxShadow = '0 0 6px ' + color
+    dot.style.left = (e.clientX || window.innerWidth / 2) + 'px'
+    dot.style.top = (e.clientY || window.innerHeight / 2) + 'px'
+    document.body.appendChild(dot)
+    var angle = Math.random() * 360
+    var dist = 20 + Math.random() * 30
+    var dx = Math.cos(angle * Math.PI / 180) * dist
+    var dy = Math.sin(angle * Math.PI / 180) * dist
+    dot.style.transition = 'transform 0.45s cubic-bezier(0,.8,.5,1), opacity 0.45s ease, box-shadow 0.45s ease'
+    requestAnimationFrame(function() {
+      dot.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(0)'
+      dot.style.opacity = '0'
+      dot.style.boxShadow = 'none'
+    })
+    setTimeout(function() { if (dot.parentNode) dot.parentNode.removeChild(dot) }, 500)
+  }
+}
+
+function burstParticles(x, y, color) {
+  var fakeEvent = { clientX: x, clientY: y }
+  todoBurst(fakeEvent)
+}

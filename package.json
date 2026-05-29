@@ -1,6 +1,6 @@
 {
   "name": "vault",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
@@ -15,11 +15,15 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.0.1",
+    "@capacitor/app": "^8.1.0",
     "@capacitor/cli": "^8.0.1",
     "@capacitor/core": "^8.0.1",
+    "@capacitor/filesystem": "^8.1.2",
     "@capacitor/haptics": "^8.0.2",
+    "@capacitor/http": "^0.0.2",
     "@capacitor/local-notifications": "^8.2.0",
     "@capacitor/status-bar": "^8.0.2",
-    "lucide": "^1.16.0"
+    "lucide": "^1.16.0",
+    "youtubei.js": "^17.0.1"
   }
 }

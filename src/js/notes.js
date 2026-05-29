@@ -87,45 +87,114 @@ document.getElementById('noteRedoBtn').addEventListener('click', () => {
   document.execCommand('redo')
 })
 
-document.getElementById('noteViewContent').addEventListener('paste', function (e) {
+function noteInsertImage(blob, el) {
+  const reader = new FileReader()
+  reader.onload = function (ev) {
+    const img = document.createElement('img')
+    img.src = ev.target.result
+    img.style.maxWidth = '100%'
+    img.style.borderRadius = '8px'
+    img.style.margin = '8px 0'
+    img.style.display = 'block'
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount) {
+      const range = sel.getRangeAt(0)
+      range.deleteContents()
+      range.insertNode(img)
+      range.setStartAfter(img)
+      range.collapse(true)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    } else {
+      el.appendChild(img)
+    }
+    noteSaveContent()
+  }
+  reader.readAsDataURL(blob)
+}
+
+async function noteReadClipboardImage(el) {
+  if (typeof AndroidClipboard !== 'undefined') {
+    const dataUri = AndroidClipboard.readImage()
+    if (dataUri) {
+      const resp = await fetch(dataUri)
+      const blob = await resp.blob()
+      noteInsertImage(blob, el)
+      return true
+    }
+  }
+
+  try {
+    const clipboardItems = await navigator.clipboard?.read()
+    if (clipboardItems) {
+      for (const ci of clipboardItems) {
+        for (const type of ci.types) {
+          if (type.startsWith('image/')) {
+            const blob = await ci.getType(type)
+            if (blob) {
+              noteInsertImage(blob, el)
+              return true
+            }
+          }
+        }
+      }
+    }
+  } catch {}
+
+  return false
+}
+
+document.getElementById('noteViewContent').addEventListener('paste', async function (e) {
+  const el = this
+
   const items = e.clipboardData?.items
-  let handled = false
   if (items) {
     for (const item of items) {
       if (item.type.startsWith('image/') && typeof item.getAsFile === 'function') {
         const blob = item.getAsFile()
         if (!blob) continue
         e.preventDefault()
-        handled = true
-        const reader = new FileReader()
-        reader.onload = function (ev) {
-          const img = document.createElement('img')
-          img.src = ev.target.result
-          img.style.maxWidth = '100%'
-          img.style.borderRadius = '8px'
-          img.style.margin = '8px 0'
-          img.style.display = 'block'
-          const sel = window.getSelection()
-          if (sel && sel.rangeCount) {
-            const range = sel.getRangeAt(0)
-            range.deleteContents()
-            range.insertNode(img)
-            range.setStartAfter(img)
-            range.collapse(true)
-            sel.removeAllRanges()
-            sel.addRange(range)
-          } else {
-            this.appendChild(img)
-          }
-          noteSaveContent()
-        }
-        reader.readAsDataURL(blob)
-        break
+        noteInsertImage(blob, el)
+        return
       }
     }
   }
+
+  if (await noteReadClipboardImage(el)) {
+    e.preventDefault()
+    return
+  }
+
+  if (!e.clipboardData) {
+    e.preventDefault()
+    return
+  }
+
+  try {
+    const html = e.clipboardData.getData('text/html')
+    if (html && /<img[^>]+src\s*=\s*['"]data:image\//i.test(html)) {
+      document.execCommand('insertHTML', false, html)
+      noteSaveContent()
+      return
+    }
+  } catch {}
+
+  try {
+    const text = e.clipboardData.getData('text/plain') || e.clipboardData.getData('text/html')
+    if (text) {
+      e.preventDefault()
+      document.execCommand('insertText', false, text)
+      noteSaveContent()
+    }
+  } catch {}
+})
+
+document.getElementById('notePasteImgBtn').addEventListener('click', async function () {
+  const el = document.getElementById('noteViewContent')
+  if (!el) return
+  const handled = await noteReadClipboardImage(el)
   if (!handled) {
-    setTimeout(noteSaveContent, 0)
+    el.focus()
   }
 })
 

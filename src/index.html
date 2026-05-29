@@ -8,12 +8,12 @@
     <link rel="manifest" href="assets/manifest.json">
     <link rel="icon" href="assets/icons/app-icon-192.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/app-icon-192.svg">
-    <link rel="stylesheet" href="css/base.css?v=2.0.1">
-    <link rel="stylesheet" href="css/layout.css?v=2.0.1">
-    <link rel="stylesheet" href="css/components.css?v=2.0.1">
-    <link rel="stylesheet" href="css/themes.css?v=2.0.1">
-    <link rel="stylesheet" href="css/mobile.css?v=2.0.1">
-    <link rel="stylesheet" href="css/vault.css?v=2.0.1">
+    <link rel="stylesheet" href="css/base.css?v=3.0.0">
+    <link rel="stylesheet" href="css/layout.css?v=3.0.0">
+    <link rel="stylesheet" href="css/components.css?v=3.0.0">
+    <link rel="stylesheet" href="css/themes.css?v=3.0.0">
+    <link rel="stylesheet" href="css/mobile.css?v=3.0.0">
+    <link rel="stylesheet" href="css/vault.css?v=3.0.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -21,11 +21,9 @@
     body.native-android { padding-top: 0 !important; }
       body.native-android .main-area { padding-top: max(30px, env(safe-area-inset-top, 0px)) !important; padding-bottom: max(20px, env(safe-area-inset-bottom, 0px)) !important; background: #f5f5f7; }
     body.native-android.theme-black .main-area { background: #1c1c1e; }
-    body.native-android.theme-obsidian .main-area { background: #19191e; }
-    body.native-android.theme-anthropic .main-area { background: #E8E0D8; }
     body.native-android .sidebar { padding-top: 40px !important; }
-    body.native-android .void-view-header { padding-top: max(12px, env(safe-area-inset-top, 0px)) !important; }
-    body.native-android .void-view-footer { padding: 10px max(20px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px)) !important; }
+    body.native-android .settings-cat[data-cat="download"] { display: none; }
+
     </style>
 </head>
 <body>
@@ -34,12 +32,6 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-header-left">
-                <div class="sidebar-logo">
-                    <img src="assets/icons/anthropic-symbol.svg" alt="" class="sidebar-logo-symbol sidebar-logo-dark" />
-                    <img src="assets/icons/anthropic-symbol-ivory.svg" alt="" class="sidebar-logo-symbol sidebar-logo-light" />
-                    <img src="assets/icons/anthropic-logotype.svg" alt="" class="sidebar-logo-type sidebar-logo-dark" />
-                    <img src="assets/icons/anthropic-logotype-ivory.svg" alt="" class="sidebar-logo-type sidebar-logo-light" />
-                </div>
             </div>
             <div class="sidebar-header-right">
                 <button class="sidebar-icon-btn" id="settingsBtn">
@@ -62,7 +54,7 @@
                 Add bookmark
             </button>
             <button class="sidebar-footer-btn" id="newNoteBtn">
-                <i data-lucide="file-text" class="footer-icon"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="footer-icon lucide-square-pen"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg>
                 New note
             </button>
         </div>
@@ -76,9 +68,7 @@
                 <i data-lucide="panel-left" class="menu-btn-icon"></i>
             </button>
 
-            <button class="menu-btn mr-6" id="newVoidTopBtn" title="Add to Void">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg>
-            </button>
+
             <button class="menu-btn mr-6" id="gridBtn">
                 <i data-lucide="layout-grid" class="icon-lg"></i>
             </button>
@@ -139,6 +129,7 @@
                 <input class="note-view-title" id="noteViewTitle" placeholder="Note title" spellcheck="false" />
                 <div class="note-view-actions">
                     <button class="note-view-btn" id="noteTodoBtn" title="Add todo"><i data-lucide="list-checks" class="icon-md"></i></button>
+                    <button class="note-view-btn" id="notePasteImgBtn" title="Paste image from clipboard"><i data-lucide="clipboard-plus" class="icon-md"></i></button>
                     <button class="note-view-btn" id="noteUndoBtn"><i data-lucide="undo-2" class="icon-md"></i></button>
                     <button class="note-view-btn" id="noteRedoBtn"><i data-lucide="redo-2" class="icon-md"></i></button>
                     <button class="note-view-btn" id="noteDeleteBtn"><i data-lucide="trash-2" class="icon-md" style="color:#ff453a"></i></button>
@@ -155,7 +146,7 @@
     <!-- Folder dialog -->
     <div class="folder-dialog-overlay" id="folderDialog">
         <div class="folder-dialog">
-            <h3>New folder</h3>
+            <div class="folder-dialog-header"><h3>New Folder</h3><p class="folder-dialog-desc">Create a folder to organize your items.</p></div>
             <input type="text" id="folderNameInput" placeholder="Folder name" spellcheck="false" />
             <div class="folder-colors">
                 <div class="folder-color active" data-color="#ff453a" style="background:#ff453a"></div>
@@ -166,7 +157,7 @@
             </div>
             <div class="folder-dialog-actions">
                 <button class="dialog-btn cancel" id="folderDialogCancel">Cancel</button>
-                <button class="dialog-btn confirm" id="folderDialogConfirm">Create</button>
+                <button class="dialog-btn confirm" id="folderDialogConfirm">Create Folder</button>
             </div>
         </div>
     </div>
@@ -174,12 +165,12 @@
     <!-- Bookmark dialog -->
     <div class="folder-dialog-overlay" id="bookmarkDialog">
         <div class="folder-dialog">
-            <h3>Add bookmark</h3>
+            <div class="folder-dialog-header"><h3>Add Bookmark</h3><p class="folder-dialog-desc">Save a link for quick access later.</p></div>
             <input type="text" id="bookmarkUrlInput" placeholder="https://..." spellcheck="false" />
             <input type="text" id="bookmarkTitleInput" placeholder="Title (optional)" spellcheck="false" />
             <div class="folder-dialog-actions">
                 <button class="dialog-btn cancel" id="bookmarkDialogCancel">Cancel</button>
-                <button class="dialog-btn confirm" id="bookmarkDialogConfirm">Add</button>
+                <button class="dialog-btn confirm" id="bookmarkDialogConfirm">Add Bookmark</button>
             </div>
         </div>
     </div>
@@ -187,12 +178,12 @@
     <!-- Direct Access dialog -->
     <div class="folder-dialog-overlay" id="daDialog">
         <div class="folder-dialog">
-            <h3>Add Direct Access</h3>
+            <div class="folder-dialog-header"><h3>Add Direct Access</h3><p class="folder-dialog-desc">Create a quick-launch shortcut.</p></div>
             <p class="da-url-display" id="daUrlDisplay"></p>
             <input type="text" id="daTitleInput" placeholder="Title (optional)" spellcheck="false" />
             <div class="folder-dialog-actions">
                 <button class="dialog-btn cancel" id="daDialogCancel">Cancel</button>
-                <button class="dialog-btn confirm" id="daDialogConfirm">Add</button>
+                <button class="dialog-btn confirm" id="daDialogConfirm">Add Shortcut</button>
             </div>
         </div>
     </div>
@@ -200,12 +191,32 @@
     <!-- Note dialog -->
     <div class="folder-dialog-overlay" id="noteDialog">
         <div class="folder-dialog note-dialog">
-            <h3>New note</h3>
+            <div class="folder-dialog-header"><h3>New Note</h3><p class="folder-dialog-desc">Capture a quick thought.</p></div>
             <input type="text" id="noteTitleInput" placeholder="Title" spellcheck="false" />
             <textarea id="noteContentInput" placeholder="Write something..." spellcheck="false"></textarea>
             <div class="folder-dialog-actions">
                 <button class="dialog-btn cancel" id="noteDialogCancel">Cancel</button>
-                <button class="dialog-btn confirm" id="noteDialogConfirm">Add</button>
+                <button class="dialog-btn confirm" id="noteDialogConfirm">Add Note</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Download dialog -->
+    <div class="folder-dialog-overlay" id="downloadDialog">
+        <div class="folder-dialog">
+            <div class="folder-dialog-header"><h3>Download Video</h3><p class="folder-dialog-desc" id="downloadDialogDesc">Choose where to save this video.</p></div>
+            <div class="download-quality-row">
+                <label class="download-quality-option active" data-quality="720"><span class="download-quality-label">720p</span><span class="download-quality-sublabel">HD ready</span></label>
+                <label class="download-quality-option" data-quality="480"><span class="download-quality-label">480p</span><span class="download-quality-sublabel">Standard</span></label>
+                <label class="download-quality-option" data-quality="360"><span class="download-quality-label">360p</span><span class="download-quality-sublabel">Fast</span></label>
+            </div>
+            <div class="dl-progress" id="dlDialogProgress" style="display:none">
+                <div class="dl-progress-track"><div class="dl-progress-fill" id="dlDialogProgressFill"></div></div>
+                <span class="dl-progress-text" id="dlDialogProgressText">0%</span>
+            </div>
+            <div class="folder-dialog-actions">
+                <button class="dialog-btn cancel" id="downloadDialogCancel">Cancel</button>
+                <button class="dialog-btn confirm" id="downloadDialogConfirm">Download</button>
             </div>
         </div>
     </div>
@@ -264,7 +275,7 @@
                     </div>
                     <div class="settings-field-row mt-12">
                         <label class="settings-field-label">Version</label>
-                        <p class="settings-user-value" id="appVersionLabel">2.0.1</p>
+                        <p class="settings-user-value" id="appVersionLabel">3.0.0</p>
                     </div>
                     <div class="settings-field-row mt-12">
                         <label class="settings-field-label">Device</label>
@@ -280,8 +291,6 @@
                     <div class="theme-options">
                         <div class="theme-option" data-theme="white"><div class="theme-preview theme-white"></div><span>White</span></div>
                         <div class="theme-option" data-theme="black"><div class="theme-preview theme-black"></div><span>Black</span></div>
-                        <div class="theme-option" data-theme="obsidian"><div class="theme-preview theme-obsidian"></div><span>Obsidian Black</span></div>
-                        <div class="theme-option" data-theme="anthropic"><div class="theme-preview theme-anthropic"></div><span>Anthropic</span></div>
                     </div>
                     <label class="settings-checkbox"><input type="checkbox" id="systemTheme" /><span class="settings-checkbox-mark"></span><span>Have system theme</span></label>
                 </div>
@@ -292,7 +301,7 @@
                         <input type="text" id="settingsUserName" class="settings-text-input" placeholder="Enter your name" maxlength="30" />
                     </div>
                     <div class="settings-footer-row flex flex-col gap-6 mt-20">
-                        <span id="settingsBasicVersion">Version 2.0.1</span><span>Language: English</span><span>Account: Not logged in</span><span>Commercial licence</span>
+                        <span id="settingsBasicVersion">Version 3.0.0</span><span>Language: English</span><span>Account: Not logged in</span><span>Commercial licence</span>
                     </div>
                 </div>
                 <div class="settings-pane" id="pane-toolbar" style="display:none">
@@ -395,27 +404,6 @@
         </div>
     </div>
 
-    <!-- Void View -->
-    <div class="void-view hidden" id="voidView">
-      <div class="void-view-header">
-        <button class="void-view-back" id="voidViewBack"><i data-lucide="arrow-left" class="icon-lg"></i> Back to Workbench</button>
-        <div class="void-view-title">The Void</div>
-      </div>
-      <div class="void-view-canvas" id="voidCanvas">
-        <div class="void-viewport" id="voidViewport"></div>
-      </div>
-      <div class="void-view-footer">
-        <div class="void-input-row">
-          <input type="text" id="voidInput" placeholder="What idea is on your mind?" spellcheck="false" />
-          <button class="void-add-btn" id="voidAddBtn">Add to Void</button>
-        </div>
-        <div class="void-zoom-controls">
-          <button class="void-zoom-btn" id="voidZoomIn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
-          <button class="void-zoom-btn" id="voidZoomOut"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
-          <button class="void-zoom-btn" id="voidZoomReset"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
-        </div>
-      </div>
-    </div>
 
     <!-- Challenge dialog -->
     <div class="folder-dialog-overlay" id="challengeDialog">
@@ -628,7 +616,6 @@
     <script src="js/search.js"></script>
     <script src="js/icons.js"></script>
     <script src="js/extras.js"></script>
-    <script src="js/void-view.js"></script>
     <script src="js/onboarding.js"></script>
     <script src="js/app.js"></script>
     <script>
@@ -657,9 +644,9 @@
           var sb = window.Capacitor.Plugins.StatusBar
           if (!sb) return
           var cls = document.body.className
-          if (cls.indexOf('theme-black') > -1 || cls.indexOf('theme-obsidian') > -1) {
+          if (cls.indexOf('theme-black') > -1) {
             sb.setStyle({ style: 'LIGHT' })
-            sb.setBackgroundColor({ color: cls.indexOf('theme-black') > -1 ? '#2c2c2e' : '#1e1e24' })
+            sb.setBackgroundColor({ color: '#2c2c2e' })
           } else {
             sb.setStyle({ style: 'DARK' })
             sb.setBackgroundColor({ color: '#ffffff' })

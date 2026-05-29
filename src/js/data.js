@@ -103,18 +103,6 @@ let currentVideo = null
 let dragVideoId = null
 let currentNoteId = null
 
-// ─── Vault Stages System ──────────────────────────────
-const STAGES = ['void', 'signal', 'star_system', 'island', 'active']
-
-function getVaultIdeas() { try { return JSON.parse(localStorage.getItem('vault_ideas') || '[]') } catch { return [] } }
-function saveVaultIdeas(ideas) { safeSetItem('vault_ideas', JSON.stringify(ideas)) }
-
-function getVaultStages() { try { return JSON.parse(localStorage.getItem('vault_stages') || '{}') } catch { return {} } }
-function saveVaultStages(s) { safeSetItem('vault_stages', JSON.stringify(s)) }
-
-function getVaultConnections() { try { return JSON.parse(localStorage.getItem('vault_connections') || '[]') } catch { return [] } }
-function saveVaultConnections(c) { safeSetItem('vault_connections', JSON.stringify(c)) }
-
 function getVaultChallenges() { try { return JSON.parse(localStorage.getItem('vault_challenges') || '[]') } catch { return [] } }
 function saveVaultChallenges(c) { safeSetItem('vault_challenges', JSON.stringify(c)) }
 
@@ -124,49 +112,4 @@ function saveVaultAchievements(a) { safeSetItem('vault_achievements', JSON.strin
 function getVaultGoals() { try { return JSON.parse(localStorage.getItem('vault_goals') || '[]') } catch { return [] } }
 function saveVaultGoals(g) { safeSetItem('vault_goals', JSON.stringify(g)) }
 
-function setIdeaStage(ideaId, stage) {
-  const stages = getVaultStages()
-  stages[ideaId] = stage
-  saveVaultStages(stages)
-}
-
-function getIdeaStage(ideaId) {
-  return getVaultStages()[ideaId] || 'void'
-}
-
-function createVaultIdea(title, type, source) {
-  const ideas = getVaultIdeas()
-  const id = '_vi_' + Date.now()
-  ideas.push({ id, title, type: type || 'note', source: source || '', created: Date.now(), updated: Date.now() })
-  saveVaultIdeas(ideas)
-  const stages = getVaultStages()
-  stages[id] = 'void'
-  saveVaultStages(stages)
-  return id
-}
-
-function promoteIdea(ideaId) {
-  const stages = getVaultStages()
-  const current = stages[ideaId] || 'void'
-  const idx = STAGES.indexOf(current)
-  if (idx < STAGES.length - 1) {
-    stages[ideaId] = STAGES[idx + 1]
-    saveVaultStages(stages)
-    return STAGES[idx + 1]
-  }
-  return current
-}
-
-function demoteIdea(ideaId) {
-  const stages = getVaultStages()
-  const current = stages[ideaId] || 'void'
-  const idx = STAGES.indexOf(current)
-  if (idx > 0) {
-    stages[ideaId] = STAGES[idx - 1]
-    saveVaultStages(stages)
-    return STAGES[idx - 1]
-  }
-  return current
-}
-
-const APP_VERSION = '2.0.1'
+const APP_VERSION = '3.0.0'

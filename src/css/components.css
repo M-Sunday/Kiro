@@ -136,8 +136,6 @@
 .theme-preview { width: 100%; height: 70px; border-radius: 8px; border: 1px solid #d1d1d6; }
 .theme-white { background: #f5f5f7; }
 .theme-black { background: #1d1d1f; }
-.theme-obsidian { background: #19191e; }
-.theme-anthropic { background: #E8E0D8; }
 .settings-clear-btn { padding: 8px 18px; border: 1px solid #d1d1d6; border-radius: 8px; background: #fff; font-size: 13px; font-family: inherit; color: #3a3a3c; cursor: pointer; transition: background 0.12s; }
 .settings-clear-btn:hover { background: #f5f5f7; border-color: #1d1d1f; }
 .settings-field-row { display: flex; flex-direction: column; gap: 6px; }
@@ -224,7 +222,7 @@
 
 .note-view { display: flex; flex-direction: column; flex: 1; overflow: hidden; padding: 0 10px; min-height: 0; }
 .note-view-header { display: flex; align-items: center; gap: 10px; padding: 8px 14px; margin: 10px 10px 0; border-radius: 14px; background: #f5f5f7; border: 1px solid #e8e8ed; }
-.note-view-title { flex: 1; font-size: 20px; font-weight: 700; border: none; background: transparent; outline: none; color: #1d1d1f; font-family: inherit; letter-spacing: -0.3px; padding: 0; }
+.note-view-title { flex: 1; font-size: 20px; font-weight: 700; border: none; background: transparent; outline: none; color: #1d1d1f; font-family: inherit; letter-spacing: -0.3px; padding: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .note-view-actions { display: flex; gap: 4px; margin-left: auto; }
 .note-view-btn { background: none; border: 1px solid #e8e8ed; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; color: #8e8e93; flex-shrink: 0; }
 .note-view-btn:hover { background: #f5f5f7; }
@@ -286,8 +284,10 @@
 /* ─── FOLDER DIALOG ───────────────────────────────────── */
 .folder-dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 150; display: none; align-items: center; justify-content: center; }
 .folder-dialog-overlay.open { display: flex; }
-.folder-dialog { background: #fff; border-radius: 16px; padding: 20px; width: 260px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
-.folder-dialog h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+.folder-dialog { background: #fff; border-radius: 16px; padding: 24px; width: 280px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+.folder-dialog-header { margin-bottom: 16px; }
+.folder-dialog h3 { font-size: 15px; font-weight: 600; margin: 0; }
+.folder-dialog-desc { font-size: 12px; color: #8e8e93; margin: 4px 0 0 0; }
 .folder-dialog input { width: 100%; padding: 10px 14px; border: 1px solid #e8e8ed; border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.15s; }
 .folder-dialog input + input { margin-top: 8px; }
 .folder-dialog input:focus { border-color: #1d1d1f; }
@@ -306,6 +306,11 @@
 .dialog-btn.confirm:hover { opacity: 0.85; }
 .dialog-btn.danger { border: none; background: #ff453a; color: #fff; }
 .dialog-btn.danger:hover { opacity: 0.85; }
+.download-quality-row { display: flex; gap: 8px; margin: 16px 0; }
+.download-quality-option { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 8px; border: 2px solid #e8e8ed; border-radius: 12px; cursor: pointer; transition: border-color 0.12s, background 0.12s; background: #f5f5f7; }
+.download-quality-option.active { border-color: #1d1d1f; background: #fff; }
+.download-quality-label { font-size: 14px; font-weight: 600; color: #1d1d1f; }
+.download-quality-sublabel { font-size: 10px; color: #8e8e93; }
 .add-goal-btn { display:flex; align-items:center; justify-content:center; gap:4px; margin-top:6px; padding:4px 10px; border-radius:6px; border:1px dashed #c7c7cc; background:transparent; color:#86868b; font-size:11px; font-family:inherit; cursor:pointer; width:100%; }
 .da-url-display { font-size:13px; color:#86868b; margin-bottom:10px; }
 .goal-input { width:60px; padding:6px 8px; border:1px solid #e8e8ed; border-radius:8px; font-size:13px; font-family:inherit; outline:none; background:#f5f5f7; color:#1d1d1f; text-align:center; }

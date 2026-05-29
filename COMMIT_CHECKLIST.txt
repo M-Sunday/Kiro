@@ -15,7 +15,7 @@
 ☐ src/assets/manifest.json    — "version": "X.Y.Z"
 ☐ package.json                — "version": "X.Y.Z"
 ☐ src/sw.js                   — CACHE = 'yt-vault-X.Y.Z' (matches version exactly)
-☐ android/app/build.gradle    — versionCode +1, versionName "X.Y.Z"
+☐ android/app/build.gradle    — versionCode +1, versionName "X.Y.Z" (LOCAL ONLY — gitignored, but must be bumped before APK deploy)
 
 ─── 3. PWA UPDATE DEADLOCK CHECK ──────────────────────────────
 The SW update flow (extras.js) had version guards that prevented

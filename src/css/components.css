@@ -18,6 +18,14 @@
 .card-add-btn.saved { border-color: #30d158; color: #30d158; }
 .card-add-btn.saved:hover { border-color: #ff453a; color: #ff453a; cursor: pointer; }
 .card-add-icon { width: 14px; height: 14px; }
+.card-add-btn.desktop-only { opacity: 0.4; cursor: not-allowed; pointer-events: auto; }
+.card-add-btn.desktop-only:hover { background: #e8e8ed; color: #3a3a3c; }
+
+/* ─── DOWNLOAD PROGRESS ──────────────────────── */
+.dl-progress { padding: 4px 24px 0; display: flex; align-items: center; gap: 8px; }
+.dl-progress-track { flex: 1; height: 4px; background: #e8e8ed; border-radius: 999px; overflow: hidden; }
+.dl-progress-fill { height: 100%; width: 0%; background: #0a84ff; border-radius: 999px; transition: width 0.2s; }
+.dl-progress-text { font-size: 11px; color: #8e8e93; min-width: 32px; text-align: right; font-variant-numeric: tabular-nums; }
 
 /* ─── UPDATE TOAST ───────────────────────────────────── */
 .update-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 500; background: #1d1d1f; color: #fff; font-size: 13px; padding: 8px 14px 8px 20px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; display: flex; align-items: center; gap: 12px; white-space: nowrap; }

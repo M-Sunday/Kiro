@@ -3,34 +3,61 @@
   if (getUserName()) return
 
   var splash = document.getElementById('splash')
-  var splashIcon = document.getElementById('splashIcon')
-  var splashText = document.getElementById('splashText')
   var step0 = document.getElementById('onbStep0')
   var onboarding = document.getElementById('onboarding')
   var step1 = document.getElementById('onbStep1')
-  var step2 = document.getElementById('onbStep2')
-  var welcomeText = document.getElementById('onbWelcome')
-  var next0 = document.getElementById('onbNext0')
   var nameInput = document.getElementById('onbNameInput')
-  var next1 = document.getElementById('onbNext1')
-  var nameDisplay = document.getElementById('onbNameDisplay')
-  var yesBtn = document.getElementById('onbYes')
-  var noBtn = document.getElementById('onbNo')
+  var stage = document.getElementById('onbStage')
+  var infoContent = document.getElementById('onbInfoContent')
+  var backBtn = document.getElementById('onbBack')
 
-  requestAnimationFrame(function() {
-    welcomeText.classList.add('onb-visible')
-    next0.classList.add('onb-visible')
+  // Set footer version
+  document.getElementById('onbFooterVersion').textContent = 'v' + APP_VERSION
+
+  // ─── Info content ────────────────────────────────────
+
+  var infoData = {
+    appinfo: 'a local-first space<br>for your videos<br>bookmarks notes<br>and ideas<br>no algorithms<br>no noise',
+    privacy: 'kiro lives on your device<br>your data stays local<br>we never collect<br>share or sell<br>your information'
+  }
+  var currentInfo = null
+  var showBackTimer = null
+
+  function openInfo(action) {
+    if (currentInfo === action) { closeInfo(); return }
+    if (currentInfo) {
+      infoContent.innerHTML = infoData[action]
+      currentInfo = action
+      return
+    }
+    currentInfo = action
+    infoContent.innerHTML = infoData[action]
+    stage.classList.add('info-open')
+    splash.classList.add('info-bg')
+    showBackTimer = setTimeout(function() { backBtn.classList.add('visible') }, 1000)
+  }
+
+  function closeInfo() {
+    currentInfo = null
+    clearTimeout(showBackTimer)
+    backBtn.classList.remove('visible')
+    splash.classList.remove('info-bg')
+    stage.classList.remove('info-open')
+  }
+
+  backBtn.addEventListener('click', closeInfo)
+
+  document.querySelectorAll('.onb-choice').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation()
+      if (this.dataset.action === 'setup') { closeInfo(); goToStep1(); return }
+      openInfo(this.dataset.action)
+    })
   })
 
-  function goToStep1() {
-    welcomeText.classList.remove('onb-visible')
-    welcomeText.classList.add('onb-fade-out')
-    next0.classList.remove('onb-visible')
-    next0.classList.add('onb-fade-out')
-    splashText.textContent = 'Getting set up'
-    splashText.style.display = 'block'
-    splashText.style.opacity = '1'
+  // ─── Step 1 (name input) ─────────────────────────────
 
+  function goToStep1() {
     setTimeout(function() {
       splash.style.display = 'none'
       onboarding.style.display = 'flex'
@@ -38,75 +65,35 @@
       step1.style.display = 'block'
       step1.classList.remove('onb-hidden')
       requestAnimationFrame(function() {
-        step1.querySelector('.onb-label').classList.add('onb-visible')
+        step1.querySelector('.onb-prompt').classList.add('onb-visible')
         nameInput.style.opacity = '1'
         nameInput.style.transform = 'translateY(0)'
       })
       setTimeout(function() { nameInput.focus() }, 400)
-    }, 500)
+    }, 200)
   }
 
-  next0.addEventListener('click', goToStep1)
-
-  nameInput.addEventListener('input', function() {
-    if (this.value.trim()) {
-      next1.classList.remove('onb-hidden')
-      next1.style.display = 'block'
-      requestAnimationFrame(function() { next1.classList.add('onb-visible') })
-    } else {
-      next1.classList.remove('onb-visible')
-      next1.classList.add('onb-hidden')
-      setTimeout(function() { if (!nameInput.value.trim()) next1.style.display = 'none' }, 300)
-    }
-  })
-
-  function goToStep2() {
-    var name = nameInput.value.trim()
-    if (!name) return
-    nameDisplay.textContent = name
-    step1.style.display = 'none'
-    step2.style.display = 'block'
-    step2.classList.remove('onb-hidden')
-    requestAnimationFrame(function() {
-      nameDisplay.classList.add('onb-visible')
-      setTimeout(function() {
-        step2.querySelector('.onb-label').classList.add('onb-visible')
-        setTimeout(function() {
-          yesBtn.classList.add('onb-visible')
-          noBtn.classList.add('onb-visible')
-        }, 300)
-      }, 400)
-    })
-  }
-
-  next1.addEventListener('click', goToStep2)
   nameInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && next1.style.display !== 'none') goToStep2()
+    if (e.key === 'Enter' && this.value.trim()) finishOnboarding(this.value.trim())
   })
 
-  yesBtn.addEventListener('click', function() {
-    saveUserName(nameInput.value.trim())
-    onboarding.style.transition = 'opacity 0.4s ease'
-    onboarding.style.opacity = '0'
+  function finishOnboarding(name) {
+    saveUserName(name)
+
+    onboarding.style.display = 'none'
+    splash.style.display = 'none'
+
+    if (window.startApp) window.startApp()
+
     setTimeout(function() {
-      onboarding.style.display = 'none'
-      if (window.startApp) window.startApp()
-      if (window.__splashFade) window.__splashFade()
-    }, 400)
-  })
+      var wb = document.querySelector('.grid-workbench')
+      if (wb) {
+        wb.classList.remove('grid-section-anim')
+        wb.style.opacity = '1'
+        wb.style.transform = 'translateY(0)'
+      }
 
-  noBtn.addEventListener('click', function() {
-    step2.style.display = 'none'
-    ;[nameDisplay, step2.querySelector('.onb-label'), yesBtn, noBtn].forEach(function(el) {
-      el.classList.remove('onb-visible')
-    })
-    step1.style.display = 'block'
-    nameInput.value = ''
-    nameInput.style.opacity = '1'
-    nameInput.style.transform = 'translateY(0)'
-    nameInput.focus()
-    next1.style.display = 'none'
-    next1.classList.remove('onb-visible')
-    next1.classList.remove('onb-hidden')
-  })
+      if (window.startGridAnim) window.startGridAnim()
+    }, 250)
+  }
 })()

@@ -97,12 +97,20 @@ body.theme-black .note-view-btn { border-color: #3a3a3c; color: #a1a1a6; }
 body.theme-black .note-view-btn:hover { background: #3a3a3c; }
 body.theme-black .note-view-content { color: #a1a1a6; }
 body.theme-black .note-view-content a { color: #5a9eff; }
+body.theme-black .onb-title { color: #636366; }
+body.theme-black .haiku-line { color: #636366; }
+body.theme-black .onb-prompt { color: #636366; }
 body.theme-black .onb-welcome { color: #a1a1a6; }
-body.theme-black .onb-label { color: #a1a1a6; }
-body.theme-black .onb-input { color: #f5f5f7; border-color: #3a3a3c; }
+body.theme-black .onb-input { color: #f5f5f7; }
 body.theme-black .onb-input::placeholder { color: #48484a; }
-body.theme-black .onb-input:focus { border-color: #5a9eff; }
+body.theme-black .onb-choice { color: #636366; }
+body.theme-black .onb-choice:hover { color: #f5f5f7; }
+body.theme-black .onb-info-content { color: #636366; }
+body.theme-black .onb-footer { color: #48484a; }
+body.theme-black #splash.info-bg { background: #4a2c22; }
 body.theme-black .onb-name-display { color: #f5f5f7; }
+body.theme-black .onb-confirm-btn { color: #636366; }
+body.theme-black .onb-confirm-btn:hover { color: #f5f5f7; }
 body.theme-black .grid-workbench-text { color: #636366; }
 body.theme-black #onboarding { background: var(--splash-bg, #1c1c1e); }
 body.theme-black .note-view-footer { border-color: #3a3a3c; color: #a1a1a6; }
@@ -163,6 +171,11 @@ body.theme-black .nsfw-chip button { background: #636366; color: #f5f5f7; }
 body.theme-black .nsfw-chip button:hover { background: #8e8e93; }
 body.theme-black #nsfwAddInput { background: #3a3a3c; border-color: #3a3a3c; color: #f5f5f7; }
 body.theme-black .ctx-item.ctx-danger { color: #ff453a; }
+body.theme-black .dl-progress-track { background: #3a3a3c; }
+body.theme-black .dl-progress-fill { background: #0a84ff; }
+body.theme-black .dl-progress-text { color: #a1a1a6; }
+body.theme-black .card-add-btn.desktop-only { opacity: 0.35; background: #3a3a3c; color: #a1a1a6; }
+body.theme-black .card-add-btn.desktop-only:hover { background: #3a3a3c; color: #a1a1a6; }
 body.theme-black .nsfw-input { background: #3a3a3c; border-color: #3a3a3c; color: #f5f5f7; }
 body.theme-black .nsfw-input:focus { border-color: #5a9eff; }
 body.theme-black .nsfw-add-btn { background: #f5f5f7; color: #1c1c1e; }

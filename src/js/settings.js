@@ -12,7 +12,7 @@ document.querySelectorAll('.settings-cat').forEach(cat => {
     document.querySelectorAll('.settings-cat').forEach(c => c.classList.remove('active'))
     this.classList.add('active')
     document.querySelectorAll('.settings-pane').forEach(p => p.style.display = 'none')
-    document.getElementById({ user: 'pane-user', theme: 'pane-theme', basic: 'pane-basic', toolbar: 'pane-toolbar', files: 'pane-files', history: 'pane-history', nsfw: 'pane-nsfw', patchnotes: 'pane-patchnotes' }[this.dataset.cat]).style.display = 'block'
+    document.getElementById({ user: 'pane-user', theme: 'pane-theme', basic: 'pane-basic', toolbar: 'pane-toolbar', files: 'pane-files', history: 'pane-history', download: 'pane-download', nsfw: 'pane-nsfw', patchnotes: 'pane-patchnotes' }[this.dataset.cat]).style.display = 'block'
     if (this.dataset.cat === 'patchnotes') loadPatchNotes()
     if (this.dataset.cat === 'history') renderSettingsHistory()
   })
@@ -244,4 +244,29 @@ document.getElementById('resetConfirm')?.addEventListener('click', function() {
 })
 document.getElementById('resetOverlay')?.addEventListener('click', function(e) {
   if (e.target === this) this.classList.remove('open')
+})
+
+// ─── Download settings persistence ──────────────
+const dlTypeEl = document.getElementById('dlType')
+const dlVideoSettings = document.querySelector('.dl-video-settings')
+const dlAudioSettings = document.querySelector('.dl-audio-settings')
+function toggleDlSettings(type) {
+  if (dlVideoSettings) dlVideoSettings.style.display = type === 'video' ? '' : 'none'
+  if (dlAudioSettings) dlAudioSettings.style.display = type === 'audio' ? '' : 'none'
+}
+if (dlTypeEl) {
+  const saved = localStorage.getItem('dlType') || 'video'
+  dlTypeEl.value = saved
+  toggleDlSettings(saved)
+  dlTypeEl.addEventListener('change', () => {
+    localStorage.setItem('dlType', dlTypeEl.value)
+    toggleDlSettings(dlTypeEl.value)
+  })
+}
+;['dlVideoQuality','dlAudioFormat','dlAudioBitrate','dlVideoCodec'].forEach(id => {
+  const el = document.getElementById(id)
+  if (!el) return
+  const saved = localStorage.getItem(id)
+  if (saved) el.value = saved
+  el.addEventListener('change', () => localStorage.setItem(id, el.value))
 })

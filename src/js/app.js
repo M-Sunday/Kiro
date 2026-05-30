@@ -6,7 +6,6 @@ if (window.innerWidth <= 640) document.getElementById('sidebar').classList.add('
 
 function startApp() {
   loadIcons(); renderCalendar(); renderSidebar(); renderGridView(); setView('grid')
-  if (window.startGridAnim) window.startGridAnim()
 }
 if (getUserName()) {
   startApp()

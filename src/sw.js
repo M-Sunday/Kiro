@@ -1,4 +1,4 @@
-var CACHE = 'vault-3.0.0'
+var CACHE = 'vault-3.0.1'
 var URLS = [
   'css/base.css',
   'css/layout.css',

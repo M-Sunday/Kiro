@@ -102,7 +102,7 @@ src/
 │   ├── themes.css       # All body.theme-* + body.compact rules
 │   └── mobile.css       # @media (max-width: 640px) responsive overrides
 ├── js/
-│   ├── data.js          # localStorage CRUD helpers, selectedGridItems, APP_VERSION (3.0.0)
+│   ├── data.js          # localStorage CRUD helpers, selectedGridItems, APP_VERSION (3.0.1)
 │   ├── views.js         # setView(), showCardView(), clearCard(), renderSearchLanding()
 │   ├── calendar.js      # Calendar rendering, published date, privacy
 │   ├── settings.js      # Settings panel, load/save history, toolbar toggles, About User, Reset Account

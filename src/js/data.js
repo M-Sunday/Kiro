@@ -112,4 +112,4 @@ function saveVaultAchievements(a) { safeSetItem('vault_achievements', JSON.strin
 function getVaultGoals() { try { return JSON.parse(localStorage.getItem('vault_goals') || '[]') } catch { return [] } }
 function saveVaultGoals(g) { safeSetItem('vault_goals', JSON.stringify(g)) }
 
-const APP_VERSION = '3.0.0'
+const APP_VERSION = '3.0.1'

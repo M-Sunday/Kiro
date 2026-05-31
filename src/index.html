@@ -832,67 +832,8 @@
         </div>
     </div>
 
-    <script src="js/data.js"></script>
-    <script src="js/views.js"></script>
-    <script src="js/calendar.js"></script>
-    <script src="js/settings.js"></script>
-    <script src="js/sidebar.js"></script>
-    <script src="js/context-menu.js"></script>
-    <script src="js/notes.js"></script>
-    <script src="js/dialogs.js"></script>
-    <script src="js/grid.js"></script>
-    <script src="js/card.js"></script>
-    <script src="js/search.js"></script>
-    <script src="js/icons.js"></script>
-    <script src="js/extras.js"></script>
-    <script src="js/onboarding.js"></script>
-    <script src="js/app.js"></script>
-
-    <script>
-        (function () {
-            // Kill text selection on non-editable elements
-            document.addEventListener('selectionchange', function () {
-                var active = document.activeElement;
-                if (!active || !active.closest('input, textarea, [contenteditable], .note-view-content')) {
-                    var s = window.getSelection();
-                    if (s && s.rangeCount) s.removeAllRanges();
-                }
-            });
-
-            // Block Android long-press context menu on non-editable elements
-            document.addEventListener('contextmenu', function (e) {
-                if (!e.target.closest('input, textarea, [contenteditable], .note-view-content')) e.preventDefault();
-            });
-
-            // Block selectstart everywhere except editable
-            document.addEventListener('selectstart', function (e) {
-                if (!e.target.closest('input, textarea, [contenteditable], .note-view-content')) e.preventDefault();
-            });
-
-            if (window.Capacitor && window.Capacitor.isNativePlatform()) document.body.classList.add('native-android');
-
-            window.applyStatusBarTheme = function () {
-                try {
-                    if (!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) return;
-                    var sb = window.Capacitor.Plugins.StatusBar;
-                    if (!sb) return;
-                    var cls = document.body.className;
-                    if (cls.indexOf('theme-black') > -1) {
-                        sb.setStyle({ style: 'LIGHT' });
-                        sb.setBackgroundColor({ color: '#2c2c2e' });
-                    } else {
-                        sb.setStyle({ style: 'DARK' });
-                        sb.setBackgroundColor({ color: '#ffffff' });
-                    }
-                    sb.setOverlaysWebView({ overlay: false });
-                } catch (e) {}
-            };
-
-            window.applyStatusBarTheme();
-            var observer = new MutationObserver(function () { window.applyStatusBarTheme(); });
-            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-        })();
-    </script>
+    <!-- ES Module bootstrap -->
+    <script type="module" src="js/app.js"></script>
 
 </body>
 </html>

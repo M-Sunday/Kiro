@@ -274,7 +274,7 @@
 
 /* ─── UPDATE DIALOG ──────────────────────────────────── */
 .update-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 200; display: none; align-items: center; justify-content: center; }
-.update-overlay.open { display: flex; }
+.update-overlay.open { display: flex; z-index: 100000; }
 .update-modal { background: #fff; border-radius: 20px; width: 420px; max-width: 90vw; max-height: 80vh; box-shadow: 0 20px 60px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
 .update-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid #e8e8ed; }
 .update-modal-header h2 { font-size: 18px; font-weight: 700; margin: 0; }

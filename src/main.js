@@ -1,11 +1,40 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron')
 const path = require('path')
+const http = require('http')
+const fs = require('fs')
+
+const PORT = process.env.KIRO_PORT || 3001
 
 try {
   require('electron-reload')(__dirname, {
     electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron.cmd')
   })
 } catch (_) {}
+
+// Local HTTP server so ES modules work (file:// blocks type="module")
+const MIME = {
+  '.html': 'text/html',
+  '.css': 'text/css',
+  '.js': 'text/javascript',
+  '.json': 'application/json',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.webmanifest': 'application/manifest+json'
+}
+function serveFile(req, res) {
+  let file = req.url === '/' ? '/index.html' : req.url.split('?')[0]
+  const filePath = path.join(__dirname, file)
+  fs.readFile(filePath, (err, data) => {
+    if (err) { res.writeHead(404); res.end('Not found'); return }
+    const ext = path.extname(file)
+    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'no-cache' })
+    res.end(data)
+  })
+}
+const server = http.createServer(serveFile).listen(PORT, () => {
+  console.log(`[Kiro] Dev server on http://localhost:${PORT}`)
+})
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -17,7 +46,7 @@ function createWindow() {
       webSecurity: false
     }
   })
-  win.loadFile('src/index.html')
+  win.loadURL('http://localhost:' + PORT + '/index.html')
 
   const template = [
     { role: 'fileMenu' },
@@ -76,7 +105,7 @@ function createWindow() {
                 partition: 'temp'
               }
             })
-            fresh.loadFile('src/index.html')
+            fresh.loadURL('http://localhost:' + PORT + '/index.html')
           }
         }
       ]
@@ -100,4 +129,8 @@ app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+
+app.on('before-quit', () => {
+  server.close()
 })

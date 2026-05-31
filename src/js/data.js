@@ -145,3 +145,52 @@ function getKiroGoals() { try { return JSON.parse(localStorage.getItem('kiro_goa
 function saveKiroGoals(g) { safeSetItem('kiro_goals', JSON.stringify(g)) }
 
 const APP_VERSION = '3.0.1'
+
+// ─── App lifecycle ─────────────────────────────────────
+function getInstalledAt() { return localStorage.getItem('kiroInstalledAt') || null }
+function getLastOpenedAt() { return localStorage.getItem('kiroLastOpenedAt') || null }
+function updateAppDates() {
+  if (!localStorage.getItem('kiroInstalledAt')) {
+    localStorage.setItem('kiroInstalledAt', new Date().toISOString())
+  }
+  localStorage.setItem('kiroLastOpenedAt', new Date().toISOString())
+}
+updateAppDates()
+
+function getStorageSize(key) {
+  try {
+    var v = localStorage.getItem(key)
+    return v ? new Blob([v]).size : 0
+  } catch { return 0 }
+}
+
+var STORAGE_GROUPS = {
+  videos: ['kiroVideos','kiroFolders','kiroFolderMeta','kiroPins'],
+  notes: ['kiroNotes'],
+  bookmarks: ['kiroBookmarks'],
+  direct: ['kiroDirectAccess'],
+  other: ['kiroNSFW','kiroCollapsed','kiroSettings','kiroUserName','kiro_challenges','kiro_achievements','kiro_goals','linkHistory']
+}
+
+function getStorageBreakdown() {
+  var groups = {}
+  var total = 0
+  for (var key in STORAGE_GROUPS) {
+    var sum = 0
+    for (var i = 0; i < STORAGE_GROUPS[key].length; i++) sum += getStorageSize(STORAGE_GROUPS[key][i])
+    groups[key] = sum
+    total += sum
+  }
+  groups.total = total
+  return groups
+}
+
+function getVideoCount() { return Object.keys(getVideos()).length }
+function getNoteCount() { return getNotes().length }
+function getBookmarkCount() { return getBookmarks().length }
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / 1048576).toFixed(1) + ' MB'
+}

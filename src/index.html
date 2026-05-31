@@ -259,20 +259,20 @@
             <div class="settings-sidebar">
                 <div class="settings-sidebar-header">Settings</div>
                 <div class="settings-categories">
-                    <div class="settings-cat active" data-cat="user">
+                    <div class="settings-cat active" data-cat="about">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
                             <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
                             <circle cx="12" cy="7" r="4"/>
                         </svg>
-                        About User
+                        About
                     </div>
                     <div class="settings-cat" data-cat="theme"><i data-lucide="eye" class="icon-md flex-shrink-0"></i> Theme</div>
-                    <div class="settings-cat" data-cat="basic"><i data-lucide="file-text" class="icon-md flex-shrink-0"></i> Basic info</div>
                     <div class="settings-cat" data-cat="toolbar"><i data-lucide="edit-3" class="icon-md flex-shrink-0"></i> Toolbar</div>
                     <div class="settings-cat" data-cat="files"><i data-lucide="folder" class="icon-md flex-shrink-0"></i> Files and links</div>
                     <div class="settings-cat" data-cat="history"><i data-lucide="history" class="icon-md flex-shrink-0"></i> Link history</div>
                     <div class="settings-cat" data-cat="download"><i data-lucide="download" class="icon-md flex-shrink-0"></i> Download</div>
                     <div class="settings-cat" data-cat="nsfw"><i data-lucide="eye-off" class="icon-md flex-shrink-0"></i> NSFW</div>
+                    <div class="settings-cat" data-cat="storage"><i data-lucide="hard-drive" class="icon-md flex-shrink-0"></i> Data & Storage</div>
                     <div class="settings-cat" data-cat="patchnotes"><i data-lucide="file-text-fill" class="icon-md flex-shrink-0"></i> Patch notes</div>
                 </div>
                 <div class="settings-sidebar-footer" id="settingsClose">
@@ -280,9 +280,9 @@
                 </div>
             </div>
             <div class="settings-content" id="settingsContent">
-                <div class="settings-pane" id="pane-user">
+                <div class="settings-pane" id="pane-about">
                     <div class="settings-pane-header">
-                        <h2>About User</h2>
+                        <h2>About</h2>
                         <p class="settings-pane-desc">Your account information.</p>
                     </div>
                     <div class="settings-field-row mt-16">
@@ -302,6 +302,11 @@
                     <div class="settings-field-row mt-12">
                         <label class="settings-field-label">Device</label>
                         <p class="settings-user-value" id="settingsDeviceName">—</p>
+                    </div>
+                    <div class="settings-footer-row flex flex-col gap-6 mt-20">
+                        <span>Language: English</span>
+                        <span>Account: Not logged in</span>
+                        <span>Commercial licence</span>
                     </div>
                     <div class="settings-reset-section">
                         <button class="settings-danger-btn" id="settingsResetBtn">Reset Account</button>
@@ -328,22 +333,6 @@
                         <span class="settings-checkbox-mark"></span>
                         <span>Have system theme</span>
                     </label>
-                </div>
-                <div class="settings-pane" id="pane-basic" style="display:none">
-                    <div class="settings-pane-header">
-                        <h2>Basic info</h2>
-                        <p class="settings-pane-desc">About this app.</p>
-                    </div>
-                    <div class="settings-field-row mt-16">
-                        <label class="settings-field-label">Your name</label>
-                        <input type="text" id="settingsUserName" class="settings-text-input" placeholder="Enter your name" maxlength="30">
-                    </div>
-                    <div class="settings-footer-row flex flex-col gap-6 mt-20">
-                        <span id="settingsBasicVersion">Version 3.0.1</span>
-                        <span>Language: English</span>
-                        <span>Account: Not logged in</span>
-                        <span>Commercial licence</span>
-                    </div>
                 </div>
                 <div class="settings-pane" id="pane-toolbar" style="display:none">
                     <div class="settings-pane-header">
@@ -484,6 +473,37 @@
                             <input id="nsfwAddInput" type="text" placeholder="Add keyword..." class="nsfw-input">
                             <button id="nsfwAddBtn" class="nsfw-add-btn">Add</button>
                         </div>
+                    </div>
+                </div>
+                <div class="settings-pane" id="pane-storage" style="display:none">
+                    <div class="settings-pane-header">
+                        <h2>Data & Storage</h2>
+                        <p class="settings-pane-desc">Your data lives on this device only.</p>
+                    </div>
+                    <div id="storageBarWrap" class="storage-bar-wrap mt-16">
+                        <div class="storage-bar" id="storageBar">
+                            <div class="storage-bar-seg storage-bar-videos" id="storageBarVideos" style="width:0%"></div>
+                            <div class="storage-bar-seg storage-bar-notes" id="storageBarNotes" style="width:0%"></div>
+                            <div class="storage-bar-seg storage-bar-bookmarks" id="storageBarBookmarks" style="width:0%"></div>
+                            <div class="storage-bar-seg storage-bar-other" id="storageBarOther" style="width:0%"></div>
+                        </div>
+                        <div class="storage-bar-label" id="storageTotalLabel">0 B used</div>
+                    </div>
+                    <div class="storage-legend" id="storageLegend">
+                        <div class="storage-legend-item"><span class="storage-dot storage-dot-videos"></span> Videos <span class="storage-legend-size" id="storageSizeVideos">—</span></div>
+                        <div class="storage-legend-item"><span class="storage-dot storage-dot-notes"></span> Notes <span class="storage-legend-size" id="storageSizeNotes">—</span></div>
+                        <div class="storage-legend-item"><span class="storage-dot storage-dot-bookmarks"></span> Bookmarks <span class="storage-legend-size" id="storageSizeBookmarks">—</span></div>
+                        <div class="storage-legend-item"><span class="storage-dot storage-dot-other"></span> App data <span class="storage-legend-size" id="storageSizeOther">—</span></div>
+                    </div>
+                    <div class="storage-meta">
+                        <span>Installed: <strong id="storageInstalledAt">—</strong></span>
+                        <span>Last opened: <strong id="storageLastOpenedAt">—</strong></span>
+                        <span>Videos: <strong id="storageVideoCount">0</strong> · Notes: <strong id="storageNoteCount">0</strong> · Bookmarks: <strong id="storageBookmarkCount">0</strong></span>
+                        <span style="font-size:11px;color:#8e8e93;word-break:break-all" id="storageLocation">—</span>
+                    </div>
+                    <div class="storage-actions">
+                        <span class="settings-link" id="settingsViewEula">Review User Agreement</span>
+                        <button class="settings-danger-btn" id="settingsClearStorageBtn" style="font-size:11px;padding:4px 12px">Clear All Data</button>
                     </div>
                 </div>
                 <div class="settings-pane" id="pane-patchnotes" style="display:none">
@@ -641,6 +661,36 @@
         </div>
     </div>
 
+    <!-- EULA overlay -->
+    <div class="update-overlay" id="eulaOverlay">
+        <div class="update-modal" style="max-width:520px">
+            <div class="update-modal-header">
+                <h2>User Agreement</h2>
+            </div>
+            <div class="update-modal-body">
+                <div class="eula-content">
+                    <h3>Terms of Service</h3>
+                    <p>By using Kiro, you agree to the following terms:</p>
+                    <ul>
+                        <li><strong>Use at your own risk.</strong> The app is provided "as is" without warranty of any kind.</li>
+                        <li><strong>Your data stays local.</strong> All videos, notes, bookmarks, and settings are stored only on your device. Nothing is sent to external servers except when you paste a YouTube link (metadata fetch) or download a video.</li>
+                        <li><strong>You are responsible</strong> for the content you save, download, or share through this app. Respect copyright and applicable laws.</li>
+                        <li><strong>No analytics, no tracking.</strong> This app does not collect usage data, crash reports, or personal information.</li>
+                        <li><strong>Permissions.</strong> On Android, Kiro may request storage permissions to save downloaded files and manage your data. These permissions are used only for local file access.</li>
+                        <li><strong>Third-party services.</strong> Video metadata is fetched via YouTube's oEmbed API and public proxy services. Downloads use yt-dlp (Electron only). These services have their own terms.</li>
+                        <li><strong>Changes.</strong> These terms may be updated. Continued use after changes constitutes acceptance.</li>
+                    </ul>
+                    <p style="margin-top:12px;font-size:11px;color:#8e8e93">Last updated: May 2026</p>
+                </div>
+                <div class="eula-actions">
+                    <button class="dialog-btn cancel" id="eulaDecline">Decline</button>
+                    <button class="dialog-btn confirm" id="eulaAccept">I Agree</button>
+                </div>
+                <p class="settings-warning" id="eulaAcceptMsg" style="display:none;margin-top:8px">You must accept the terms to use this app.</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         (function () {
             var splash = document.getElementById('splash');
@@ -668,31 +718,62 @@
                 }
                 setTimeout(randomSpin, 2000);
             }
+            var eulaAccepted = localStorage.getItem('kiroEulaAccepted') === 'true';
             var isFirstTime = !localStorage.getItem('kiroUserName');
             if (!navigator.onLine) {
                 splash.classList.add('offline');
                 splashText.textContent = "You're offline";
             }
+            function dismissSplash() {
+                if (faded) return;
+                faded = true;
+                splash.classList.add('fade');
+                setTimeout(function () {
+                    splash.style.display = 'none';
+                    if (window.startGridAnim) window.startGridAnim();
+                    if (!localStorage.getItem('kiroEulaAccepted')) {
+                        setTimeout(function () { document.getElementById('eulaOverlay').classList.add('open') }, 600);
+                    }
+                }, 500);
+            }
             if (isFirstTime) {
-                splash.classList.add('onboarding');
-                splashText.style.display = 'none';
-                document.getElementById('onbStep0').classList.remove('onb-hidden');
+                if (eulaAccepted) {
+                    splash.classList.add('onboarding');
+                    splashText.style.display = 'none';
+                    document.getElementById('onbStep0').classList.remove('onb-hidden');
+                } else {
+                    setTimeout(function () { document.getElementById('eulaOverlay').classList.add('open') }, 800);
+                    window.__proceedFirstTime = function () {
+                        splash.classList.add('onboarding');
+                        splashText.style.display = 'none';
+                        document.getElementById('onbStep0').classList.remove('onb-hidden');
+                    };
+                }
             } else {
                 if (navigator.onLine) {
                     setTimeout(function () { splashText.textContent = 'Up to date'; }, 2000);
                     setTimeout(function () { splashText.textContent = 'Welcome, ' + localStorage.getItem('kiroUserName'); }, 3400);
                 }
-                function fadeOut() {
-                    if (faded) return;
-                    faded = true;
-                    splash.classList.add('fade');
-                    setTimeout(function () {
-                        splash.style.display = 'none';
-                        if (window.startGridAnim) window.startGridAnim();
-                    }, 500);
-                }
-                setTimeout(fadeOut, navigator.onLine ? 4600 : 2000);
+                setTimeout(dismissSplash, navigator.onLine ? 4600 : 2000);
             }
+
+            document.getElementById('eulaDecline').addEventListener('click', function () {
+                var msg = document.getElementById('eulaAcceptMsg')
+                msg.style.display = 'block'
+                msg.textContent = 'You must accept the terms to use this app.'
+            });
+            document.getElementById('eulaAccept').addEventListener('click', function () {
+                localStorage.setItem('kiroEulaAccepted', 'true')
+                document.getElementById('eulaOverlay').classList.remove('open')
+                if (window.__proceedFirstTime) window.__proceedFirstTime()
+            });
+            document.getElementById('eulaOverlay').addEventListener('click', function (e) {
+                if (e.target === this) {
+                    var msg = document.getElementById('eulaAcceptMsg')
+                    msg.style.display = 'block'
+                    msg.textContent = 'Please accept the terms above to continue.'
+                }
+            });
             window.__splashFade = function () {
                 if (faded) return;
                 faded = true;

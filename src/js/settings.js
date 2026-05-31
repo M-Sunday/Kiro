@@ -12,9 +12,10 @@ document.querySelectorAll('.settings-cat').forEach(cat => {
     document.querySelectorAll('.settings-cat').forEach(c => c.classList.remove('active'))
     this.classList.add('active')
     document.querySelectorAll('.settings-pane').forEach(p => p.style.display = 'none')
-    document.getElementById({ user: 'pane-user', theme: 'pane-theme', basic: 'pane-basic', toolbar: 'pane-toolbar', files: 'pane-files', history: 'pane-history', download: 'pane-download', nsfw: 'pane-nsfw', patchnotes: 'pane-patchnotes' }[this.dataset.cat]).style.display = 'block'
+    document.getElementById({ about: 'pane-about', theme: 'pane-theme', toolbar: 'pane-toolbar', files: 'pane-files', history: 'pane-history', download: 'pane-download', nsfw: 'pane-nsfw', storage: 'pane-storage', patchnotes: 'pane-patchnotes' }[this.dataset.cat]).style.display = 'block'
     if (this.dataset.cat === 'patchnotes') loadPatchNotes()
     if (this.dataset.cat === 'history') renderSettingsHistory()
+    if (this.dataset.cat === 'storage') renderStorageInfo()
   })
 })
 function saveSetting(key, on) { const s = JSON.parse(localStorage.getItem('kiroSettings') || '{}'); s[key] = on; safeSetItem('kiroSettings', JSON.stringify(s)) }
@@ -155,16 +156,7 @@ if (blurAllToggle) {
     setTimeout(function(){ location.reload() }, 400)
   })
 }
-document.querySelector('#pane-basic .settings-clear-btn')?.addEventListener('click', () => {
-  if (confirm('Clear all saved data?')) { localStorage.removeItem('kiroVideos'); localStorage.removeItem('kiroFolders'); localStorage.removeItem('kiroFolderMeta'); localStorage.removeItem('linkHistory'); localStorage.removeItem('kiroBookmarks'); localStorage.removeItem('kiroNotes'); renderSidebar(); clearCard() }
-})
-var settingsNameInput = document.getElementById('settingsUserName')
-if (settingsNameInput) {
-  settingsNameInput.value = getUserName()
-  settingsNameInput.addEventListener('input', function() {
-    saveUserName(this.value.trim())
-  })
-}
+
 window.addEventListener('beforeunload', () => { const t = document.querySelector('#pane-history .settings-toggle:last-child'); if (t?.classList.contains('on')) localStorage.removeItem('linkHistory') })
 
 applyToolbarSettings()
@@ -172,7 +164,7 @@ applyToolbarSettings()
 function loadHistory() { try { return JSON.parse(localStorage.getItem('linkHistory') || '[]') } catch { return [] } }
 function saveHistory(h) { safeSetItem('linkHistory', JSON.stringify(h)) }
 
-// ─── About User pane ───────────────────────────────────
+// ─── About pane ────────────────────────────────────────
 var userDisplay = document.getElementById('settingsUserNameDisplay')
 if (userDisplay) userDisplay.textContent = getUserName() || '—'
 
@@ -246,6 +238,46 @@ document.getElementById('resetOverlay')?.addEventListener('click', function(e) {
   if (e.target === this) this.classList.remove('open')
 })
 
+// ─── Storage info ───────────────────────────────────────
+function renderStorageInfo() {
+  var brk = getStorageBreakdown()
+  var total = brk.total || 1
+  var pct = function (v) { return Math.round((v / total) * 100) }
+
+  document.getElementById('storageBarVideos').style.width = pct(brk.videos) + '%'
+  document.getElementById('storageBarNotes').style.width = pct(brk.notes) + '%'
+  document.getElementById('storageBarBookmarks').style.width = pct(brk.bookmarks) + '%'
+  document.getElementById('storageBarOther').style.width = pct(brk.direct + brk.other) + '%'
+  document.getElementById('storageTotalLabel').textContent = formatBytes(total) + ' used'
+
+  document.getElementById('storageSizeVideos').textContent = formatBytes(brk.videos)
+  document.getElementById('storageSizeNotes').textContent = formatBytes(brk.notes)
+  document.getElementById('storageSizeBookmarks').textContent = formatBytes(brk.bookmarks)
+  document.getElementById('storageSizeOther').textContent = formatBytes(brk.direct + brk.other)
+
+  document.getElementById('storageInstalledAt').textContent = getInstalledAt() ? new Date(getInstalledAt()).toLocaleDateString() : '—'
+  document.getElementById('storageLastOpenedAt').textContent = getLastOpenedAt() ? new Date(getLastOpenedAt()).toLocaleDateString() : '—'
+  document.getElementById('storageVideoCount').textContent = getVideoCount()
+  document.getElementById('storageNoteCount').textContent = getNoteCount()
+  document.getElementById('storageBookmarkCount').textContent = getBookmarkCount()
+
+  var loc = ''
+  try {
+    if (typeof process !== 'undefined' && process.versions?.electron) {
+      loc = require('electron').ipcRenderer ? 'App data folder (Electron)' : 'Electron — localStorage'
+    } else if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+      loc = 'Android — internal app storage'
+    } else {
+      loc = 'Browser localStorage'
+    }
+  } catch (_) { loc = 'localStorage' }
+  document.getElementById('storageLocation').textContent = loc
+}
+
+document.getElementById('settingsClearStorageBtn')?.addEventListener('click', function() {
+  document.getElementById('resetOverlay').classList.add('open')
+})
+
 // ─── Download settings persistence ──────────────
 const dlTypeEl = document.getElementById('dlType')
 const dlVideoSettings = document.querySelector('.dl-video-settings')
@@ -269,4 +301,7 @@ if (dlTypeEl) {
   const saved = localStorage.getItem(id)
   if (saved) el.value = saved
   el.addEventListener('change', () => localStorage.setItem(id, el.value))
+})
+document.getElementById('settingsViewEula')?.addEventListener('click', function () {
+  document.getElementById('eulaOverlay').classList.add('open')
 })

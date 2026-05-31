@@ -372,7 +372,7 @@ document.getElementById('updateCloseBtn').addEventListener('click', () => {
         var cat = document.querySelector('.settings-cat[data-cat="debug"]')
         if (pane && cat) {
           if (pane.style.display !== 'none') { pane.style.display = 'none'; cat.remove() }
-          else document.querySelector('.settings-cat[data-cat="user"]').click()
+          else document.querySelector('.settings-cat[data-cat="about"]').click()
         } else {
           showDebugUnlocked()
         }

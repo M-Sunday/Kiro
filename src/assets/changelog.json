@@ -12,6 +12,17 @@
     ]
   },
   {
+    "version": "3.0.0",
+    "date": "2026-05-29",
+    "title": "Refined Vault: Simpler Themes, Cleaner Dialogs, The Void Removed",
+    "changes": [
+      "Removed The Void and all associated ideas/stages/connections/achievements",
+      "Removed Obsidian Black and Anthropic themes — White and Black remain",
+      "New note icon updated to square-pen (file-pen) for clarity",
+      "New Folder, Add Bookmark, and New Note dialogs redesigned with cleaner layout, better spacing, and clearer button labels",
+      "Version bumped to 3.0.0"
+    ]
+  },
   {
     "version": "2.0.1",
     "date": "2026-05-29",

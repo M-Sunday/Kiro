@@ -12,27 +12,37 @@ async function loadVideo(videoId) {
   document.getElementById('videoTitle').textContent = 'Loading...'; document.getElementById('channelName').textContent = ''
   try {
     const data = await (await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`)).json()
-    const title = data.title || 'Unknown'
-    const channel = data.author_name || ''
+    let title = data.title || 'Unknown'
+    let channel = data.author_name || ''
     let sec = 0, dateStr = '', privacy = 'PUBLIC'
-    const proxies = [
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-      `https://corsproxy.io/?url=${encodeURIComponent(url)}`
-    ]
-    for (const proxyUrl of proxies) {
-      try {
-        const controller = new AbortController()
-        const t = setTimeout(() => controller.abort(), 5000)
-        const html = await (await fetch(proxyUrl, { signal: controller.signal })).text()
-        clearTimeout(t)
-        const s = parseInt((html.match(/"lengthSeconds":"?(\d+)"?/) || [])[1] || '0')
-        if (s) { sec = s }
-        const ds = (html.match(/"uploadDate":"([^"]+)"/) || html.match(/<meta\s+itemprop="datePublished"\s+content="([^"]+)"/) || [])[1]
-        if (ds) { dateStr = ds }
-        const pv = (html.match(/"privacyStatus":"([^"]+)"/) || [])[1]
-        if (pv) { privacy = pv }
-        if (s || ds || pv) break
-      } catch (_) {}
+    try {
+      const piped = await (await fetch(`https://pipedapi.kavin.rocks/streams/${videoId}`)).json()
+      if (piped.uploadDate) dateStr = piped.uploadDate
+      if (piped.duration) sec = parseInt(piped.duration)
+      if (piped.privacyStatus) privacy = piped.privacyStatus
+      if (piped.title) title = piped.title
+      if (piped.uploader) channel = piped.uploader
+    } catch (_) {}
+    if (!dateStr || !sec) {
+      const proxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        `https://corsproxy.io/?url=${encodeURIComponent(url)}`
+      ]
+      for (const proxyUrl of proxies) {
+        try {
+          const controller = new AbortController()
+          const t = setTimeout(() => controller.abort(), 5000)
+          const html = await (await fetch(proxyUrl, { signal: controller.signal })).text()
+          clearTimeout(t)
+          const s = parseInt((html.match(/"lengthSeconds":"?(\d+)"?/) || [])[1] || '0')
+          if (s) { sec = s }
+          const ds = (html.match(/"uploadDate":"([^"]+)"/) || html.match(/<meta\s+itemprop="datePublished"\s+content="([^"]+)"/) || [])[1]
+          if (ds) { dateStr = ds }
+          const pv = (html.match(/"privacyStatus":"([^"]+)"/) || [])[1]
+          if (pv) { privacy = pv }
+          if (s || ds || pv) break
+        } catch (_) {}
+      }
     }
     const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60
     const duration = sec ? (h ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}:${String(s).padStart(2,'0')}`) : ''

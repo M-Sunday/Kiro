@@ -1,12 +1,24 @@
 // ─── Load video ───────────────────────────────────────
-function loadVideoById(id) {
+async function loadVideoById(id) {
   const v = getVideos()[id]; if (!v) return
   currentVideo = { ...v, id }
   document.getElementById('thumbnail').src = v.thumbnail || `https://img.youtube.com/vi/${id}/maxresdefault.jpg`
   document.getElementById('durationBadge').textContent = v.duration || '–'
   document.getElementById('videoTitle').textContent = v.title
   document.getElementById('channelName').textContent = v.channel
-  if (v.pubDate) setPublishedDate(new Date(v.pubDate))
+  if (v.pubDate) {
+    setPublishedDate(new Date(v.pubDate))
+  } else {
+    try {
+      const piped = await (await fetch(`https://pipedapi.kavin.rocks/streams/${id}`)).json()
+      if (piped.uploadDate) {
+        const d = new Date(piped.uploadDate)
+        setPublishedDate(d)
+        const vs = getVideos()
+        if (vs[id]) { vs[id].pubDate = d.toISOString(); saveVideos(vs) }
+      }
+    } catch (_) {}
+  }
   updatePrivacy(v.privacy || 'PUBLIC')
   if (currentNoteId) closeNoteView()
   updatePinBadge(id); showCardView(); renderSidebar(); updateCardAddBtn()

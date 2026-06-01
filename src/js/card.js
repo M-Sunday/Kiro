@@ -130,7 +130,7 @@ function showToastActions() {
   const actions = document.querySelector('.update-toast-actions')
   if (actions) actions.style.display = ''
 }
-const ytDlpDir = isElectron ? require('path').join(require('os').homedir(), '.youtube-vault', 'bin') : ''
+const ytDlpDir = isElectron ? require('path').join(require('os').homedir(), '.kiro', 'bin') : ''
 const ytDlpPath = isElectron ? require('path').join(ytDlpDir, 'yt-dlp.exe') : ''
 const ytDlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
 const ffmpegUrl = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'

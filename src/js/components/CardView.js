@@ -103,7 +103,7 @@ export class CardView extends Component {
       setTimeout(() => { if (!done) { done = true; r(false) } }, 3000)
     })
 
-    const ytDlpDir = window.require('path').join(window.require('os').homedir(), '.youtube-vault', 'bin')
+    const ytDlpDir = window.require('path').join(window.require('os').homedir(), '.kiro', 'bin')
     const ffmpegPath = window.require('path').join(ytDlpDir, 'ffmpeg.exe')
     if (!hasFfmpeg) hasFfmpeg = window.require('fs').existsSync(ffmpegPath)
 
@@ -184,7 +184,7 @@ export class CardView extends Component {
   }
 
   _ensureYtDlp() {
-    const ytDlpDir = window.require('path').join(window.require('os').homedir(), '.youtube-vault', 'bin')
+    const ytDlpDir = window.require('path').join(window.require('os').homedir(), '.kiro', 'bin')
     const ytDlpPath = window.require('path').join(ytDlpDir, 'yt-dlp.exe')
     const ytDlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
 
@@ -219,7 +219,7 @@ export class CardView extends Component {
   }
 
   _ensureFfmpeg() {
-    const ytDlpDir = window.require('path').join(window.require('os').homedir(), '.youtube-vault', 'bin')
+    const ytDlpDir = window.require('path').join(window.require('os').homedir(), '.kiro', 'bin')
     const ffmpegPath = window.require('path').join(ytDlpDir, 'ffmpeg.exe')
     const ffmpegUrl = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
 

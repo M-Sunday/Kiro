@@ -196,7 +196,8 @@
             </div>
             <div class="ext-video-body">
                 <div class="ext-video-overlay-icon" id="extVideoOverlayIcon"></div>
-                <video class="ext-video-element" id="extVideoElement"></video>
+                <div class="ext-video-error" id="extVideoError" style="display:none">Video could not be loaded</div>
+                <video class="ext-video-element" id="extVideoElement" playsinline preload="metadata"></video>
                 <div class="ext-video-controls" id="extVideoControls">
                     <button class="ext-video-ctrl-btn" id="extVideoPlayBtn" title="Play/Pause" type="button"><span class="icon-sm" id="extVideoPlayIcon"></span></button>
                     <button class="ext-video-ctrl-btn" id="extVideoSkipBackBtn" title="Skip back 10s" type="button"><i data-lucide="skip-back" class="icon-sm"></i></button>

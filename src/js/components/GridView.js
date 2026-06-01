@@ -559,7 +559,7 @@ export class GridView extends Component {
         const result = await fp.pickFiles({ limit: 1 })
         if (!result?.files?.length) return
         const file = result.files[0]
-        const path = file.path || file.name
+        const path = file.path || file.uri || file.name
         this._addExternalFile(file.name, path, file.size || 0, file.mimeType || '')
       } catch (e) {
         if (e.message?.includes?.('canceled')) return
@@ -598,7 +598,10 @@ export class GridView extends Component {
     input.onchange = (e) => {
       const file = e.target.files?.[0]
       if (!file) return
-      this._addExternalFile(file.name, file.name, file.size, file.type)
+      const isVideo = file.type.startsWith('video/')
+      const isImage = file.type.startsWith('image/')
+      const path = isVideo || isImage ? URL.createObjectURL(file) : file.name
+      this._addExternalFile(file.name, path, file.size, file.type)
     }
     input.click()
   }
@@ -620,35 +623,59 @@ export class GridView extends Component {
     const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(entry.name)
     if (!entry.path || !(isImage || isVideo)) return
     const isElectron = typeof process !== 'undefined' && process.versions?.electron
-    if (isImage && isElectron) {
-      try {
-        const fs = window.require('fs')
-        const stat = fs.statSync(entry.path)
-        if (stat.size > 2 * 1024 * 1024) {
-          entry.thumbnail = encodeURI('file:///' + entry.path.replace(/\\/g, '/'))
+
+    if (isImage) {
+      if (isElectron) {
+        try {
+          const fs = window.require('fs')
+          const stat = fs.statSync(entry.path)
+          if (stat.size > 2 * 1024 * 1024) {
+            entry.thumbnail = encodeURI('file:///' + entry.path.replace(/\\/g, '/'))
+            this._saveThumbnail(entry)
+            return
+          }
+          const buf = fs.readFileSync(entry.path)
+          const ext = entry.name.split('.').pop().toLowerCase()
+          const mime = ext === 'jpg' ? 'jpeg' : ext === 'svg' ? 'svg+xml' : ext
+          entry.thumbnail = 'data:image/' + mime + ';base64,' + buf.toString('base64')
           this._saveThumbnail(entry)
-          return
+        } catch (e) {
+          console.warn('[Thumbnail] Failed to read image:', e)
         }
-        const buf = fs.readFileSync(entry.path)
-        const ext = entry.name.split('.').pop().toLowerCase()
-        const mime = ext === 'jpg' ? 'jpeg' : ext === 'svg' ? 'svg+xml' : ext
-        entry.thumbnail = 'data:image/' + mime + ';base64,' + buf.toString('base64')
-        this._saveThumbnail(entry)
-      } catch (e) {
-        console.warn('[Thumbnail] Failed to read image:', e)
+      } else {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => {
+          try {
+            const c = document.createElement('canvas')
+            c.width = Math.min(img.naturalWidth, 320)
+            c.height = Math.min(img.naturalHeight, 180)
+            const ctx = c.getContext('2d')
+            if (ctx) { ctx.drawImage(img, 0, 0, c.width, c.height); entry.thumbnail = c.toDataURL('image/jpeg', 0.6); this._saveThumbnail(entry) }
+          } catch (e) { console.warn('[Thumbnail] Image canvas failed:', e) }
+        }
+        img.onerror = () => {}
+        img.src = entry.path
       }
       return
     }
-    if (isVideo && isElectron) {
+
+    if (isVideo) {
       const vid = document.createElement('video')
-      vid.src = encodeURI('file:///' + entry.path.replace(/\\/g, '/'))
       vid.muted = true
+      vid.playsInline = true
+      vid.preload = 'metadata'
+      if (isElectron) {
+        vid.src = encodeURI('file:///' + entry.path.replace(/\\/g, '/'))
+      } else {
+        vid.src = entry.path
+      }
       vid.style.position = 'absolute'
       vid.style.left = '-9999px'
       document.body.appendChild(vid)
       const cleanup = () => { try { vid.remove() } catch {} }
       vid.addEventListener('loadeddata', () => {
-        vid.currentTime = Math.min(vid.duration * 0.3, 5)
+        if (vid.duration) vid.currentTime = Math.min(vid.duration * 0.3, 5)
       })
       vid.addEventListener('seeked', () => {
         try {
@@ -814,7 +841,9 @@ export class GridView extends Component {
     if (!f.path) return
     const isElectron = typeof process !== 'undefined' && process.versions?.electron
     const el = document.getElementById('extVideoElement')
+    const errEl = document.getElementById('extVideoError')
     this._hideAllViews()
+    if (errEl) errEl.style.display = 'none'
     if (isElectron) {
       el.src = encodeURI('file:///' + f.path.replace(/\\/g, '/'))
     } else {
@@ -827,6 +856,10 @@ export class GridView extends Component {
     this._updatePipIcon(false)
     this._updateVideoControls()
     el.play().catch(() => {})
+    el.addEventListener('error', function () {
+      console.warn('[Video] Failed to load:', el.error?.message, el.src)
+      if (errEl) errEl.style.display = 'block'
+    }, { once: true })
   }
 
   _closeExternalVideo() {

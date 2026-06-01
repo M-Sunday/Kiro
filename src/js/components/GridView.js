@@ -267,7 +267,7 @@ export class GridView extends Component {
 
   _externalFileCard(f) {
     const nsfw = f.blurred || false
-    const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(f.name)
+    const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv|m4v|3gp|mpeg|mpg)$/i.test(f.name)
     const isAudio = /\.(mp3|wav|ogg|flac|m4a)$/i.test(f.name)
     const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(f.name)
     const isText = /\.(txt|md|json|xml|html|css|js|py|java|c|cpp|h|ts)$/i.test(f.name)
@@ -345,7 +345,7 @@ export class GridView extends Component {
       item.addEventListener('click', () => {
         const f = externalFiles.find(x => x.id === item.dataset.extId)
         if (!f) return
-        const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(f.name)
+        const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv|m4v|3gp|mpeg|mpg)$/i.test(f.name)
         const isText = /\.(txt|md|json|xml|html|css|js|py|java|c|cpp|h|ts)$/i.test(f.name)
         const isElectron = typeof process !== 'undefined' && process.versions?.electron
         if (isText && isElectron && f.path) {
@@ -598,8 +598,11 @@ export class GridView extends Component {
     input.onchange = (e) => {
       const file = e.target.files?.[0]
       if (!file) return
-      const isVideo = file.type.startsWith('video/')
-      const isImage = file.type.startsWith('image/')
+      const ext = file.name.split('.').pop().toLowerCase()
+      const videoExts = ['mp4', 'webm', 'mkv', 'avi', 'mov', 'flv', 'wmv', 'm4v', '3gp', 'mpeg', 'mpg']
+      const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico']
+      const isVideo = file.type.startsWith('video/') || videoExts.includes(ext)
+      const isImage = file.type.startsWith('image/') || imageExts.includes(ext)
       const path = isVideo || isImage ? URL.createObjectURL(file) : file.name
       this._addExternalFile(file.name, path, file.size, file.type)
     }
@@ -620,7 +623,7 @@ export class GridView extends Component {
 
   _generateThumbnail(entry) {
     const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(entry.name)
-    const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(entry.name)
+    const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv|m4v|3gp|mpeg|mpg)$/i.test(entry.name)
     if (!entry.path || !(isImage || isVideo)) return
     const isElectron = typeof process !== 'undefined' && process.versions?.electron
 
@@ -630,7 +633,7 @@ export class GridView extends Component {
           const fs = window.require('fs')
           const stat = fs.statSync(entry.path)
           if (stat.size > 2 * 1024 * 1024) {
-            entry.thumbnail = encodeURI('file:///' + entry.path.replace(/\\/g, '/'))
+            entry.thumbnail = this._toFileURL(entry.path)
             this._saveThumbnail(entry)
             return
           }
@@ -664,9 +667,18 @@ export class GridView extends Component {
       const vid = document.createElement('video')
       vid.muted = true
       vid.playsInline = true
-      vid.preload = 'metadata'
       if (isElectron) {
-        vid.src = encodeURI('file:///' + entry.path.replace(/\\/g, '/'))
+        try {
+          const fs = window.require('fs')
+          const buf = fs.readFileSync(entry.path)
+          const ext = entry.name.split('.').pop().toLowerCase()
+          const mimeMap = { mp4: 'video/mp4', webm: 'video/webm', mkv: 'video/x-matroska', avi: 'video/x-msvideo', mov: 'video/quicktime', flv: 'video/x-flv', wmv: 'video/x-ms-wmv', m4v: 'video/mp4', '3gp': 'video/3gpp', mpeg: 'video/mpeg', mpg: 'video/mpeg' }
+          const blob = new Blob([buf], { type: mimeMap[ext] || 'video/mp4' })
+          vid.src = URL.createObjectURL(blob)
+        } catch (e) {
+          console.warn('[Thumbnail] Failed to read video file:', e)
+          return
+        }
       } else {
         vid.src = entry.path
       }
@@ -679,16 +691,21 @@ export class GridView extends Component {
       })
       vid.addEventListener('seeked', () => {
         try {
-          const canvas = document.createElement('canvas')
-          canvas.width = vid.videoWidth || 320
-          canvas.height = vid.videoHeight || 180
-          const ctx = canvas.getContext('2d')
-          if (ctx) { ctx.drawImage(vid, 0, 0, canvas.width, canvas.height); entry.thumbnail = canvas.toDataURL('image/jpeg', 0.6) }
+          if (vid.videoWidth > 0 && vid.videoHeight > 0) {
+            const canvas = document.createElement('canvas')
+            canvas.width = Math.min(vid.videoWidth, 320)
+            canvas.height = Math.min(vid.videoHeight, 180)
+            const ctx = canvas.getContext('2d')
+            if (ctx) { ctx.drawImage(vid, 0, 0, canvas.width, canvas.height); entry.thumbnail = canvas.toDataURL('image/jpeg', 0.6) }
+          }
         } catch (e) { console.warn('[Thumbnail] seeked drawImage failed:', e) }
         cleanup()
-        if (entry.thumbnail) this._saveThumbnail(entry)
+        if (entry.thumbnail && entry.thumbnail.length > 50) this._saveThumbnail(entry)
       })
-      vid.addEventListener('error', () => cleanup())
+      vid.addEventListener('error', (e) => {
+        console.warn('[Thumbnail] Video error:', vid.error?.message || vid.error, entry.path)
+        cleanup()
+      })
       vid.load()
     }
   }
@@ -706,15 +723,24 @@ export class GridView extends Component {
   _backfillThumbnails() {
     const ext = window.getExternalFiles?.() || []
     let dirty = false
+    const isElectron = typeof process !== 'undefined' && process.versions?.electron
     for (const entry of ext) {
+      if (!entry.thumbnail && entry.path && !isElectron && entry.path.startsWith('blob:')) {
+        entry._stale = true
+        dirty = true
+      }
       if (entry.thumbnail) continue
       const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(entry.name)
-      const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(entry.name)
+      const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv|m4v|3gp|mpeg|mpg)$/i.test(entry.name)
       if (!isImage && !isVideo) continue
       dirty = true
       this._generateThumbnail(entry)
     }
-    if (dirty && window.renderSidebar) window.renderSidebar()
+    if (dirty) {
+      window.saveExternalFiles?.(ext)
+      this.state.setState('externalFiles', ext)
+      if (window.renderSidebar) window.renderSidebar()
+    }
   }
 
   _hideAllViews() {
@@ -837,6 +863,19 @@ export class GridView extends Component {
     }
   }
 
+  _toFileURL(p) {
+    let normalized = p.replace(/\\/g, '/')
+    const parts = normalized.split('/')
+    for (let i = 0; i < parts.length; i++) {
+      if (/^[A-Z]:$/i.test(parts[i])) continue
+      parts[i] = encodeURIComponent(parts[i])
+    }
+    if (/^[A-Z]:/i.test(parts[0])) {
+      parts.unshift('')
+    }
+    return 'file://' + parts.join('/')
+  }
+
   _openExternalVideo(f) {
     if (!f.path) return
     const isElectron = typeof process !== 'undefined' && process.versions?.electron
@@ -844,22 +883,33 @@ export class GridView extends Component {
     const errEl = document.getElementById('extVideoError')
     this._hideAllViews()
     if (errEl) errEl.style.display = 'none'
-    if (isElectron) {
-      el.src = encodeURI('file:///' + f.path.replace(/\\/g, '/'))
-    } else {
-      el.src = f.path
-    }
+    el.addEventListener('error', function () {
+      console.warn('[Video] Failed to load:', el.error?.message, el.error?.code, el.src)
+      if (errEl) errEl.style.display = 'block'
+    }, { once: true })
     document.getElementById('extVideoTitle').textContent = f.name
     document.getElementById('extVideoView').style.display = 'flex'
     this._updateVideoPlayIcon(false)
     this._updateVideoVolumeUI()
     this._updatePipIcon(false)
     this._updateVideoControls()
+    if (isElectron) {
+      try {
+        const fs = window.require('fs')
+        const buf = fs.readFileSync(f.path)
+        const ext = f.name.split('.').pop().toLowerCase()
+        const mimeMap = { mp4: 'video/mp4', webm: 'video/webm', mkv: 'video/x-matroska', avi: 'video/x-msvideo', mov: 'video/quicktime', flv: 'video/x-flv', wmv: 'video/x-ms-wmv', m4v: 'video/mp4', '3gp': 'video/3gpp', mpeg: 'video/mpeg', mpg: 'video/mpeg' }
+        const blob = new Blob([buf], { type: mimeMap[ext] || 'video/mp4' })
+        el.src = URL.createObjectURL(blob)
+      } catch (e) {
+        console.warn('[Video] Failed to read file:', e)
+        if (errEl) errEl.style.display = 'block'
+        return
+      }
+    } else {
+      el.src = f.path
+    }
     el.play().catch(() => {})
-    el.addEventListener('error', function () {
-      console.warn('[Video] Failed to load:', el.error?.message, el.src)
-      if (errEl) errEl.style.display = 'block'
-    }, { once: true })
   }
 
   _closeExternalVideo() {

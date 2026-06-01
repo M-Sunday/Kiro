@@ -58,6 +58,7 @@ var URLS = [
   'assets/icons/ui/content/list-checks.svg',
   'assets/icons/ui/content/list-todo.svg',
   'assets/icons/ui/content/sparkles.svg',
+  'assets/icons/ui/view/layers.svg',
   'assets/icons/ui/view/layout-grid.svg',
   'assets/icons/ui/view/history.svg',
   'assets/icons/ui/view/moon-star.svg',

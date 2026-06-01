@@ -17,10 +17,14 @@ export class ViewManager {
     const sl = document.getElementById('searchLanding')
     const ct = document.querySelector('.content')
     const nv = document.getElementById('noteView')
+    const dv = document.getElementById('deckView')
     const gb = document.getElementById('gridBtn')
+    const db = document.getElementById('deckBtn')
 
     if (gv) gv.classList.remove('open')
+    if (dv) dv.classList.remove('open')
     if (gb) gb.classList.remove('active')
+    if (db) db.classList.remove('active')
     if (sl) sl.style.display = 'none'
     if (ct) ct.style.display = 'none'
     if (nv) nv.style.display = 'none'
@@ -28,6 +32,9 @@ export class ViewManager {
     if (view === 'grid') {
       if (gv) gv.classList.add('open')
       if (gb) gb.classList.add('active')
+    } else if (view === 'deck') {
+      if (dv) dv.classList.add('open')
+      if (db) db.classList.add('active')
     } else if (view === 'card') {
       if (ct) ct.style.display = ''
     } else if (view === 'landing') {

@@ -68,10 +68,22 @@ export class GridView extends Component {
       this._hideAllViews()
       gv.classList.add('open')
       document.getElementById('gridBtn')?.classList.add('active')
+      document.getElementById('deckBtn')?.classList.remove('active')
       this.bus.emit('ui:view:set', { view: 'grid' })
       const input = document.getElementById('kiroInput')
       if (input) input.value = ''
       this.render()
+    })
+
+    this.listenTo(document.getElementById('deckBtn'), 'click', () => {
+      const dv = document.getElementById('deckView')
+      if (dv.classList.contains('open')) return
+      this._hideAllViews()
+      dv.classList.add('open')
+      document.getElementById('deckBtn')?.classList.add('active')
+      this.bus.emit('ui:view:set', { view: 'deck' })
+      const input = document.getElementById('kiroInput')
+      if (input) input.value = ''
     })
 
     this.listenTo(document.getElementById('extTextClose'), 'click', () => this._closeExternalText())
@@ -681,6 +693,7 @@ export class GridView extends Component {
   _hideAllViews() {
     document.getElementById('noteView').style.display = 'none'
     document.getElementById('gridView').classList.remove('open')
+    document.getElementById('deckView')?.classList.remove('open')
     document.getElementById('extTextView').style.display = 'none'
     document.getElementById('extVideoView').style.display = 'none'
     const ct = document.querySelector('.content')

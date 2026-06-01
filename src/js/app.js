@@ -30,6 +30,7 @@ import { DownloadService } from './services/DownloadService.js'
 import { SearchView } from './components/SearchView.js'
 import { GridView } from './components/GridView.js'
 import { SidebarView } from './components/SidebarView.js'
+import { CardStackView } from './components/CardStackView.js'
 import { CardView } from './components/CardView.js'
 import { NoteView } from './components/NoteView.js'
 import { ContextMenu } from './components/ContextMenu.js'
@@ -132,6 +133,7 @@ async function bootstrap() {
   const searchView = new SearchView()
   const gridView = new GridView()
   const sidebarView = new SidebarView()
+  const cardStackView = new CardStackView()
   const cardView = new CardView()
   const noteView = new NoteView()
   const contextMenu = new ContextMenu()
@@ -142,6 +144,7 @@ async function bootstrap() {
   services.register('searchView', searchView)
   services.register('gridView', gridView)
   services.register('sidebarView', sidebarView)
+  services.register('cardStackView', cardStackView)
   services.register('cardView', cardView)
   services.register('noteView', noteView)
   services.register('contextMenu', contextMenu)
@@ -229,7 +232,11 @@ async function bootstrap() {
   bus.on('ui:note:open', (e) => { if (window.openNote) window.openNote(e.data?.id || e.id) })
   bus.on('ui:icons:load-needed', () => loadIcons())
   bus.on('ui:grid:refresh', () => { if (window.renderGridView) window.renderGridView() })
-  bus.on('ui:view:set', (e) => viewManager.setView(e.view))
+  bus.on('ui:view:set', (e) => {
+    viewManager.setView(e.view)
+    if (e.view === 'deck') { cardStackView.mount() }
+    else { cardStackView.unmount() }
+  })
 
   // Load existing localStorage data into state
   loadStateFromStorage(state)

@@ -1,3 +1,11 @@
+const ICON_DIR_MAP = {
+  'panel-left': 'nav/', 'arrow-right': 'nav/', 'x': 'nav/', 'plus': 'nav/', 'chevron-down': 'nav/', 'chevron-up': 'nav/', 'ellipsis': 'nav/', 'ellipsis-vertical': 'nav/', 'hard-drive': 'nav/', 'download': 'nav/',
+  'archive': 'action/', 'bookmark': 'action/', 'bookmark-fill': 'action/', 'check': 'action/', 'edit-3': 'action/', 'eye': 'action/', 'eye-off': 'action/', 'external-link': 'action/', 'folder': 'action/', 'folder-fill': 'action/', 'folder-plus': 'action/', 'link': 'action/', 'pin': 'action/', 'pin-off': 'action/', 'redo-2': 'action/', 'search': 'action/', 'settings': 'action/', 'trash-2': 'action/', 'undo-2': 'action/', 'circle-check': 'action/', 'circle-x': 'action/',
+  'file-video-2': 'media/',
+  'file-text': 'content/', 'file-text-fill': 'content/', 'list-checks': 'content/', 'list-todo': 'content/', 'sparkles': 'content/',
+  'layout-grid': 'view/', 'history': 'view/', 'moon-star': 'view/', 'star': 'view/', 'star-off': 'view/', 'layers': 'view/',
+  'rocket': 'space/',
+}
 const ICON_SUBDIRS = ['nav/', 'action/', 'media/', 'content/', 'view/', 'space/', '']
 const ICON_CACHE = {
   play: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>',
@@ -30,6 +38,18 @@ function applySvg(el, svg) {
 }
 
 function tryFetch(el, name, i) {
+  const known = ICON_DIR_MAP[name]
+  if (known) {
+    const base = 'assets/icons/ui/' + known
+    fetch(base + name + '.svg').then(function (r) {
+      if (!r.ok) throw new Error()
+      return r.text()
+    }).then(function (svg) {
+      setCached(name, svg)
+      if (el.parentNode) applySvg(el, svg)
+    })
+    return
+  }
   if (i >= ICON_SUBDIRS.length) return
   const base = 'assets/icons/ui/' + ICON_SUBDIRS[i]
   fetch(base + name + '.svg').then(function (r) {

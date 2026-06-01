@@ -71,6 +71,9 @@
             <button class="menu-btn mr-6" id="gridBtn">
                 <i data-lucide="layout-grid" class="icon-lg"></i>
             </button>
+            <button class="menu-btn mr-6" id="deckBtn">
+                <i data-lucide="layers" class="icon-lg"></i>
+            </button>
             <div class="top-bar-input">
                 <input type="text" id="kiroInput" placeholder="Paste a link" spellcheck="false">
                 <button id="kiroBtn">
@@ -115,6 +118,31 @@
                     <div class="search-landing-divider"></div>
                     <div class="search-landing-history" id="searchLandingHistory"></div>
                 </div>
+            </div>
+            <div class="deck-view" id="deckView">
+                <div class="deck-container">
+                    <div class="deck-content">
+                        <div class="deck-card" data-index="0">
+                            <img src="assets/state2.png" alt="State 2">
+                            <div class="deck-card-content"><span class="deck-card-title">State 2</span></div>
+                        </div>
+                        <div class="deck-card" data-index="1">
+                            <img src="assets/state3.png" alt="State 3">
+                            <div class="deck-card-content"><span class="deck-card-title">State 3</span></div>
+                        </div>
+                        <div class="deck-card" data-index="2">
+                            <img src="assets/state4.png" alt="State 4">
+                            <div class="deck-card-content"><span class="deck-card-title">State 4</span></div>
+                        </div>
+                        <div class="deck-card" data-index="3">
+                            <img src="assets/state1.png" alt="State 1">
+                            <div class="deck-card-content"><span class="deck-card-title">State 1</span></div>
+                        </div>
+                    </div>
+                </div>
+                <button class="deck-settings-btn" id="deckSettingsBtn">
+                    <img src="assets/settings-gear.png" alt="Settings">
+                </button>
             </div>
             <div class="grid-view" id="gridView"></div>
             <div class="batch-bar" id="batchBar" style="display:none">

@@ -33,8 +33,12 @@ const bookmarkUrlInput = document.getElementById('bookmarkUrlInput')
 const bookmarkTitleInput = document.getElementById('bookmarkTitleInput')
 
 async function addBookmark() {
+  const btn = document.getElementById('bookmarkDialogConfirm')
+  const orig = btn?.innerHTML
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>' }
+
   const url = bookmarkUrlInput.value.trim()
-  if (!url) return
+  if (!url) { if (btn) { btn.disabled = false; btn.innerHTML = orig }; return }
   const bms = getBookmarks()
   const id = '_bm_' + Date.now()
   const bm = { id, url, title: bookmarkTitleInput.value.trim() || url, added: Date.now() }
@@ -87,6 +91,7 @@ async function addBookmark() {
   }
   bms.push(bm)
   saveBookmarks(bms)
+  if (btn) { btn.disabled = false; btn.innerHTML = orig }
   bookmarkUrlInput.value = ''; bookmarkTitleInput.value = ''
   bookmarkDialog.classList.remove('open')
   renderSidebar(); renderGridView()

@@ -17,20 +17,16 @@ import { NoteRepository } from './data/repositories/NoteRepository.js'
 import { FolderRepository } from './data/repositories/FolderRepository.js'
 import { BookmarkRepository } from './data/repositories/BookmarkRepository.js'
 import { DirectAccessRepository } from './data/repositories/DirectAccessRepository.js'
-import { ChallengeRepository, AchievementRepository, GoalRepository } from './data/repositories/GoalRepository.js'
 import { SettingsRepository, MetadataRepository } from './data/repositories/SettingsRepository.js'
 
 import { VideoService } from './services/VideoService.js'
 import { NoteService } from './services/NoteService.js'
 import { FolderService } from './services/FolderService.js'
 import { BookmarkService } from './services/BookmarkService.js'
-import { ChallengeService } from './services/ChallengeService.js'
-import { GoalService } from './services/GoalService.js'
 import { SearchService } from './services/SearchService.js'
 import { SettingsService } from './services/SettingsService.js'
 import { DownloadService } from './services/DownloadService.js'
 
-import { CalendarView } from './components/CalendarView.js'
 import { SearchView } from './components/SearchView.js'
 import { GridView } from './components/GridView.js'
 import { SidebarView } from './components/SidebarView.js'
@@ -51,10 +47,8 @@ function loadStateFromStorage(state) {
   state.setState('notes', window.getNotes?.() || [])
   state.setState('bookmarks', window.getBookmarks?.() || [])
   state.setState('directAccess', window.getDirectAccess?.() || [])
-  state.setState('challenges', window.getKiroChallenges?.() || [])
-  state.setState('goals', window.getKiroGoals?.() || [])
-  state.setState('achievements', window.getKiroAchievements?.() || [])
-  state.setState('collapsed', window.getCollapsed?.() || {})
+    state.setState('externalFiles', window.getExternalFiles?.() || [])
+    state.setState('collapsed', window.getCollapsed?.() || {})
   state.setState('userName', window.getUserName?.() || '')
   state.setState('installedAt', window.getInstalledAt?.() || null)
   state.setState('lastOpenedAt', window.getLastOpenedAt?.() || null)
@@ -71,9 +65,6 @@ function patchLegacySavers(state, bus) {
     state.setState('notes', window.getNotes?.() || [])
     state.setState('bookmarks', window.getBookmarks?.() || [])
     state.setState('directAccess', window.getDirectAccess?.() || [])
-    state.setState('challenges', window.getKiroChallenges?.() || [])
-    state.setState('goals', window.getKiroGoals?.() || [])
-    state.setState('achievements', window.getKiroAchievements?.() || [])
     state.setState('collapsed', window.getCollapsed?.() || {})
     state.setState('userName', window.getUserName?.() || '')
   }
@@ -90,8 +81,7 @@ function patchLegacySavers(state, bus) {
 
   const savers = [
     'saveVideos', 'saveFolders', 'saveFolderMeta', 'savePins',
-    'saveNotes', 'saveBookmarks', 'saveDirectAccess',
-    'saveKiroChallenges', 'saveKiroGoals', 'saveKiroAchievements',
+    'saveNotes', 'saveBookmarks', 'saveDirectAccess', 'saveExternalFiles',
     'saveCollapsed', 'saveUserName', 'saveNSFW', 'saveBlurAllNSFW'
   ]
   for (const fn of savers) patch(fn)
@@ -126,9 +116,6 @@ async function bootstrap() {
   api.registerRepository('folders', new FolderRepository())
   api.registerRepository('bookmarks', new BookmarkRepository())
   api.registerRepository('directAccess', new DirectAccessRepository())
-  api.registerRepository('challenges', new ChallengeRepository())
-  api.registerRepository('goals', new GoalRepository('goals'))
-  api.registerRepository('achievements', new AchievementRepository())
   api.registerRepository('settings', new SettingsRepository())
   api.registerRepository('metadata', new MetadataRepository())
 
@@ -137,14 +124,11 @@ async function bootstrap() {
   services.register('noteService', new NoteService())
   services.register('folderService', new FolderService())
   services.register('bookmarkService', new BookmarkService())
-  services.register('challengeService', new ChallengeService())
-  services.register('goalService', new GoalService())
   services.register('searchService', new SearchService(bus))
   services.register('settingsService', new SettingsService())
   services.register('downloadService', new DownloadService())
 
   // UI Components
-  const calendarView = new CalendarView()
   const searchView = new SearchView()
   const gridView = new GridView()
   const sidebarView = new SidebarView()
@@ -155,7 +139,6 @@ async function bootstrap() {
   const settingsPanel = new SettingsPanel()
   const onboardingFlow = new OnboardingFlow()
 
-  services.register('calendarView', calendarView)
   services.register('searchView', searchView)
   services.register('gridView', gridView)
   services.register('sidebarView', sidebarView)
@@ -174,9 +157,6 @@ async function bootstrap() {
   services.register('notificationService', notificationService)
 
   // Mount UI components to their root elements
-  const calendarEl = document.getElementById('calendar')
-  if (calendarEl) calendarView.mount(calendarEl)
-
   const searchLanding = document.getElementById('searchLanding')
   if (searchLanding) searchView.mount(searchLanding)
 
@@ -186,6 +166,7 @@ async function bootstrap() {
   const sidebarTree = document.getElementById('sidebarTree')
   if (sidebarTree) sidebarView.mount(sidebarTree)
 
+  cardView.mount(document.querySelector('.card'))
   contextMenu.mount(document.getElementById('ctxMenu'))
   noteView.mount(document.getElementById('noteView'))
   dialogs.mount(document.getElementById('folderDialog'))
@@ -206,7 +187,6 @@ async function bootstrap() {
       settings: api.getRepository('settings'),
     },
     components: {
-      calendarView,
       searchView,
       gridView,
       sidebarView,

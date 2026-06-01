@@ -123,6 +123,14 @@ function createWindow() {
     })
     return result.canceled ? null : result.filePaths[0]
   })
+
+  ipcMain.handle('open-file-dialog', async () => {
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openFile'],
+      title: 'Import File'
+    })
+    return result
+  })
 }
 
 app.whenReady().then(createWindow)

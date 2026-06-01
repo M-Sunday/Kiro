@@ -15,7 +15,9 @@ export class SearchView extends Component {
   }
 
   _bindEvents() {
+    this.bus.on('search:started', (e) => this._onSearchStarted(e.videoId))
     this.bus.on('search:complete', (e) => this._onSearchComplete(e.videoId, e.metadata))
+    this.bus.on('search:enriched', (e) => this._onSearchEnriched(e.videoId, e.metadata))
     this.bus.on('search:failed', (e) => this._onSearchFailed(e.videoId))
     this.bus.on('search:not-youtube', (e) => this._onNonYouTubeUrl(e.url))
   }
@@ -44,33 +46,35 @@ export class SearchView extends Component {
     const text = input.value.trim()
     if (!text) return
 
-    const videoId = this.searchService.getVideoId(text)
+    this.bus.emit('ui:search:video', { url: text })
+  }
 
-    if (videoId) {
-      this.bus.emit('ui:search:video', { url: text })
-      return
-    }
-
-    if (/^https?:\/\//i.test(text) || /^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(text)) {
-      this._showDaDialog(text)
-    } else {
-      document.getElementById('videoTitle').textContent = 'Invalid video link'
-    }
+  _onSearchStarted(videoId) {
+    this.bus.emit('ui:view:set', { view: 'card' })
+    document.getElementById('thumbnail').src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+    document.getElementById('durationBadge').textContent = ''
+    document.getElementById('durationBadge').className = 'badge searching'
+    document.getElementById('videoTitle').textContent = 'Searching'
+    document.getElementById('videoTitle').className = 'searching-title'
+    document.getElementById('channelName').textContent = ''
   }
 
   _onSearchComplete(videoId, metadata) {
-    this.bus.emit('ui:view:set', { view: 'card' })
     document.getElementById('thumbnail').src = metadata.thumbnail
+    document.getElementById('durationBadge').textContent = metadata.duration || '–'
+    document.getElementById('durationBadge').className = 'badge'
+    document.getElementById('videoTitle').textContent = metadata.title
+    document.getElementById('videoTitle').className = ''
+    document.getElementById('channelName').textContent = metadata.channel
+
+    window.currentVideo = { id: videoId, ...metadata }
+    if (window.updateCardAddBtn) window.updateCardAddBtn()
+  }
+
+  _onSearchEnriched(videoId, metadata) {
     document.getElementById('durationBadge').textContent = metadata.duration || '–'
     document.getElementById('videoTitle').textContent = metadata.title
     document.getElementById('channelName').textContent = metadata.channel
-
-    if (metadata.pubDate) {
-      this.bus.emit('ui:calendar:set-date', { date: new Date(metadata.pubDate) })
-    }
-    if (metadata.privacy) {
-      this.bus.emit('ui:calendar:set-privacy', { status: metadata.privacy })
-    }
 
     window.currentVideo = { id: videoId, ...metadata }
     if (window.updateCardAddBtn) window.updateCardAddBtn()
@@ -78,12 +82,18 @@ export class SearchView extends Component {
 
   _onSearchFailed(videoId) {
     document.getElementById('durationBadge').textContent = '–'
+    document.getElementById('durationBadge').className = 'badge'
     document.getElementById('videoTitle').textContent = 'Could not load video info'
+    document.getElementById('videoTitle').className = ''
     document.getElementById('channelName').textContent = 'Try again or check the link'
   }
 
   _onNonYouTubeUrl(url) {
-    this._showDaDialog(url)
+    if (/^https?:\/\//i.test(url) || /^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(url)) {
+      this._showDaDialog(url)
+    } else {
+      document.getElementById('videoTitle').textContent = 'Invalid video link'
+    }
   }
 
   _showDaDialog(url) {

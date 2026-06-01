@@ -51,8 +51,6 @@ async function loadVideo(videoId) {
     document.getElementById('thumbnail').src = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
     document.getElementById('durationBadge').textContent = duration || '–'
     document.getElementById('videoTitle').textContent = title; document.getElementById('channelName').textContent = channel
-    if (pubDate) setPublishedDate(pubDate)
-    updatePrivacy(privacy)
     renderSidebar(); updateCardAddBtn()
   } catch (e) { currentVideo = null; document.getElementById('durationBadge').textContent = '–'; document.getElementById('videoTitle').textContent = 'Could not load video info'; document.getElementById('channelName').textContent = 'Try again or check the link' }
 }
@@ -77,7 +75,11 @@ document.getElementById('kiroBtn').addEventListener('click', () => {
 document.getElementById('daDialogCancel').addEventListener('click', () => { document.getElementById('daDialog').classList.remove('open'); pendingDaUrl = '' })
 
 document.getElementById('daDialogConfirm').addEventListener('click', async () => {
-  if (!pendingDaUrl) return
+  const btn = document.getElementById('daDialogConfirm')
+  const orig = btn?.innerHTML
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>' }
+
+  if (!pendingDaUrl) { if (btn) { btn.disabled = false; btn.innerHTML = orig }; return }
   const das = getDirectAccess()
   const title = document.getElementById('daTitleInput').value.trim() || pendingDaUrl
   let domain = ''
@@ -85,6 +87,7 @@ document.getElementById('daDialogConfirm').addEventListener('click', async () =>
   const da = { id: '_da_' + Date.now(), url: pendingDaUrl, title, added: Date.now(), image: `https://www.google.com/s2/favicons?domain=${domain}&sz=128` }
   das.push(da)
   saveDirectAccess(das)
+  if (btn) { btn.disabled = false; btn.innerHTML = orig }
   document.getElementById('kiroInput').value = ''
   document.getElementById('daDialog').classList.remove('open')
   pendingDaUrl = ''

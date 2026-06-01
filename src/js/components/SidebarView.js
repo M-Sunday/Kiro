@@ -46,6 +46,7 @@ export class SidebarView extends Component {
     const notes = window.getNotes?.() || []
     const bookmarks = window.getBookmarks?.() || []
     const directAccess = window.getDirectAccess?.() || []
+    const externalFiles = window.getExternalFiles?.() || []
     const collapsed = window.getCollapsed?.() || {}
     const query = (document.getElementById('searchInput')?.value || '').toLowerCase().trim()
 
@@ -64,10 +65,15 @@ export class SidebarView extends Component {
             n.folder === name && (n.title.toLowerCase().includes(query) || (n.content || '').toLowerCase().includes(query))
           )
         }
+        if (!folderHasMatch) {
+          folderHasMatch = externalFiles.some(f =>
+            f.folder === name && f.name.toLowerCase().includes(query)
+          )
+        }
         if (!folderHasMatch) continue
       }
       const color = meta[name]?.color || ''
-      const hasContents = ids.length || notes.filter(n => n.folder === name).length
+      const hasContents = ids.length || notes.filter(n => n.folder === name).length || externalFiles.filter(f => f.folder === name).length
       const icon = name === 'Archived' ? 'archive' : (hasContents ? 'folder-fill' : 'folder')
       const isCollapsed = collapsed['folder:' + name]
       html += '<div class="tree-item ' + (isCollapsed ? '' : 'expanded') + '" data-folder="' + name + '"><div class="tree-folder" draggable="false"' + (color ? ' data-color="' + color + '" style="--folder-color:' + color + '"' : '') + '><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="' + icon + '" class="tree-folder-icon"></i><span class="tree-label">' + name + '</span></div><div class="tree-children">'
@@ -85,7 +91,8 @@ export class SidebarView extends Component {
         if (!showAll && query && !v.title.toLowerCase().includes(query) && !v.channel.toLowerCase().includes(query)) continue
         const isPinned = pins.includes(id)
         const isActive = window.currentVideo?.id === id
-        html += '<div class="tree-item" data-video-id="' + id + '" draggable="true"><div class="tree-file' + (isActive ? ' active' : '') + (isPinned ? ' pinned' : '') + '"><i data-lucide="file-video-2" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">' + this._escapeHtml(v.title) + '</span><span class="tree-sublabel">' + this._escapeHtml(v.channel) + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
+        const vt = v.thumbnail || `https://img.youtube.com/vi/${id}/hqdefault.jpg`
+        html += '<div class="tree-item" data-video-id="' + id + '" draggable="true"><div class="tree-file' + (isActive ? ' active' : '') + (isPinned ? ' pinned' : '') + '"><div class="bm-thumb-wrap"><img class="bm-thumb" src="' + vt + '" onerror="this.style.display=\'none\'" loading="lazy"></div><div class="tree-file-meta"><span class="tree-label">' + this._escapeHtml(v.title) + '</span><span class="tree-sublabel">' + this._escapeHtml(v.channel) + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
       }
 
       for (const n of notes) {
@@ -94,6 +101,17 @@ export class SidebarView extends Component {
         const preview = this._stripHtml(n.content || '').replace(/\n/g, ' ').substring(0, 50)
         const noteIcon = n.todos && n.todos.length ? 'list-todo' : 'file-text'
         html += '<div class="tree-item" data-note-id="' + n.id + '" draggable="true"><div class="tree-file"><i data-lucide="' + noteIcon + '" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">' + (n.title || 'Untitled') + '</span><span class="tree-sublabel">' + preview + (this._stripHtml(n.content || '').length > 50 ? '…' : '') + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
+      }
+
+      for (const f of externalFiles) {
+        if (f.folder !== name) continue
+        if (!showAll && query && !f.name.toLowerCase().includes(query)) continue
+        const nsfw = f.blurred || false
+        const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(f.name)
+        const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(f.name)
+        const isText = /\.(txt|md|json|xml|html|css|js|py|java|c|cpp|h|ts)$/i.test(f.name)
+        const icon = isVideo ? 'file-video-2' : isImage ? 'image' : isText ? 'file-text' : 'file'
+        html += '<div class="tree-item" data-ext-id="' + f.id + '" draggable="true"><div class="tree-file"><div class="bm-thumb-wrap">' + (f.thumbnail ? '<img class="bm-thumb' + (nsfw ? ' nsfw-blur' : '') + '" src="' + f.thumbnail + '" onerror="this.style.display=\'none\'" />' : '<i data-lucide="' + icon + '" class="tree-file-icon" style="margin:4px"></i>') + '</div><div class="tree-file-meta' + (nsfw ? ' nsfw-blur' : '') + '"><span class="tree-label">' + this._escapeHtml(f.name) + '</span><span class="tree-sublabel">' + this._formatSize(f.size) + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
       }
 
       html += '</div></div>'
@@ -130,6 +148,22 @@ export class SidebarView extends Component {
         if (query && !d.title.toLowerCase().includes(query) && !d.url.toLowerCase().includes(query)) continue
         const nsfw = window.isNSFW?.(d) || d.blurred
         html += '<div class="tree-item" data-da-id="' + d.id + '" draggable="true"><div class="tree-file"><div class="bm-thumb-wrap">' + (d.image ? '<img class="bm-thumb' + (nsfw ? ' nsfw-blur' : '') + '" src="' + d.image + '" onerror="this.style.display=\'none\'" />' : '<i data-lucide="external-link" class="tree-file-icon" style="margin:4px"></i>') + '</div><div class="tree-file-meta' + (nsfw ? ' nsfw-blur' : '') + '"><span class="tree-label">' + d.title + '</span><span class="tree-sublabel">' + d.url + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
+      }
+      html += '</div></div>'
+    }
+
+    const unassignedExt = externalFiles.filter(f => !f.folder)
+    if (unassignedExt.length) {
+      const efCollapsed = collapsed['section:externalfiles']
+      html += '<div class="tree-item ' + (efCollapsed ? '' : 'expanded') + '" data-externalfiles="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="folder" class="tree-folder-icon"></i><span class="tree-label">External Files</span></div><div class="tree-children">'
+      for (const f of unassignedExt) {
+        if (query && !f.name.toLowerCase().includes(query)) continue
+        const nsfw = f.blurred || false
+        const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(f.name)
+        const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(f.name)
+        const isText = /\.(txt|md|json|xml|html|css|js|py|java|c|cpp|h|ts)$/i.test(f.name)
+        const icon = isVideo ? 'file-video-2' : isImage ? 'image' : isText ? 'file-text' : 'file'
+        html += '<div class="tree-item" data-ext-id="' + f.id + '" draggable="true"><div class="tree-file"><div class="bm-thumb-wrap">' + (f.thumbnail ? '<img class="bm-thumb' + (nsfw ? ' nsfw-blur' : '') + '" src="' + f.thumbnail + '" onerror="this.style.display=\'none\'" />' : '<i data-lucide="' + icon + '" class="tree-file-icon" style="margin:4px"></i>') + '</div><div class="tree-file-meta' + (nsfw ? ' nsfw-blur' : '') + '"><span class="tree-label">' + this._escapeHtml(f.name) + '</span><span class="tree-sublabel">' + this._formatSize(f.size) + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
       }
       html += '</div></div>'
     }
@@ -175,6 +209,15 @@ export class SidebarView extends Component {
             this.render()
             if (window.renderGridView) window.renderGridView()
           }
+        } else if (type === 'ext') {
+          let exts = window.getExternalFiles?.() || []
+          const f = exts.find(x => x.id === id)
+          if (f) {
+            f.folder = folderName
+            window.saveExternalFiles?.(exts)
+            this.render()
+            if (window.renderGridView) window.renderGridView()
+          }
         }
       })
     })
@@ -189,7 +232,8 @@ export class SidebarView extends Component {
         const bm = item.dataset.bookmarks
         const nt = item.dataset.notes
         const da = item.dataset.directaccess
-        const key = folder ? 'folder:' + folder : bm ? 'section:bookmarks' : nt ? 'section:notes' : da ? 'section:directaccess' : null
+        const ef = item.dataset.externalfiles
+        const key = folder ? 'folder:' + folder : bm ? 'section:bookmarks' : nt ? 'section:notes' : da ? 'section:directaccess' : ef ? 'section:externalfiles' : null
         if (key) {
           collapsed[key] = item.classList.contains('expanded')
           window.saveCollapsed?.(collapsed)
@@ -224,6 +268,26 @@ export class SidebarView extends Component {
           const das = (window.getDirectAccess?.() || []).filter(d => d.id === da.dataset.daId)
           if (das[0]?.url) { window.open(das[0].url); if (window.innerWidth <= 640) document.getElementById('sidebar')?.classList.add('closed') }
         }
+        const ext = file.closest('[data-ext-id]')
+        if (ext) {
+          const extId = ext.dataset.extId
+          if (window.openExternalText || window.openExternalVideo) {
+            const files = window.getExternalFiles?.() || []
+            const f = files.find(x => x.id === extId)
+            if (f) {
+              const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(f.name)
+              const isText = /\.(txt|md|json|xml|html|css|js|py|java|c|cpp|h|ts)$/i.test(f.name)
+              if (isText && window.openExternalText) window.openExternalText(f)
+              else if (isVideo && window.openExternalVideo) window.openExternalVideo(f)
+              else if (f.path) {
+                const isElectron = typeof process !== 'undefined' && process.versions?.electron
+                if (isElectron) window.require('electron').shell.openPath(f.path)
+                else window.open(f.path)
+              }
+            }
+          }
+          if (window.innerWidth <= 640) document.getElementById('sidebar')?.classList.add('closed')
+        }
       })
     })
 
@@ -233,14 +297,15 @@ export class SidebarView extends Component {
         const bm = el.dataset.bookmarkId
         const nt = el.dataset.noteId
         const da = el.dataset.daId
+        const ext = el.dataset.extId
         window.dragVideoId = vid || null
-        e.dataTransfer.setData('text/plain', vid || bm || nt || da || '')
-        e.dataTransfer.setData('type', vid ? 'video' : bm ? 'bookmark' : nt ? 'note' : da ? 'da' : '')
+        e.dataTransfer.setData('text/plain', vid || bm || nt || da || ext || '')
+        e.dataTransfer.setData('type', vid ? 'video' : bm ? 'bookmark' : nt ? 'note' : da ? 'da' : ext ? 'ext' : '')
         e.dataTransfer.effectAllowed = 'move'
       })
     })
 
-    document.querySelectorAll('.tree-item[data-bookmark-id], .tree-item[data-note-id], .tree-item[data-da-id]').forEach(el => {
+    document.querySelectorAll('.tree-item[data-bookmark-id], .tree-item[data-note-id], .tree-item[data-da-id], .tree-item[data-ext-id]').forEach(el => {
       el.addEventListener('dragover', (e) => { e.preventDefault(); el.querySelector('.tree-file')?.classList.add('drop-zone') })
       el.addEventListener('dragleave', () => el.querySelector('.tree-file')?.classList.remove('drop-zone'))
       el.addEventListener('drop', (e) => {
@@ -249,8 +314,8 @@ export class SidebarView extends Component {
         const draggedId = e.dataTransfer.getData('text/plain')
         const draggedType = e.dataTransfer.getData('type')
         if (!draggedId) return
-        const targetId = el.dataset.bookmarkId || el.dataset.noteId || el.dataset.daId
-        const targetType = el.dataset.bookmarkId ? 'bookmark' : el.dataset.noteId ? 'note' : 'da'
+        const targetId = el.dataset.bookmarkId || el.dataset.noteId || el.dataset.daId || el.dataset.extId
+        const targetType = el.dataset.bookmarkId ? 'bookmark' : el.dataset.noteId ? 'note' : el.dataset.daId ? 'da' : 'ext'
         if (draggedType !== targetType || draggedId === targetId) return
         if (targetType === 'bookmark') {
           let bms = window.getBookmarks?.() || []
@@ -267,6 +332,11 @@ export class SidebarView extends Component {
           const from = das.findIndex(d => d.id === draggedId)
           const to = das.findIndex(d => d.id === targetId)
           if (from > -1 && to > -1) { const [item] = das.splice(from, 1); das.splice(to, 0, item); window.saveDirectAccess?.(das); this.render() }
+        } else if (targetType === 'ext') {
+          let exts = window.getExternalFiles?.() || []
+          const from = exts.findIndex(x => x.id === draggedId)
+          const to = exts.findIndex(x => x.id === targetId)
+          if (from > -1 && to > -1) { const [item] = exts.splice(from, 1); exts.splice(to, 0, item); window.saveExternalFiles?.(exts); this.render(); if (window.renderGridView) window.renderGridView() }
         }
       })
     })
@@ -274,9 +344,10 @@ export class SidebarView extends Component {
     document.querySelectorAll('.tree-file').forEach(file => {
       file.addEventListener('contextmenu', (e) => {
         e.preventDefault()
-        const entry = file.closest('[data-video-id]'), folder = file.closest('[data-folder]'), bm = file.closest('[data-bookmark-id]'), note = file.closest('[data-note-id]'), da = file.closest('[data-da-id]')
+        const entry = file.closest('[data-video-id]'), folder = file.closest('[data-folder]'), bm = file.closest('[data-bookmark-id]'), note = file.closest('[data-note-id]'), da = file.closest('[data-da-id]'), ext = file.closest('[data-ext-id]')
         if (window.showContextMenu) {
-          if (da) window.showContextMenu(e.clientX, e.clientY, null, null, null, null, da.dataset.daId)
+          if (ext) window.showContextMenu(e.clientX, e.clientY, null, null, null, null, null, ext.dataset.extId)
+          else if (da) window.showContextMenu(e.clientX, e.clientY, null, null, null, null, da.dataset.daId)
           else if (bm) window.showContextMenu(e.clientX, e.clientY, null, null, bm.dataset.bookmarkId)
           else if (note) window.showContextMenu(e.clientX, e.clientY, null, null, null, note.dataset.noteId)
           else if (entry) window.showContextMenu(e.clientX, e.clientY, entry?.dataset.videoId, folder?.dataset.folder)
@@ -298,11 +369,12 @@ export class SidebarView extends Component {
       btn.addEventListener('click', (e) => {
         e.stopPropagation()
         const file = btn.closest('.tree-file')
-        const entry = file?.closest('[data-video-id]'), folder = file?.closest('[data-folder]'), bm = file?.closest('[data-bookmark-id]'), note = file?.closest('[data-note-id]'), da = file?.closest('[data-da-id]')
+        const entry = file?.closest('[data-video-id]'), folder = file?.closest('[data-folder]'), bm = file?.closest('[data-bookmark-id]'), note = file?.closest('[data-note-id]'), da = file?.closest('[data-da-id]'), ext = file?.closest('[data-ext-id]')
         const rect = btn.getBoundingClientRect()
         const x = rect.right, y = rect.bottom
         if (window.showContextMenu) {
-          if (da) window.showContextMenu(x, y, null, null, null, null, da.dataset.daId)
+          if (ext) window.showContextMenu(x, y, null, null, null, null, null, ext.dataset.extId)
+          else if (da) window.showContextMenu(x, y, null, null, null, null, da.dataset.daId)
           else if (bm) window.showContextMenu(x, y, null, null, bm.dataset.bookmarkId)
           else if (note) window.showContextMenu(x, y, null, null, null, note.dataset.noteId)
           else if (entry) window.showContextMenu(x, y, entry.dataset.videoId, folder?.dataset.folder)
@@ -318,9 +390,10 @@ export class SidebarView extends Component {
         longTimer = setTimeout(() => {
           longPressed = true
           const touch = e.touches[0]
-          const item = el.closest('[data-folder]'), video = el.closest('[data-video-id]'), bm = el.closest('[data-bookmark-id]'), note = el.closest('[data-note-id]'), da = el.closest('[data-da-id]')
+          const item = el.closest('[data-folder]'), video = el.closest('[data-video-id]'), bm = el.closest('[data-bookmark-id]'), note = el.closest('[data-note-id]'), da = el.closest('[data-da-id]'), ext = el.closest('[data-ext-id]')
           if (window.showContextMenu) {
-            if (da) window.showContextMenu(touch.clientX, touch.clientY, null, null, null, null, da.dataset.daId)
+            if (ext) window.showContextMenu(touch.clientX, touch.clientY, null, null, null, null, null, ext.dataset.extId)
+            else if (da) window.showContextMenu(touch.clientX, touch.clientY, null, null, null, null, da.dataset.daId)
             else if (video) window.showContextMenu(touch.clientX, touch.clientY, video.dataset.videoId, item?.dataset.folder || null)
             else if (bm) window.showContextMenu(touch.clientX, touch.clientY, null, null, bm.dataset.bookmarkId)
             else if (note) window.showContextMenu(touch.clientX, touch.clientY, null, null, null, note.dataset.noteId)
@@ -333,6 +406,15 @@ export class SidebarView extends Component {
       el.addEventListener('touchcancel', () => { clearTimeout(longTimer) })
       el.addEventListener('click', (e) => { if (longPressed) { e.preventDefault(); e.stopPropagation(); longPressed = false } })
     })
+  }
+
+  _formatSize(bytes) {
+    if (!bytes || bytes === 0) return ''
+    const units = ['B', 'KB', 'MB', 'GB']
+    let i = 0
+    let size = bytes
+    while (size >= 1024 && i < units.length - 1) { size /= 1024; i++ }
+    return (i === 0 ? size : size.toFixed(1)) + ' ' + units[i]
   }
 
   _escapeHtml(str) {

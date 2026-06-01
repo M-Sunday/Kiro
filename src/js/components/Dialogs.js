@@ -113,8 +113,12 @@ export class Dialogs extends Component {
   }
 
   async _addBookmark() {
+    const btn = document.getElementById('bookmarkDialogConfirm')
+    const orig = btn?.innerHTML
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>' }
+
     const url = document.getElementById('bookmarkUrlInput')?.value.trim()
-    if (!url) return
+    if (!url) { if (btn) { btn.disabled = false; btn.innerHTML = orig } return }
     const bms = window.getBookmarks?.() || []
     const id = '_bm_' + Date.now()
     const bm = { id, url, title: document.getElementById('bookmarkTitleInput')?.value.trim() || url, added: Date.now() }
@@ -171,6 +175,7 @@ export class Dialogs extends Component {
     bms.push(bm)
     window.saveBookmarks?.(bms)
 
+    if (btn) { btn.disabled = false; btn.innerHTML = orig }
     const urlInput = document.getElementById('bookmarkUrlInput')
     const titleInput = document.getElementById('bookmarkTitleInput')
     if (urlInput) urlInput.value = ''
@@ -181,8 +186,12 @@ export class Dialogs extends Component {
   }
 
   _addDirectAccess() {
+    const btn = document.getElementById('daDialogConfirm')
+    const orig = btn?.innerHTML
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>' }
+
     const url = window._pendingDaUrl || ''
-    if (!url) return
+    if (!url) { if (btn) { btn.disabled = false; btn.innerHTML = orig }; return }
     const das = window.getDirectAccess?.() || []
     const title = document.getElementById('daTitleInput')?.value.trim() || url
     let domain = ''
@@ -191,6 +200,7 @@ export class Dialogs extends Component {
     das.push(da)
     window.saveDirectAccess?.(das)
 
+    if (btn) { btn.disabled = false; btn.innerHTML = orig }
     const input = document.getElementById('kiroInput')
     if (input) input.value = ''
     this._closeDialog('daDialog')

@@ -7,9 +7,7 @@ const LS_TO_STORE_MAP = {
   kiroNotes: 'notes',
   kiroBookmarks: 'bookmarks',
   kiroDirectAccess: 'directAccess',
-  kiro_challenges: 'challenges',
-  kiro_goals: 'goals',
-  kiro_achievements: 'achievements',
+
   linkHistory: 'linkHistory',
 }
 

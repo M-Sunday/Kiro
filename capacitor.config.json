@@ -9,6 +9,27 @@
     "StatusBar": {
       "style": "DARK",
       "backgroundColor": "#1d1d1f"
+    },
+    "FilePicker": {
+      "android": {
+        "permissions": [
+          "READ_EXTERNAL_STORAGE",
+          "WRITE_EXTERNAL_STORAGE",
+          "READ_MEDIA_IMAGES",
+          "READ_MEDIA_VIDEO",
+          "READ_MEDIA_AUDIO"
+        ]
+      },
+      "ios": {
+        "entitlements": {
+          "com.apple.security.files.user-selected.read-only": true
+        }
+      }
+    },
+    "Filesystem": {
+      "android": {
+        "permissions": ["READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
+      }
     }
   }
 }

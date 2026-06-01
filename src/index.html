@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="css/kiro.css?v=3.0.1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Jeju+Myeongjo&family=Rethink+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         body.native-android { padding-top: 0 !important; }
         body.native-android .main-area {
@@ -106,7 +106,6 @@
                             <div class="dl-progress-track"><div class="dl-progress-fill" id="dlProgressFill"></div></div>
                             <span class="dl-progress-text" id="dlProgressText">0%</span>
                         </div>
-                        <div class="calendar" id="calendar"></div>
                     </div>
                 </div>
             </div>
@@ -152,6 +151,68 @@
                 <div class="note-view-content" id="noteViewContent" contenteditable="true" spellcheck="false"></div>
                 <div class="note-view-todos" id="noteViewTodos"></div>
                 <div class="note-view-footer" id="noteViewFooter"></div>
+            </div>
+        <div class="ext-text-view" id="extTextView" style="display:none">
+            <div class="ext-text-header">
+                <i data-lucide="file-text" class="ext-text-icon"></i>
+                <span class="ext-text-title" id="extTextTitle"></span>
+                <button class="ext-text-close" id="extTextClose"><i data-lucide="x" class="icon-md"></i></button>
+            </div>
+            <pre class="ext-text-content" id="extTextContent"></pre>
+        </div>
+        <div class="ext-video-view" id="extVideoView" style="display:none">
+            <div class="ext-video-header">
+                <i data-lucide="file-video-2" class="ext-video-icon"></i>
+                <span class="ext-video-title" id="extVideoTitle"></span>
+                <button class="ext-video-close" id="extVideoClose"><i data-lucide="x" class="icon-md"></i></button>
+            </div>
+            <div class="ext-video-body">
+                <div class="ext-video-overlay-icon" id="extVideoOverlayIcon"></div>
+                <video class="ext-video-element" id="extVideoElement"></video>
+                <div class="ext-video-controls" id="extVideoControls">
+                    <button class="ext-video-ctrl-btn" id="extVideoPlayBtn" title="Play/Pause" type="button"><span class="icon-sm" id="extVideoPlayIcon"></span></button>
+                    <button class="ext-video-ctrl-btn" id="extVideoSkipBackBtn" title="Skip back 10s" type="button"><i data-lucide="skip-back" class="icon-sm"></i></button>
+                    <button class="ext-video-ctrl-btn" id="extVideoSkipFwdBtn" title="Skip forward 10s" type="button"><i data-lucide="skip-forward" class="icon-sm"></i></button>
+                    <button class="ext-video-ctrl-btn" id="extVideoPipBtn" title="Picture in picture" type="button"><span class="icon-sm" id="extVideoPipIcon"></span></button>
+                    <div class="ext-video-progress" id="extVideoProgress">
+                        <div class="ext-video-progress-track" id="extVideoProgressTrack">
+                            <div class="ext-video-progress-fill" id="extVideoProgressFill"></div>
+                        </div>
+                    </div>
+                    <span class="ext-video-time" id="extVideoTime">0:00 / 0:00</span>
+                    <button class="ext-video-ctrl-btn" id="extVideoMuteBtn" title="Mute/Unmute" type="button"><span class="icon-sm" id="extVideoMuteIcon"></span></button>
+                    <input class="ext-video-volume" id="extVideoVolume" type="range" min="0" max="1" step="0.05" value="1" title="Volume">
+                    <button class="ext-video-ctrl-btn" id="extVideoFullscreenBtn" title="Fullscreen" type="button"><i data-lucide="maximize" class="icon-sm"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera overlay -->
+    <div class="camera-overlay" id="cameraOverlay" style="display:none">
+        <video class="camera-preview" id="cameraPreview" autoplay playsinline muted></video>
+        <div class="camera-header">
+            <span class="camera-title">Take Picture</span>
+            <button class="camera-close" id="cameraClose" aria-label="Close">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="camera-controls">
+            <button class="camera-flip-btn" id="cameraFlipBtn" title="Flip camera">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </button>
+            <button class="camera-capture-btn" id="cameraCaptureBtn" title="Capture"><span class="camera-capture-ring"></span></button>
+            <button class="camera-flash-btn" id="cameraFlashBtn" title="Flash">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </button>
+        </div>
+        <div class="camera-preview-shot" id="cameraPreviewShot" style="display:none">
+            <div class="camera-shot-inner">
+                <img id="cameraShotImg" />
+                <div class="camera-shot-actions">
+                    <button class="camera-shot-btn" id="cameraRetakeBtn">Retake</button>
+                    <button class="camera-shot-btn primary" id="cameraUseBtn">Use Photo</button>
+                </div>
             </div>
         </div>
     </div>
@@ -220,9 +281,11 @@
             <input type="text" id="noteTitleInput" placeholder="Title" spellcheck="false">
             <textarea id="noteContentInput" placeholder="Write something..." spellcheck="false"></textarea>
             <div class="folder-dialog-actions">
-                <button class="dialog-btn cancel" id="noteDialogCancel">Cancel</button>
-                <button class="dialog-btn confirm" id="noteDialogConfirm">Add Note</button>
-            </div>
+        <button class="dialog-btn cancel" id="noteDialogCancel">Cancel</button>
+        <button class="dialog-btn confirm" id="noteDialogConfirm">Add Note</button>
+      </div>
+    </div>
+  </div>
         </div>
     </div>
 
@@ -239,6 +302,7 @@
         <div class="ctx-item" data-action="move-up"><i data-lucide="chevron-up" class="ctx-icon"></i> Move up</div>
         <div class="ctx-item" data-action="move-down"><i data-lucide="chevron-down" class="ctx-icon"></i> Move down</div>
         <div class="ctx-divider" id="ctxDiv3"></div>
+        <div class="ctx-item" data-action="open-file-location"><i data-lucide="folder" class="ctx-icon"></i> Show in folder</div>
         <div class="ctx-move-to" id="ctxMoveTo"></div>
         <div class="ctx-divider" id="ctxDiv4"></div>
         <div class="ctx-item ctx-danger" data-action="delete"><i data-lucide="trash-2" class="ctx-icon"></i> Delete</div>
@@ -485,6 +549,7 @@
                             <div class="storage-bar-seg storage-bar-videos" id="storageBarVideos" style="width:0%"></div>
                             <div class="storage-bar-seg storage-bar-notes" id="storageBarNotes" style="width:0%"></div>
                             <div class="storage-bar-seg storage-bar-bookmarks" id="storageBarBookmarks" style="width:0%"></div>
+                            <div class="storage-bar-seg storage-bar-external" id="storageBarExternal" style="width:0%"></div>
                             <div class="storage-bar-seg storage-bar-other" id="storageBarOther" style="width:0%"></div>
                         </div>
                         <div class="storage-bar-label" id="storageTotalLabel">0 B used</div>
@@ -493,12 +558,13 @@
                         <div class="storage-legend-item"><span class="storage-dot storage-dot-videos"></span> Videos <span class="storage-legend-size" id="storageSizeVideos">—</span></div>
                         <div class="storage-legend-item"><span class="storage-dot storage-dot-notes"></span> Notes <span class="storage-legend-size" id="storageSizeNotes">—</span></div>
                         <div class="storage-legend-item"><span class="storage-dot storage-dot-bookmarks"></span> Bookmarks <span class="storage-legend-size" id="storageSizeBookmarks">—</span></div>
+                        <div class="storage-legend-item"><span class="storage-dot storage-dot-external"></span> External Files <span class="storage-legend-size" id="storageSizeExternal">—</span></div>
                         <div class="storage-legend-item"><span class="storage-dot storage-dot-other"></span> App data <span class="storage-legend-size" id="storageSizeOther">—</span></div>
                     </div>
                     <div class="storage-meta">
                         <span>Installed: <strong id="storageInstalledAt">—</strong></span>
                         <span>Last opened: <strong id="storageLastOpenedAt">—</strong></span>
-                        <span>Videos: <strong id="storageVideoCount">0</strong> · Notes: <strong id="storageNoteCount">0</strong> · Bookmarks: <strong id="storageBookmarkCount">0</strong></span>
+                        <span>Videos: <strong id="storageVideoCount">0</strong> · Notes: <strong id="storageNoteCount">0</strong> · Bookmarks: <strong id="storageBookmarkCount">0</strong> · External: <strong id="storageExtCount">0</strong></span>
                         <span style="font-size:11px;color:#8e8e93;word-break:break-all" id="storageLocation">—</span>
                     </div>
                     <div class="storage-actions">
@@ -513,72 +579,6 @@
                     </div>
                     <div id="patchNotesList" class="mt-20"></div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Challenge dialog -->
-    <div class="folder-dialog-overlay" id="challengeDialog">
-        <div class="folder-dialog dialog-scroll">
-            <h3>New Challenge</h3>
-            <input type="text" id="challengeNameInput" placeholder="Challenge name" spellcheck="false">
-            <textarea id="challengeDescInput" placeholder="Description..." class="dialog-textarea" spellcheck="false"></textarea>
-            <div class="milestone-header">GOALS / MILESTONES</div>
-            <div id="challengeTodoList"></div>
-            <button id="challengeAddTodoBtn" class="add-goal-btn">+ Add goal</button>
-            <div class="folder-dialog-actions compact">
-                <button class="dialog-btn cancel" id="challengeDialogCancel">Cancel</button>
-                <button class="dialog-btn confirm" id="challengeDialogConfirm">Start Challenge</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Challenge Edit dialog -->
-    <div class="folder-dialog-overlay" id="challengeEditDialog">
-        <div class="folder-dialog dialog-scroll">
-            <h3 id="challengeEditTitle">Edit Challenge</h3>
-            <input type="text" id="challengeEditNameInput" placeholder="Challenge name" spellcheck="false">
-            <textarea id="challengeEditDescInput" placeholder="Description..." class="dialog-textarea" spellcheck="false"></textarea>
-            <div class="milestone-header">GOALS / MILESTONES</div>
-            <div id="challengeEditTodoList"></div>
-            <button id="challengeEditAddTodoBtn" class="add-goal-btn">+ Add goal</button>
-            <div class="dialog-action-row">
-                <div class="dialog-action-group">
-                    <button class="dialog-btn danger" id="challengeEditDeleteBtn">Delete</button>
-                </div>
-                <div class="dialog-action-group">
-                    <button class="dialog-btn cancel" id="challengeEditCancel">Cancel</button>
-                    <button class="dialog-btn confirm" id="challengeEditSaveBtn">Save</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Achievements dialog -->
-    <div class="folder-dialog-overlay" id="achievementDialog">
-        <div class="folder-dialog dialog-scroll-sm">
-            <h3>Achievements</h3>
-            <div id="achievementList" class="mt-12"></div>
-            <div class="folder-dialog-actions mt-12">
-                <button class="dialog-btn cancel" id="achievementDialogClose">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Goal dialog -->
-    <div class="folder-dialog-overlay" id="goalDialog">
-        <div class="folder-dialog">
-            <h3>New Goal</h3>
-            <input type="text" id="goalNameInput" placeholder="What do you want to achieve?" spellcheck="false">
-            <textarea id="goalDescInput" placeholder="Why does this matter to you?" class="dialog-textarea-lg" spellcheck="false"></textarea>
-            <div class="flex gap-6 mt-12 items-center">
-                <label class="goal-label">Target:</label>
-                <input type="number" id="goalTargetInput" value="5" min="1" class="goal-input">
-                <label class="goal-label">per week</label>
-            </div>
-            <div class="folder-dialog-actions mt-12">
-                <button class="dialog-btn cancel" id="goalDialogCancel">Cancel</button>
-                <button class="dialog-btn confirm" id="goalDialogConfirm">Set Goal</button>
             </div>
         </div>
     </div>

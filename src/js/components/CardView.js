@@ -40,6 +40,255 @@ export class CardView extends Component {
     })
 
     this.listenTo(document.getElementById('cardAddBtn'), 'click', () => this.addCurrentVideo())
+    this.listenTo(document.getElementById('dlBtn'), 'click', (e) => this._handleDownload(e))
+  }
+
+  _handleDownload(e) {
+    e.stopPropagation()
+    if (!window.currentVideo?.url) return
+
+    const isElectron = typeof process !== 'undefined' && process.versions?.electron
+    if (!isElectron) {
+      const toast = document.getElementById('updateToast')
+      if (toast) {
+        const text = document.getElementById('updateToastText') || toast
+        text.textContent = 'Desktop exclusive \u2014 use the desktop app'
+        const actions = document.querySelector('.update-toast-actions')
+        if (actions) actions.style.display = 'none'
+        toast.classList.add('show')
+        setTimeout(() => { toast.classList.remove('show'); if (actions) actions.style.display = '' }, 3000)
+      }
+      return
+    }
+
+    this._startDownload()
+  }
+
+  async _startDownload() {
+    const prefs = {
+      type: localStorage.getItem('dlType') || 'video',
+      videoQuality: localStorage.getItem('dlVideoQuality') || '720',
+      audioFormat: localStorage.getItem('dlAudioFormat') || 'mp3',
+      audioBitrate: localStorage.getItem('dlAudioBitrate') || 'auto',
+      videoCodec: localStorage.getItem('dlVideoCodec') || 'h264'
+    }
+
+    const toast = document.getElementById('updateToast')
+    const toastText = document.getElementById('updateToastText') || toast
+    const progress = document.getElementById('dlProgress')
+    const fill = document.getElementById('dlProgressFill')
+    const pctText = document.getElementById('dlProgressText')
+    const actions = document.querySelector('.update-toast-actions')
+
+    progress.style.display = 'flex'
+    fill.style.width = '0%'
+    pctText.textContent = '0%'
+
+    let folder
+    try {
+      folder = await window.require('electron').ipcRenderer.invoke('pick-folder')
+    } catch {}
+    if (!folder) {
+      progress.style.display = 'none'
+      return
+    }
+
+    const quality = parseInt(prefs.videoQuality)
+    const needsFfmpeg = prefs.type === 'video' && (isNaN(quality) || quality >= 1080)
+    let hasFfmpeg = await new Promise(r => {
+      const p = window.require('child_process').spawn('ffmpeg', ['-version'])
+      let done = false
+      p.on('error', () => { if (!done) { done = true; r(false) } })
+      p.on('close', code => { if (!done) { done = true; r(code === 0) } })
+      setTimeout(() => { if (!done) { done = true; r(false) } }, 3000)
+    })
+
+    const ytDlpDir = window.require('path').join(window.require('os').homedir(), '.youtube-vault', 'bin')
+    const ffmpegPath = window.require('path').join(ytDlpDir, 'ffmpeg.exe')
+    if (!hasFfmpeg) hasFfmpeg = window.require('fs').existsSync(ffmpegPath)
+
+    if (needsFfmpeg && !hasFfmpeg) {
+      try {
+        await this._ensureFfmpeg()
+        hasFfmpeg = true
+      } catch {
+        toastText.textContent = 'ffmpeg download failed \u2014 limited to 720p'
+      }
+    }
+
+    this._ensureYtDlp().then((ytPath) => {
+      const args = ['--no-playlist', '--progress', '-o', window.require('path').join(folder, '%(title)s.%(ext)s')]
+      if (prefs.type === 'audio') {
+        args.push('-x', '--audio-format', prefs.audioFormat)
+        if (prefs.audioBitrate !== 'auto') args.push('--audio-quality', prefs.audioBitrate + 'k')
+      } else {
+        let format
+        if (prefs.videoQuality === 'max') {
+          format = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+        } else if (hasFfmpeg) {
+          format = `bestvideo[height<=${prefs.videoQuality}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${prefs.videoQuality}][ext=mp4]/best[height<=${prefs.videoQuality}]`
+        } else {
+          format = `best[height<=${prefs.videoQuality}][ext=mp4]/best[height<=${prefs.videoQuality}]`
+        }
+        args.push('-f', format)
+        if (prefs.videoCodec !== 'h264') args.push('--video-multistreams', '--prefer-free-formats')
+      }
+      args.push(window.currentVideo.url)
+
+      if (actions) actions.style.display = 'none'
+      toastText.textContent = 'Starting download\u2026'
+      toast.classList.add('show')
+
+      const proc = window.require('child_process').spawn(ytPath, args)
+      let output = ''
+      const onOutput = (data) => {
+        const text = data.toString()
+        output += text
+        const m = text.match(/(\d+\.?\d*)%\s/)
+        if (m) {
+          const pct = parseFloat(m[1])
+          fill.style.width = pct + '%'
+          pctText.textContent = pct.toFixed(0) + '%'
+          toastText.textContent = `Downloading\u2026 ${pct.toFixed(0)}%`
+        }
+      }
+      proc.stdout.on('data', onOutput)
+      proc.stderr.on('data', onOutput)
+      proc.on('close', (code) => {
+        if (code === 0) {
+          fill.style.width = '100%'
+          pctText.textContent = '100%'
+          toastText.textContent = 'Download complete'
+          if (actions) actions.style.display = 'none'
+          toast.classList.add('show')
+          setTimeout(() => { progress.style.display = 'none'; toast.classList.remove('show'); if (actions) actions.style.display = '' }, 4000)
+          const destMatch = output.match(/\[download\]\s+Destination:\s+(.+)/i)
+          const dest = destMatch ? destMatch[1].trim() : folder
+          if (dest) {
+            window.require('child_process').exec(`explorer /select,"${dest.replace(/"/g, '""')}"`)
+          }
+        } else {
+          toastText.textContent = `Download failed (code ${code})`
+          setTimeout(() => { toast.classList.remove('show'); if (actions) actions.style.display = '' }, 6000)
+        }
+      })
+      proc.on('error', (err) => {
+        toastText.textContent = 'Failed to start download: ' + (err.message || '')
+        setTimeout(() => { toast.classList.remove('show'); if (actions) actions.style.display = '' }, 5000)
+      })
+    }).catch((err) => {
+      toastText.textContent = 'Download setup failed: ' + (err.message || '')
+      progress.style.display = 'none'
+      setTimeout(() => { toast.classList.remove('show'); if (actions) actions.style.display = '' }, 5000)
+    })
+  }
+
+  _ensureYtDlp() {
+    const ytDlpDir = window.require('path').join(window.require('os').homedir(), '.youtube-vault', 'bin')
+    const ytDlpPath = window.require('path').join(ytDlpDir, 'yt-dlp.exe')
+    const ytDlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
+
+    if (window.require('fs').existsSync(ytDlpPath)) return Promise.resolve(ytDlpPath)
+
+    const toast = document.getElementById('updateToast')
+    const toastText = document.getElementById('updateToastText') || toast
+    const progress = document.getElementById('dlProgress')
+    const fill = document.getElementById('dlProgressFill')
+    const pctText = document.getElementById('dlProgressText')
+    const actions = document.querySelector('.update-toast-actions')
+
+    progress.style.display = 'flex'
+    fill.style.width = '0%'
+    pctText.textContent = '0%'
+    toastText.textContent = 'Downloading yt-dlp\u2026'
+    if (actions) actions.style.display = 'none'
+    toast.classList.add('show')
+
+    try { window.require('fs').mkdirSync(ytDlpDir, { recursive: true }) } catch {}
+
+    return this._dlFile(ytDlpUrl, ytDlpPath).then(() => {
+      fill.style.width = '100%'
+      pctText.textContent = '100%'
+      toastText.textContent = 'yt-dlp ready'
+      setTimeout(() => { progress.style.display = 'none'; toast.classList.remove('show'); if (actions) actions.style.display = '' }, 1500)
+      return ytDlpPath
+    }).catch((e) => {
+      if (actions) actions.style.display = ''
+      throw e
+    })
+  }
+
+  _ensureFfmpeg() {
+    const ytDlpDir = window.require('path').join(window.require('os').homedir(), '.youtube-vault', 'bin')
+    const ffmpegPath = window.require('path').join(ytDlpDir, 'ffmpeg.exe')
+    const ffmpegUrl = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
+
+    if (window.require('fs').existsSync(ffmpegPath)) return Promise.resolve(ffmpegPath)
+
+    const toast = document.getElementById('updateToast')
+    const toastText = document.getElementById('updateToastText') || toast
+    const progress = document.getElementById('dlProgress')
+    const fill = document.getElementById('dlProgressFill')
+    const pctText = document.getElementById('dlProgressText')
+    const actions = document.querySelector('.update-toast-actions')
+
+    progress.style.display = 'flex'
+    fill.style.width = '0%'
+    pctText.textContent = '0%'
+    toastText.textContent = 'Downloading ffmpeg\u2026'
+    if (actions) actions.style.display = 'none'
+    toast.classList.add('show')
+
+    try { window.require('fs').mkdirSync(ytDlpDir, { recursive: true }) } catch {}
+    const zipPath = window.require('path').join(ytDlpDir, 'ffmpeg.zip')
+
+    return this._dlFile(ffmpegUrl, zipPath).then(() => {
+      fill.style.width = '50%'
+      pctText.textContent = '50%'
+      toastText.textContent = 'Extracting ffmpeg\u2026'
+
+      const extractDir = window.require('path').join(ytDlpDir, 'ffmpeg-temp')
+      return new Promise((resolve, reject) => {
+        window.require('child_process').exec(
+          `Expand-Archive -Path '${zipPath.replace(/'/g, "''")}' -DestinationPath '${extractDir.replace(/'/g, "''")}' -Force; $exe = Get-ChildItem -Path '${extractDir.replace(/'/g, "''")}' -Recurse -Filter ffmpeg.exe | Select-Object -First 1 -ExpandProperty FullName; if ($exe) { Move-Item -Path $exe -Destination '${ffmpegPath.replace(/'/g, "''")}' -Force; Write-Output 'ok' }`,
+          (err, stdout) => {
+            if (!err && stdout.trim() === 'ok' && window.require('fs').existsSync(ffmpegPath)) {
+              fill.style.width = '100%'
+              pctText.textContent = '100%'
+              toastText.textContent = 'ffmpeg ready'
+              setTimeout(() => { progress.style.display = 'none'; toast.classList.remove('show'); if (actions) actions.style.display = '' }, 1500)
+              resolve(ffmpegPath)
+            } else {
+              reject(new Error('Failed to extract ffmpeg'))
+            }
+            try { window.require('fs').rmSync(zipPath, { force: true }); window.require('fs').rmSync(extractDir, { recursive: true, force: true }) } catch {}
+          }
+        )
+      })
+    }).catch((e) => {
+      if (actions) actions.style.display = ''
+      throw e
+    })
+  }
+
+  _dlFile(url, dest) {
+    return new Promise((resolve, reject) => {
+      const proto = url.startsWith('https') ? window.require('https') : window.require('http')
+      proto.get(url, res => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          this._dlFile(res.headers.location, dest).then(resolve).catch(reject)
+          return
+        }
+        if (res.statusCode !== 200) {
+          reject(new Error(`HTTP ${res.statusCode}`))
+          return
+        }
+        const file = window.require('fs').createWriteStream(dest)
+        res.pipe(file)
+        file.on('finish', () => { file.close(); resolve(dest) })
+        file.on('error', reject)
+      }).on('error', reject)
+    })
   }
 
   async loadVideoById(id) {
@@ -56,21 +305,16 @@ export class CardView extends Component {
     const channel = document.getElementById('channelName')
     if (channel) channel.textContent = v.channel
 
-    if (v.pubDate) {
-      if (window.setPublishedDate) window.setPublishedDate(new Date(v.pubDate))
-    } else {
+    if (!v.pubDate) {
       try {
         const piped = await (await fetch(`https://pipedapi.kavin.rocks/streams/${id}`)).json()
         if (piped.uploadDate) {
           const d = new Date(piped.uploadDate)
-          if (window.setPublishedDate) window.setPublishedDate(d)
           const vs = window.getVideos?.() || {}
           if (vs[id]) { vs[id].pubDate = d.toISOString(); window.saveVideos?.(vs) }
         }
       } catch {}
     }
-
-    if (window.updatePrivacy) window.updatePrivacy(v.privacy || 'PUBLIC')
     if (window.currentNoteId && window.closeNoteView) window.closeNoteView()
     this.updatePinBadge(id)
     if (window.showCardView) window.showCardView()

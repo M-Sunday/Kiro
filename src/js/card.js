@@ -6,20 +6,16 @@ async function loadVideoById(id) {
   document.getElementById('durationBadge').textContent = v.duration || '–'
   document.getElementById('videoTitle').textContent = v.title
   document.getElementById('channelName').textContent = v.channel
-  if (v.pubDate) {
-    setPublishedDate(new Date(v.pubDate))
-  } else {
+  if (!v.pubDate) {
     try {
       const piped = await (await fetch(`https://pipedapi.kavin.rocks/streams/${id}`)).json()
       if (piped.uploadDate) {
         const d = new Date(piped.uploadDate)
-        setPublishedDate(d)
         const vs = getVideos()
         if (vs[id]) { vs[id].pubDate = d.toISOString(); saveVideos(vs) }
       }
     } catch (_) {}
   }
-  updatePrivacy(v.privacy || 'PUBLIC')
   if (currentNoteId) closeNoteView()
   updatePinBadge(id); showCardView(); renderSidebar(); updateCardAddBtn()
 }

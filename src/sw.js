@@ -8,7 +8,6 @@ var URLS = [
   'css/kiro.css',
   'js/data.js',
   'js/views.js',
-  'js/calendar.js',
   'js/settings.js',
   'js/sidebar.js',
   'js/context-menu.js',

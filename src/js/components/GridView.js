@@ -4,6 +4,19 @@ import { Api } from '../core/Api.js'
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 
+const SVG = {
+  play: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>',
+  pause: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/></svg>',
+  'volume-2': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
+  'volume-1': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
+  'volume-x': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>',
+  'picture-in-picture-2': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 9V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h4"/><rect width="10" height="7" x="12" y="13" rx="2"/></svg>',
+  'picture-in-picture': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/><path d="M10 10v5a1 1 0 0 0 1 1h5"/><rect x="2" y="10" width="6" height="7" rx="1"/></svg>',
+  'maximize': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/></svg>',
+  'skip-back': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.971 4.285A2 2 0 0 1 21 6v12a2 2 0 0 1-3.029 1.715l-9.997-5.998a2 2 0 0 1-.003-3.432z"/><path d="M3 20V4"/></svg>',
+  'skip-forward': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4v16"/><path d="M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z"/></svg>',
+}
+
 export class GridView extends Component {
   constructor() {
     super()
@@ -11,19 +24,15 @@ export class GridView extends Component {
     this.selectedItems = new Set()
     this._animDone = false
     this._clockInterval = null
-    this._challengeTodoCtx = null
-    this._challengeEditTodoCtx = null
-    this._challengeTodoIdx = 0
 
     this.state.subscribe('videos', () => this.render())
     this.state.subscribe('folders', () => this.render())
     this.state.subscribe('notes', () => this.render())
     this.state.subscribe('bookmarks', () => this.render())
     this.state.subscribe('directAccess', () => this.render())
-    this.state.subscribe('challenges', () => this.render())
-    this.state.subscribe('goals', () => this.render())
     this.state.subscribe('pins', () => this.render())
     this.state.subscribe('userName', () => this.render())
+    this.state.subscribe('externalFiles', () => this.render())
 
     this.on('ui:grid:refresh', () => this.render())
 
@@ -33,27 +42,30 @@ export class GridView extends Component {
   _exposeGlobals() {
     window.renderGridView = () => this.render()
     window.startGridAnim = () => this._startAnim()
-    window.openChallengeDialog = () => this._openChallengeDialog()
-    window.openGoalDialog = () => this._openGoalDialog()
-    window.openAchievementDialog = () => this._openAchievementDialog()
-    window.openChallengeEditDialog = (id) => this._openChallengeEditDialog(id)
-    window.checkAchievements = () => this._checkAchievements()
+    window.takePicture = () => this._takePicture()
     window.renderProgressBar = (c, t, l) => this._renderProgressBar(c, t, l)
     window.renderNoteTodoPreview = (n) => this._renderNoteTodoPreview(n)
     window.burstParticles = (x, y, c) => this._burstParticles(x, y, c)
     window.todoBurst = (e) => this._todoBurst(e)
+    window.openExternalText = (f) => this._openExternalText(f)
+    window.openExternalVideo = (f) => this._openExternalVideo(f)
+    window.closeExternalText = () => this._closeExternalText()
+    window.closeExternalVideo = () => this._closeExternalVideo()
+    window.backfillExtThumbnails = () => this._backfillThumbnails()
   }
 
   mount(rootEl) {
     super.mount(rootEl)
     this._bindDOMEvents()
     this.render()
+    this._backfillThumbnails()
   }
 
   _bindDOMEvents() {
     this.listenTo(document.getElementById('gridBtn'), 'click', () => {
       const gv = this.rootEl
       if (gv.classList.contains('open')) return
+      this._hideAllViews()
       gv.classList.add('open')
       document.getElementById('gridBtn')?.classList.add('active')
       this.bus.emit('ui:view:set', { view: 'grid' })
@@ -62,105 +74,56 @@ export class GridView extends Component {
       this.render()
     })
 
+    this.listenTo(document.getElementById('extTextClose'), 'click', () => this._closeExternalText())
+    this.listenTo(document.getElementById('extVideoClose'), 'click', () => this._closeExternalVideo())
+
+    this.listenTo(document.getElementById('extVideoPlayBtn'), 'click', () => this._toggleVideoPlay())
+    this.listenTo(document.getElementById('extVideoSkipBackBtn'), 'click', () => { this._videoSkip(-10); this._showSkipOverlay('skip-back') })
+    this.listenTo(document.getElementById('extVideoSkipFwdBtn'), 'click', () => { this._videoSkip(10); this._showSkipOverlay('skip-forward') })
+    this.listenTo(document.getElementById('extVideoMuteBtn'), 'click', () => this._toggleVideoMute())
+    this.listenTo(document.getElementById('extVideoVolume'), 'input', (e) => this._videoVolume(e))
+    this.listenTo(document.getElementById('extVideoFullscreenBtn'), 'click', () => this._toggleVideoFullscreen())
+    this.listenTo(document.getElementById('extVideoPipBtn'), 'click', () => this._toggleVideoPip())
+    this.listenTo(document.getElementById('extVideoProgress'), 'click', (e) => this._videoSeek(e))
+    this.listenTo(document.getElementById('extVideoElement'), 'timeupdate', () => this._updateVideoControls())
+    this.listenTo(document.getElementById('extVideoElement'), 'play', () => this._updateVideoPlayIcon(true))
+    this.listenTo(document.getElementById('extVideoElement'), 'pause', () => this._updateVideoPlayIcon(false))
+    this.listenTo(document.getElementById('extVideoElement'), 'volumechange', () => this._updateVideoVolumeUI())
+    this.listenTo(document.getElementById('extVideoElement'), 'loadedmetadata', () => this._updateVideoControls())
+    this.listenTo(document.getElementById('extVideoElement'), 'enterpictureinpicture', () => this._updatePipIcon(true))
+    this.listenTo(document.getElementById('extVideoElement'), 'leavepictureinpicture', () => this._updatePipIcon(false))
+    this.listenTo(document.getElementById('extVideoElement'), 'click', (e) => {
+      if (this._extVideoDbl) {
+        clearTimeout(this._extVideoDbl)
+        this._extVideoDbl = null
+        const rect = e.currentTarget.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const edge = rect.width * 0.3
+        if (x < edge) { this._videoSkip(-10); this._showSkipOverlay('skip-back') }
+        else if (x > rect.width - edge) { this._videoSkip(10); this._showSkipOverlay('skip-forward') }
+        return
+      }
+      this._extVideoDbl = setTimeout(() => {
+        this._extVideoDbl = null
+        this._toggleVideoPlay()
+      }, 220)
+    })
+
     this.listenTo(document, 'click', (e) => {
       const btn = e.target.closest('.wb-btn')
       if (!btn) return
       const action = btn.dataset.action
       if (action === 'note') this._handleNewNote()
-      else if (action === 'challenge') this._openChallengeDialog()
-      else if (action === 'achievement') this._openAchievementDialog()
-      else if (action === 'goal') this._openGoalDialog()
+      else if (action === 'import-file') this._importFile()
+      else if (action === 'camera') this._takePicture()
     })
 
-    // Challenge dialog buttons
-    this.listenTo(document.getElementById('challengeAddTodoBtn'), 'click', () => {
-      if (this._challengeTodoCtx) this._challengeTodoCtx.add()
-    })
-    this.listenTo(document.getElementById('challengeDialogCancel'), 'click', () => {
-      document.getElementById('challengeDialog')?.classList.remove('open')
-    })
-    this.listenTo(document.getElementById('challengeDialogConfirm'), 'click', () => {
-      const name = document.getElementById('challengeNameInput')?.value.trim()
-      if (!name) return
-      const todos = (this._challengeTodoCtx ? this._challengeTodoCtx.items : []).filter(t => t.text.trim())
-      const challenges = window.getKiroChallenges?.() || []
-      challenges.push({
-        id: '_ch_' + Date.now(),
-        name,
-        desc: document.getElementById('challengeDescInput')?.value.trim() || '',
-        target: Math.max(todos.length, 1),
-        unit: 'goals',
-        progress: 0,
-        created: Date.now(),
-        todos
-      })
-      window.saveKiroChallenges?.(challenges)
-      document.getElementById('challengeDialog')?.classList.remove('open')
-      this._checkAchievements()
-      const rect = (document.querySelector('.wb-btn[data-action="challenge"]') || document.body).getBoundingClientRect()
-      this._burstParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#30d158')
-    })
+    this.listenTo(document.getElementById('cameraClose'), 'click', () => this._closeCamera())
+    this.listenTo(document.getElementById('cameraCaptureBtn'), 'click', () => this._capturePhoto())
+    this.listenTo(document.getElementById('cameraFlipBtn'), 'click', () => this._flipCamera())
+    this.listenTo(document.getElementById('cameraRetakeBtn'), 'click', () => this._retakePhoto())
+    this.listenTo(document.getElementById('cameraUseBtn'), 'click', () => this._usePhoto())
 
-    // Goal dialog buttons
-    this.listenTo(document.getElementById('goalDialogCancel'), 'click', () => {
-      document.getElementById('goalDialog')?.classList.remove('open')
-    })
-    this.listenTo(document.getElementById('goalDialogConfirm'), 'click', () => {
-      const name = document.getElementById('goalNameInput')?.value.trim()
-      if (!name) return
-      const goals = window.getKiroGoals?.() || []
-      goals.push({
-        id: '_gl_' + Date.now(),
-        name,
-        desc: document.getElementById('goalDescInput')?.value.trim() || '',
-        target: parseInt(document.getElementById('goalTargetInput')?.value) || 5,
-        progress: 0,
-        created: Date.now()
-      })
-      window.saveKiroGoals?.(goals)
-      document.getElementById('goalDialog')?.classList.remove('open')
-      this._checkAchievements()
-      this._burstParticles(window.innerWidth / 2, window.innerHeight / 2, '#ff9f0a')
-    })
-
-    // Challenge edit dialog buttons
-    this.listenTo(document.getElementById('challengeEditAddTodoBtn'), 'click', () => {
-      if (this._challengeEditTodoCtx) this._challengeEditTodoCtx.add()
-    })
-    this.listenTo(document.getElementById('challengeEditCancel'), 'click', () => {
-      document.getElementById('challengeEditDialog')?.classList.remove('open')
-    })
-    this.listenTo(document.getElementById('challengeEditSaveBtn'), 'click', () => {
-      const dialog = document.getElementById('challengeEditDialog')
-      const cid = dialog?.dataset.challengeId
-      if (!cid) return
-      const challenges = window.getKiroChallenges?.() || []
-      const c = challenges.find(x => x.id === cid)
-      if (!c) return
-      const name = document.getElementById('challengeEditNameInput')?.value.trim()
-      if (!name) return
-      const todos = (this._challengeEditTodoCtx ? this._challengeEditTodoCtx.items : []).filter(t => t.text.trim())
-      c.name = name
-      c.desc = document.getElementById('challengeEditDescInput')?.value.trim() || ''
-      c.todos = todos
-      c.target = Math.max(todos.length, 1)
-      c.unit = 'goals'
-      c.progress = todos.filter(t => t.done).length
-      if (c.progress > c.target) c.progress = c.target
-      window.saveKiroChallenges?.(challenges)
-      dialog?.classList.remove('open')
-      this._checkAchievements()
-      const rect = (document.querySelector('.grid-item.challenge[data-challenge-id="' + cid + '"]') || document.body).getBoundingClientRect()
-      this._burstParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#30d158')
-    })
-    this.listenTo(document.getElementById('challengeEditDeleteBtn'), 'click', () => {
-      const dialog = document.getElementById('challengeEditDialog')
-      const cid = dialog?.dataset.challengeId
-      if (!cid || !confirm('Delete this challenge?')) return
-      const challenges = window.getKiroChallenges?.() || []
-      window.saveKiroChallenges?.(challenges.filter(x => x.id !== cid))
-      dialog?.classList.remove('open')
-    })
   }
 
   render() {
@@ -172,8 +135,7 @@ export class GridView extends Component {
     const notes = this.state.getState('notes') || []
     const bookmarks = this.state.getState('bookmarks') || []
     const directAccess = this.state.getState('directAccess') || []
-    const challenges = this.state.getState('challenges') || []
-    const goals = this.state.getState('goals') || []
+    const externalFiles = this.state.getState('externalFiles') || []
     const pins = this.state.getState('pins') || []
     const userName = this.state.getState('userName') || ''
 
@@ -181,9 +143,10 @@ export class GridView extends Component {
 
     for (const [name, ids] of Object.entries(folders)) {
       const folderNotes = notes.filter(n => n.folder === name)
-      if (!ids.length && !folderNotes.length) continue
+      const folderExt = externalFiles.filter(f => f.folder === name)
+      if (!ids.length && !folderNotes.length && !folderExt.length) continue
       const color = folderMeta[name]?.color || ''
-      const hasContents = ids.length || folderNotes.length
+      const hasContents = ids.length || folderNotes.length || folderExt.length
 
       html += `<div class="grid-section"><div class="grid-section-header"${color ? ` style="color:${color}"` : ''}><i data-lucide="${hasContents ? 'folder-fill' : 'folder'}" style="width:16px;height:16px;flex-shrink:0"></i> ${name}</div><div class="grid-items">`
 
@@ -197,6 +160,10 @@ export class GridView extends Component {
 
       for (const n of folderNotes) {
         html += this._noteCard(n)
+      }
+
+      for (const f of folderExt) {
+        html += this._externalFileCard(f)
       }
 
       html += '</div></div>'
@@ -215,23 +182,16 @@ export class GridView extends Component {
       html += '</div></div>'
     }
 
+    const unassignedExt = externalFiles.filter(f => !f.folder)
+    if (unassignedExt.length) {
+      html += `<div class="grid-section"><div class="grid-section-header"><i data-lucide="folder" style="width:16px;height:16px;flex-shrink:0"></i> External Files</div><div class="grid-items">`
+      for (const f of unassignedExt) html += this._externalFileCard(f)
+      html += '</div></div>'
+    }
+
     if (directAccess.length) {
       html += `<div class="grid-section"><div class="grid-section-header"><i data-lucide="link" style="width:16px;height:16px;flex-shrink:0"></i> Direct Access</div><div class="grid-items">`
       for (const d of directAccess) html += this._daCard(d)
-      html += '</div></div>'
-    }
-
-    const activeChallenges = challenges.filter(c => c.progress < c.target)
-    if (activeChallenges.length) {
-      html += '<div class="grid-section"><div class="grid-section-header"><i data-lucide="sparkles" style="width:16px;height:16px;flex-shrink:0"></i> Active Challenges</div><div class="grid-items">'
-      for (const c of activeChallenges) html += this._challengeCard(c)
-      html += '</div></div>'
-    }
-
-    const activeGoals = goals.filter(g => g.progress < g.target)
-    if (activeGoals.length) {
-      html += '<div class="grid-section"><div class="grid-section-header"><i data-lucide="rocket" style="width:16px;height:16px;flex-shrink:0"></i> Goals</div><div class="grid-items">'
-      for (const g of activeGoals) html += this._goalCard(g)
       html += '</div></div>'
     }
 
@@ -249,9 +209,8 @@ export class GridView extends Component {
       this._clockInterval = setInterval(() => this._updateClock(), 30000)
     }
 
-    this._attachItemEvents(el, videos, bookmarks, directAccess, notes)
+    this._attachItemEvents(el, videos, bookmarks, directAccess, notes, externalFiles)
     this._attachDropEvents(el, folders)
-    this._attachChallengeEvents(el, challenges)
     this._updateBatchBar()
 
     this.bus.emit('ui:icons:load-needed')
@@ -267,8 +226,8 @@ export class GridView extends Component {
       <div class="grid-clock">${clock}</div>
       <div class="grid-workbench-actions">
         <button class="wb-btn" data-action="note" title="New Note"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg> New Note</button>
-        <button class="wb-btn" data-action="challenge" title="New Challenge"><i data-lucide="sparkles" style="width:15px;height:15px"></i> New Challenge</button>
-        <button class="wb-btn" data-action="goal" title="New Goal"><i data-lucide="rocket" style="width:15px;height:15px"></i> New Goal</button>
+        <button class="wb-btn" data-action="import-file" title="Import File"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg> Import File</button>
+        <button class="wb-btn" data-action="camera" title="Take Picture"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg> Take Picture</button>
       </div>
     </div>`
   }
@@ -294,6 +253,32 @@ export class GridView extends Component {
     </div>`
   }
 
+  _externalFileCard(f) {
+    const nsfw = f.blurred || false
+    const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(f.name)
+    const isAudio = /\.(mp3|wav|ogg|flac|m4a)$/i.test(f.name)
+    const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(f.name)
+    const isText = /\.(txt|md|json|xml|html|css|js|py|java|c|cpp|h|ts)$/i.test(f.name)
+    const thumb = f.thumbnail || ''
+    if (thumb) {
+      return `<div class="grid-item ext-file" data-ext-id="${f.id}">
+        <button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button>
+        <div style="position:relative"><img class="grid-item-img${nsfw ? ' nsfw-blur' : ''}" src="${thumb}" loading="lazy" onerror="this.style.display='none'" /></div>
+        <div class="grid-item-info${nsfw ? ' nsfw-blur' : ''}"><div class="grid-item-title" style="font-size:12px">${this._escapeHtml(f.name)}</div><div class="grid-item-sublabel" style="font-size:10px">${this._formatSize(f.size)}</div></div>
+      </div>`
+    }
+    let icon = 'file'
+    if (isVideo) icon = 'file-video-2'
+    else if (isAudio) icon = 'music'
+    else if (isImage) icon = 'image'
+    else if (isText) icon = 'file-text'
+    return `<div class="grid-item ext-file" data-ext-id="${f.id}">
+      <button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button>
+      <div class="grid-item-img${nsfw ? ' nsfw-blur' : ''}" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;aspect-ratio:auto;height:70px"><i data-lucide="${icon}" style="width:28px;height:28px;color:#8e8e93"></i></div>
+      <div class="grid-item-info${nsfw ? ' nsfw-blur' : ''}"><div class="grid-item-title" style="font-size:12px">${this._escapeHtml(f.name)}</div><div class="grid-item-sublabel" style="font-size:10px">${this._formatSize(f.size)}</div></div>
+    </div>`
+  }
+
   _bookmarkCard(bm) {
     const nsfw = bm.blurred || false
     return `<div class="grid-item bm" data-bookmark-id="${bm.id}">
@@ -311,37 +296,6 @@ export class GridView extends Component {
     </div>`
   }
 
-  _challengeCard(c) {
-    const pct = Math.min(100, (c.progress / Math.max(c.target, 1)) * 100)
-    let todosHtml = ''
-    if (c.todos && c.todos.length) {
-      todosHtml = '<div class="grid-item-todos" style="margin-top:6px">'
-      for (let tgi = 0; tgi < c.todos.length; tgi++) {
-        const t = c.todos[tgi]
-        todosHtml += `<div class="grid-item-todo challenge-todo-item" data-challenge-id="${c.id}" data-todo-idx="${tgi}" style="cursor:pointer"><span class="todo-check${t.done ? ' done' : ''}"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span><span class="todo-text${t.done ? ' done' : ''}">${this._escapeHtml(t.text || '')}</span></div>`
-      }
-      todosHtml += '</div>'
-    }
-    return `<div class="grid-item challenge" data-challenge-id="${c.id}">
-      <div class="grid-item-info" style="padding:10px;width:100%;box-sizing:border-box">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span class="grid-item-title" style="font-size:13px">${this._escapeHtml(c.name)}</span></div>
-        ${c.desc ? '<div class="grid-item-sublabel" style="margin-bottom:6px">' + this._escapeHtml(c.desc) + '</div>' : ''}
-        ${this._renderProgressBar(c.progress, c.target, c.progress + '/' + c.target + ' ' + c.unit)}
-        ${todosHtml}
-      </div>
-    </div>`
-  }
-
-  _goalCard(g) {
-    return `<div class="grid-item goal" data-goal-id="${g.id}">
-      <div class="grid-item-info" style="padding:10px;width:100%;box-sizing:border-box">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span class="grid-item-title" style="font-size:13px">${this._escapeHtml(g.name)}</span></div>
-        ${g.desc ? '<div class="grid-item-sublabel" style="margin-bottom:6px">' + this._escapeHtml(g.desc) + '</div>' : ''}
-        ${this._renderProgressBar(g.progress, g.target, g.progress + '/' + g.target + ' per week')}
-      </div>
-    </div>`
-  }
-
   _updateClock() {
     const c = this.rootEl?.querySelector('.grid-clock')
     if (!c) return
@@ -349,7 +303,7 @@ export class GridView extends Component {
     c.textContent = `${DAYS[d.getDay()].toUpperCase()} • ${MONTHS[d.getMonth()].toUpperCase()} ${d.getDate()} • ${d.getFullYear()}`
   }
 
-  _attachItemEvents(el, videos, bookmarks, directAccess, notes) {
+  _attachItemEvents(el, videos, bookmarks, directAccess, notes, externalFiles) {
     el.querySelectorAll('[data-video-id]').forEach(item => {
       this._addDragEvents(item, 'video', el)
       item.addEventListener('click', () => {
@@ -375,6 +329,27 @@ export class GridView extends Component {
       })
     })
 
+    el.querySelectorAll('[data-ext-id]').forEach(item => {
+      item.addEventListener('click', () => {
+        const f = externalFiles.find(x => x.id === item.dataset.extId)
+        if (!f) return
+        const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(f.name)
+        const isText = /\.(txt|md|json|xml|html|css|js|py|java|c|cpp|h|ts)$/i.test(f.name)
+        const isElectron = typeof process !== 'undefined' && process.versions?.electron
+        if (isText && isElectron && f.path) {
+          this._openExternalText(f)
+        } else if (isVideo && f.path) {
+          this._openExternalVideo(f)
+        } else if (f.path) {
+          if (isElectron) {
+            window.require('electron').shell.openPath(f.path)
+          } else if (window.cordova || window.Capacitor) {
+            window.open(f.path)
+          }
+        }
+      })
+    })
+
     el.querySelectorAll('.grid-item-menu').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation()
@@ -386,6 +361,7 @@ export class GridView extends Component {
           bookmarkId: item.dataset.bookmarkId || null,
           noteId: item.dataset.noteId || null,
           daId: item.dataset.daId || null,
+          extId: item.dataset.extId || null,
         })
       })
     })
@@ -399,6 +375,7 @@ export class GridView extends Component {
           bookmarkId: item.dataset.bookmarkId || null,
           noteId: item.dataset.noteId || null,
           daId: item.dataset.daId || null,
+          extId: item.dataset.extId || null,
         })
       })
     })
@@ -408,7 +385,7 @@ export class GridView extends Component {
       const item = e.target.closest('.grid-item')
       if (!item) return
       e.preventDefault(); e.stopPropagation()
-      const id = item.dataset.videoId || item.dataset.bookmarkId || item.dataset.noteId || item.dataset.daId
+      const id = item.dataset.videoId || item.dataset.bookmarkId || item.dataset.noteId || item.dataset.daId || item.dataset.extId
       if (!id) return
       if (this.selectedItems.has(id)) { this.selectedItems.delete(id); item.classList.remove('selected') }
       else { this.selectedItems.add(id); item.classList.add('selected') }
@@ -423,7 +400,7 @@ export class GridView extends Component {
     item.addEventListener('touchstart', (e) => {
       const t = e.touches[0]
       tdState = {
-        dragId: item.dataset.videoId || item.dataset.bookmarkId || item.dataset.noteId || item.dataset.daId,
+        dragId: item.dataset.videoId || item.dataset.bookmarkId || item.dataset.noteId || item.dataset.daId || item.dataset.extId,
         dragType: type,
         folder: (item.closest('.grid-section')?.querySelector('.grid-section-header')?.textContent?.trim()) || '',
         startX: t.clientX, startY: t.clientY, lastX: t.clientX, lastY: t.clientY,
@@ -458,7 +435,7 @@ export class GridView extends Component {
     })
 
     item.addEventListener('dragstart', (e) => {
-      const id = item.dataset.videoId || item.dataset.bookmarkId || item.dataset.noteId || item.dataset.daId
+      const id = item.dataset.videoId || item.dataset.bookmarkId || item.dataset.noteId || item.dataset.daId || item.dataset.extId
       const section = item.closest('.grid-section')
       const folder = section?.querySelector('.grid-section-header')?.textContent?.trim() || ''
       e.dataTransfer.setData('text/plain', id || '')
@@ -472,7 +449,7 @@ export class GridView extends Component {
       e.preventDefault()
       e.dataTransfer.dropEffect = 'move'
       const t = e.dataTransfer.getData('type')
-      const myId = item.dataset.videoId || item.dataset.bookmarkId || item.dataset.noteId || item.dataset.daId
+      const myId = item.dataset.videoId || item.dataset.bookmarkId || item.dataset.noteId || item.dataset.daId || item.dataset.extId
       if (t === type && e.dataTransfer.getData('text/plain') !== myId) {
         const rect = item.getBoundingClientRect()
         item.classList.toggle('drag-before', e.clientY < rect.top + rect.height / 2)
@@ -503,7 +480,7 @@ export class GridView extends Component {
     const targetItem = target?.closest('.grid-item')
     if (!targetItem) return
 
-    const targetId = targetItem.dataset.videoId || targetItem.dataset.bookmarkId || targetItem.dataset.noteId || targetItem.dataset.daId
+    const targetId = targetItem.dataset.videoId || targetItem.dataset.bookmarkId || targetItem.dataset.noteId || targetItem.dataset.daId || targetItem.dataset.extId
     if (!targetId || dragId === targetId) return
 
     const rect = targetItem.getBoundingClientRect()
@@ -527,26 +504,6 @@ export class GridView extends Component {
     })
   }
 
-  _attachChallengeEvents(el) {
-    el.querySelectorAll('.challenge-todo-item').forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.stopPropagation()
-        const cid = item.dataset.challengeId
-        const idx = parseInt(item.dataset.todoIdx)
-        if (!cid || isNaN(idx)) return
-        this.bus.emit('ui:challenge:toggle-todo', { challengeId: cid, todoIndex: idx })
-      })
-    })
-
-    el.querySelectorAll('.grid-item.challenge').forEach(item => {
-      item.addEventListener('click', (e) => {
-        if (e.target.closest('.challenge-todo-item')) return
-        const cid = item.dataset.challengeId
-        if (cid) this._openChallengeEditDialog(cid)
-      })
-    })
-  }
-
   _updateBatchBar() {
     const bar = document.getElementById('batchBar')
     const count = document.getElementById('batchCount')
@@ -566,153 +523,418 @@ export class GridView extends Component {
     if (window.openNote) window.openNote(id)
   }
 
-  _openChallengeDialog() {
-    const dialog = document.getElementById('challengeDialog')
-    if (!dialog) return
-    document.getElementById('challengeNameInput').value = ''
-    document.getElementById('challengeDescInput').value = ''
-    dialog.classList.add('open')
-    this._challengeTodoCtx = this._renderChallengeTodoList('challengeTodoList', [], false)
-    setTimeout(() => document.getElementById('challengeNameInput')?.focus(), 100)
-  }
-
-  _openGoalDialog() {
-    const dialog = document.getElementById('goalDialog')
-    if (!dialog) return
-    document.getElementById('goalNameInput').value = ''
-    document.getElementById('goalDescInput').value = ''
-    document.getElementById('goalTargetInput').value = 5
-    dialog.classList.add('open')
-    setTimeout(() => document.getElementById('goalNameInput')?.focus(), 100)
-  }
-
-  _openAchievementDialog() {
-    this._renderAchievements()
-    const dialog = document.getElementById('achievementDialog')
-    if (dialog) dialog.classList.add('open')
-  }
-
-  _openChallengeEditDialog(challengeId) {
-    const challenges = this.state.getState('challenges') || []
-    const c = challenges.find(x => x.id === challengeId)
-    if (!c) return
-
-    document.getElementById('challengeEditTitle').textContent = 'Edit: ' + this._escapeHtml(c.name)
-    document.getElementById('challengeEditNameInput').value = c.name
-    document.getElementById('challengeEditDescInput').value = c.desc || ''
-    document.getElementById('challengeEditDialog').dataset.challengeId = challengeId
-
-    c.todos = c.todos || []
-    this._challengeEditTodoCtx = this._renderChallengeTodoList('challengeEditTodoList', c.todos.map(t => ({ id: t.id || '_cht_' + Date.now() + '_' + Math.random(), text: t.text, done: t.done })), true)
-
-    const dialog = document.getElementById('challengeEditDialog')
-    if (dialog) dialog.classList.add('open')
-    setTimeout(() => document.getElementById('challengeEditNameInput')?.focus(), 100)
-  }
-
-  _renderChallengeTodoList(containerId, todos, showChecks) {
-    const el = document.getElementById(containerId)
-    if (!el) return null
-    const items = (todos || []).map(t => ({ ...t }))
-
-    const render = () => {
-      let html = ''
-      for (let i = 0; i < items.length; i++) {
-        const t = items[i]
-        if (showChecks) {
-          html += `<div class="todo-row" data-idx="${i}">
-            <span class="todo-cb${t.done ? ' checked' : ''}" data-idx="${i}">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="todo-cb-icon todo-cb-check"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="todo-cb-icon todo-cb-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
-            </span>
-            <span class="todo-text${t.done ? ' done' : ''}" contenteditable="true" data-idx="${i}" spellcheck="false">${this._escapeHtml(t.text || '')}</span>
-            <button class="challenge-todo-rm" data-idx="${i}" style="background:none;border:none;color:#ff453a;cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;flex-shrink:0">×</button>
-          </div>`
-        } else {
-          html += `<div class="challenge-todo-row" data-idx="${i}" style="display:flex;align-items:center;gap:6px;margin-top:4px">
-            <input type="text" class="challenge-todo-input" value="${this._escapeHtml(items[i].text || '')}" placeholder="Goal..." spellcheck="false" style="flex:1;padding:5px 8px;border:1px solid #d2d2d7;border-radius:6px;font-size:12px;font-family:inherit;outline:none;background:#f5f5f7;color:#1d1d1f" />
-            <button class="challenge-todo-rm" data-idx="${i}" style="background:none;border:none;color:#ff453a;cursor:pointer;font-size:16px;line-height:1;padding:0 2px">×</button>
-          </div>`
+  async _importFile() {
+    // Capacitor native (Android, iOS, macOS via Mac Catalyst)
+    if (window.Capacitor?.isNativePlatform?.()) {
+      try {
+        const fp = window.Capacitor.Plugins.FilePicker
+        if (!fp) throw new Error('FilePicker plugin not available')
+        // Only Android needs explicit permission requests
+        if (window.Capacitor.getPlatform() === 'android') {
+          try {
+            const permResult = await fp.checkPermissions()
+            if (permResult.readExternalStorage !== 'granted') {
+              const reqResult = await fp.requestPermissions({ permissions: ['readExternalStorage'] })
+              if (reqResult.readExternalStorage !== 'granted') {
+                console.warn('[Import] Storage permission denied')
+                return
+              }
+            }
+          } catch (permErr) {
+            // checkPermissions/requestPermissions only work on Android; carry on
+          }
         }
+        const result = await fp.pickFiles({ limit: 1 })
+        if (!result?.files?.length) return
+        const file = result.files[0]
+        const path = file.path || file.name
+        this._addExternalFile(file.name, path, file.size || 0, file.mimeType || '')
+      } catch (e) {
+        if (e.message?.includes?.('canceled')) return
+        console.warn('[Import] Capacitor file-picker failed:', e)
       }
-      el.innerHTML = html
+      return
+    }
 
-      el.querySelectorAll('.challenge-todo-rm').forEach(btn => {
-        btn.addEventListener('click', () => { items.splice(parseInt(btn.dataset.idx), 1); render() })
+    // Electron (macOS, Windows, Linux)
+    const isElectron = typeof process !== 'undefined' && process.versions?.electron
+    if (isElectron) {
+      try {
+        const { dialog } = window.require('@electron/remote') || {}
+        if (dialog) {
+          const result = await dialog.showOpenDialog({ properties: ['openFile'] })
+          if (!result.canceled && result.filePaths?.length) {
+            const path = result.filePaths[0]
+            this._addExternalFile(path.split(/[/\\]/).pop(), path)
+          }
+          return
+        }
+      } catch {}
+      try {
+        const result = await window.require('electron').ipcRenderer.invoke('open-file-dialog')
+        if (result?.filePaths?.length) {
+          const path = result.filePaths[0]
+          this._addExternalFile(path.split(/[/\\]/).pop(), path)
+        }
+      } catch {}
+      return
+    }
+
+    // Web / PWA fallback
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.onchange = (e) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+      this._addExternalFile(file.name, file.name, file.size, file.type)
+    }
+    input.click()
+  }
+
+  _addExternalFile(name, path, size, mimeType) {
+    const ext = window.getExternalFiles?.() || []
+    const id = '_ext_' + Date.now()
+    const entry = { id, name, path, size: size || 0, mimeType: mimeType || '', added: Date.now(), blurred: false }
+    ext.push(entry)
+    window.saveExternalFiles?.(ext)
+    this.state.setState('externalFiles', ext)
+    this._generateThumbnail(entry)
+    if (window.renderSidebar) window.renderSidebar()
+    if (window.renderGridView) window.renderGridView()
+  }
+
+  _generateThumbnail(entry) {
+    const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(entry.name)
+    const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(entry.name)
+    if (!entry.path || !(isImage || isVideo)) return
+    const isElectron = typeof process !== 'undefined' && process.versions?.electron
+    if (isImage && isElectron) {
+      try {
+        const fs = window.require('fs')
+        const stat = fs.statSync(entry.path)
+        if (stat.size > 2 * 1024 * 1024) {
+          entry.thumbnail = encodeURI('file:///' + entry.path.replace(/\\/g, '/'))
+          this._saveThumbnail(entry)
+          return
+        }
+        const buf = fs.readFileSync(entry.path)
+        const ext = entry.name.split('.').pop().toLowerCase()
+        const mime = ext === 'jpg' ? 'jpeg' : ext === 'svg' ? 'svg+xml' : ext
+        entry.thumbnail = 'data:image/' + mime + ';base64,' + buf.toString('base64')
+        this._saveThumbnail(entry)
+      } catch (e) {
+        console.warn('[Thumbnail] Failed to read image:', e)
+      }
+      return
+    }
+    if (isVideo && isElectron) {
+      const vid = document.createElement('video')
+      vid.src = encodeURI('file:///' + entry.path.replace(/\\/g, '/'))
+      vid.muted = true
+      vid.style.position = 'absolute'
+      vid.style.left = '-9999px'
+      document.body.appendChild(vid)
+      const cleanup = () => { try { vid.remove() } catch {} }
+      vid.addEventListener('loadeddata', () => {
+        vid.currentTime = Math.min(vid.duration * 0.3, 5)
       })
-
-      if (showChecks) {
-        el.querySelectorAll('.todo-cb').forEach(cb => {
-          cb.addEventListener('click', () => { const idx = parseInt(cb.dataset.idx); items[idx].done = !items[idx].done; render() })
-        })
-        el.querySelectorAll('.todo-text[contenteditable]').forEach(span => {
-          span.addEventListener('blur', () => { items[parseInt(span.dataset.idx)].text = span.textContent })
-          span.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); span.blur() } })
-        })
-      } else {
-        el.querySelectorAll('.challenge-todo-input').forEach(inp => {
-          inp.addEventListener('input', () => { items[parseInt(inp.dataset.idx)].text = inp.value })
-          inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addItem() } })
-        })
-      }
+      vid.addEventListener('seeked', () => {
+        try {
+          const canvas = document.createElement('canvas')
+          canvas.width = vid.videoWidth || 320
+          canvas.height = vid.videoHeight || 180
+          const ctx = canvas.getContext('2d')
+          if (ctx) { ctx.drawImage(vid, 0, 0, canvas.width, canvas.height); entry.thumbnail = canvas.toDataURL('image/jpeg', 0.6) }
+        } catch (e) { console.warn('[Thumbnail] seeked drawImage failed:', e) }
+        cleanup()
+        if (entry.thumbnail) this._saveThumbnail(entry)
+      })
+      vid.addEventListener('error', () => cleanup())
+      vid.load()
     }
-
-    const addItem = () => {
-      items.push({ id: '_cht_' + Date.now() + '_' + (this._challengeTodoIdx++), text: '', done: false })
-      render()
-      if (showChecks) {
-        const lastSpan = el.querySelector('.todo-row:last-child .todo-text')
-        if (lastSpan) setTimeout(() => lastSpan.focus(), 50)
-      } else {
-        const lastInput = el.querySelector('.challenge-todo-input:last-child')
-        if (lastInput) setTimeout(() => lastInput.focus(), 50)
-      }
-    }
-
-    render()
-    return { items, add: addItem }
   }
 
-  _renderAchievements() {
-    const el = document.getElementById('achievementList')
+  _saveThumbnail(entry) {
+    const ext = window.getExternalFiles?.() || []
+    const f = ext.filter(x => x.id === entry.id)[0]
+    if (!f) return
+    f.thumbnail = entry.thumbnail
+    window.saveExternalFiles?.(ext)
+    this.state.setState('externalFiles', ext)
+    if (window.renderGridView) window.renderGridView()
+  }
+
+  _backfillThumbnails() {
+    const ext = window.getExternalFiles?.() || []
+    let dirty = false
+    for (const entry of ext) {
+      if (entry.thumbnail) continue
+      const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(entry.name)
+      const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(entry.name)
+      if (!isImage && !isVideo) continue
+      dirty = true
+      this._generateThumbnail(entry)
+    }
+    if (dirty && window.renderSidebar) window.renderSidebar()
+  }
+
+  _hideAllViews() {
+    document.getElementById('noteView').style.display = 'none'
+    document.getElementById('gridView').classList.remove('open')
+    document.getElementById('extTextView').style.display = 'none'
+    document.getElementById('extVideoView').style.display = 'none'
+    const ct = document.querySelector('.content')
+    if (ct) ct.style.display = 'none'
+    const sl = document.getElementById('searchLanding')
+    if (sl) sl.style.display = 'none'
+    const ve = document.getElementById('extVideoElement')
+    if (ve) { ve.pause(); ve.src = '' }
+  }
+
+  _openExternalText(f) {
+    if (!f.path) return
+    const isElectron = typeof process !== 'undefined' && process.versions?.electron
+    if (!isElectron) return
+    try {
+      const fs = window.require('fs')
+      const content = fs.readFileSync(f.path, 'utf-8')
+      document.getElementById('extTextTitle').textContent = f.name
+      document.getElementById('extTextContent').textContent = content
+      this._hideAllViews()
+      document.getElementById('extTextView').style.display = 'flex'
+    } catch (e) {
+      console.warn('[ExtText] Failed to read:', e)
+    }
+  }
+
+  _closeExternalText() {
+    document.getElementById('extTextContent').textContent = ''
+    this._hideAllViews()
+    document.getElementById('gridView').classList.add('open')
+  }
+
+  async _takePicture() {
+    try {
+      if (this._cameraStream) {
+        this._cameraStream.getTracks().forEach(t => t.stop())
+        this._cameraStream = null
+      }
+      const constraints = { video: { facingMode: 'environment' }, audio: false }
+      this._cameraStream = await navigator.mediaDevices.getUserMedia(constraints)
+      const video = document.getElementById('cameraPreview')
+      video.srcObject = this._cameraStream
+      this._cameraFacing = 'environment'
+      document.getElementById('cameraOverlay').style.display = 'flex'
+      document.getElementById('cameraPreviewShot').style.display = 'none'
+      if (window.loadIcons) window.loadIcons()
+    } catch (e) {
+      if (e.name === 'NotAllowedError') {
+        alert('Camera permission denied. Please allow camera access in your browser settings.')
+      } else {
+        console.warn('[Camera] Failed to open:', e)
+        alert('Could not open camera: ' + e.message)
+      }
+    }
+  }
+
+  _closeCamera() {
+    document.getElementById('cameraOverlay').style.display = 'none'
+    document.getElementById('cameraPreviewShot').style.display = 'none'
+    if (this._cameraStream) {
+      this._cameraStream.getTracks().forEach(t => t.stop())
+      this._cameraStream = null
+    }
+  }
+
+  _capturePhoto() {
+    const video = document.getElementById('cameraPreview')
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(video, 0, 0)
+    this._capturedDataUrl = canvas.toDataURL('image/jpeg', 0.92)
+    document.getElementById('cameraShotImg').src = this._capturedDataUrl
+    document.getElementById('cameraPreviewShot').style.display = 'flex'
+  }
+
+  _retakePhoto() {
+    document.getElementById('cameraPreviewShot').style.display = 'none'
+    this._capturedDataUrl = null
+  }
+
+  _usePhoto() {
+    if (!this._capturedDataUrl) return
+    const now = Date.now()
+    const name = 'Photo_' + new Date().toISOString().slice(0, 10) + '_' + now + '.jpg'
+    const ext = window.getExternalFiles?.() || []
+    const id = '_ext_' + now
+    const mimeType = 'image/jpeg'
+    const data = this._capturedDataUrl.split(',')[1]
+    const size = Math.round(data.length * 0.75)
+    const entry = { id, name, path: this._capturedDataUrl, size, mimeType, added: now, blurred: false, thumbnail: this._capturedDataUrl }
+    ext.push(entry)
+    window.saveExternalFiles?.(ext)
+    this.state.setState('externalFiles', ext)
+    if (window.renderSidebar) window.renderSidebar()
+    if (window.renderGridView) window.renderGridView()
+    this._closeCamera()
+  }
+
+  async _flipCamera() {
+    const newFacing = this._cameraFacing === 'environment' ? 'user' : 'environment'
+    if (this._cameraStream) {
+      this._cameraStream.getTracks().forEach(t => t.stop())
+      this._cameraStream = null
+    }
+    try {
+      const constraints = { video: { facingMode: newFacing }, audio: false }
+      this._cameraStream = await navigator.mediaDevices.getUserMedia(constraints)
+      document.getElementById('cameraPreview').srcObject = this._cameraStream
+      this._cameraFacing = newFacing
+    } catch (e) {
+      console.warn('[Camera] Flip failed:', e)
+    }
+  }
+
+  _openExternalVideo(f) {
+    if (!f.path) return
+    const isElectron = typeof process !== 'undefined' && process.versions?.electron
+    const el = document.getElementById('extVideoElement')
+    this._hideAllViews()
+    if (isElectron) {
+      el.src = encodeURI('file:///' + f.path.replace(/\\/g, '/'))
+    } else {
+      el.src = f.path
+    }
+    document.getElementById('extVideoTitle').textContent = f.name
+    document.getElementById('extVideoView').style.display = 'flex'
+    this._updateVideoPlayIcon(false)
+    this._updateVideoVolumeUI()
+    this._updatePipIcon(false)
+    this._updateVideoControls()
+    el.play().catch(() => {})
+  }
+
+  _closeExternalVideo() {
+    const el = document.getElementById('extVideoElement')
+    el.pause()
+    el.src = ''
+    this._hideAllViews()
+    document.getElementById('gridView').classList.add('open')
+  }
+
+  _toggleVideoPlay() {
+    const el = document.getElementById('extVideoElement')
+    if (el.paused) el.play().catch(() => {})
+    else el.pause()
+    this._showPlayPauseOverlay()
+  }
+
+  _showPlayPauseOverlay() {
+    const el = document.getElementById('extVideoElement')
     if (!el) return
-    const achievements = this.state.getState('achievements') || []
-
-    const defaults = [
-      { id: 'first_challenge', name: 'Challenger', desc: 'Complete your first challenge', icon: 'sparkles' },
-      { id: 'first_goal', name: 'Goal Setter', desc: 'Set your first goal', icon: 'target' },
-      { id: 'challenge_5', name: '5 Challenges Done', desc: 'Complete 5 challenges', icon: 'star' },
-    ]
-
-    let html = ''
-    for (const def of defaults) {
-      const unlocked = achievements.some(a => a.id === def.id)
-      html += `<div class="achievement-badge${unlocked ? '' : ' locked'}">
-        <span class="ab-icon">${unlocked ? '✦' : '○'}</span>
-        <div><div style="font-size:13px;font-weight:600">${def.name}</div><div style="font-size:10px;opacity:0.7">${def.desc}</div></div>
-      </div>`
-    }
-
-    el.innerHTML = html || '<div style="padding:20px;text-align:center;font-size:12px;color:#86868b">No achievements yet</div>'
+    this._showOverlay(el.paused ? 'pause' : 'play')
   }
 
-  _checkAchievements() {
-    const achievements = this.state.getState('achievements') || []
-    const challenges = this.state.getState('challenges') || []
-    const goals = this.state.getState('goals') || []
+  _showSkipOverlay(dir) {
+    const pos = dir === 'skip-back' ? 'skip-left' : dir === 'skip-forward' ? 'skip-right' : ''
+    this._showOverlay(dir, pos)
+  }
 
-    const unlock = (id) => {
-      if (!achievements.some(a => a.id === id)) {
-        achievements.push({ id, unlocked: Date.now() })
-        this.state.setState('achievements', achievements)
-        return true
-      }
-      return false
+  _showOverlay(name, pos) {
+    const overlay = document.getElementById('extVideoOverlayIcon')
+    if (!overlay) return
+    overlay.innerHTML = SVG[name]
+    overlay.classList.remove('skip-left', 'skip-right')
+    if (pos) overlay.classList.add(pos)
+    overlay.classList.add('show')
+    clearTimeout(overlay._hideTimer)
+    overlay._hideTimer = setTimeout(() => overlay.classList.remove('show'), 400)
+  }
+
+  _videoSkip(sec) {
+    const el = document.getElementById('extVideoElement')
+    if (!el.duration) return
+    el.currentTime = Math.max(0, Math.min(el.duration, el.currentTime + sec))
+  }
+
+  _toggleVideoMute() {
+    const el = document.getElementById('extVideoElement')
+    el.muted = !el.muted
+  }
+
+  _videoVolume(e) {
+    const el = document.getElementById('extVideoElement')
+    const v = parseFloat(e.target.value)
+    el.muted = false
+    el.volume = v
+  }
+
+  _toggleVideoFullscreen() {
+    const el = document.getElementById('extVideoElement')
+    if (!document.fullscreenElement) {
+      el.requestFullscreen?.()
+    } else {
+      document.exitFullscreen?.()
     }
+  }
 
-    if (challenges.some(c => c.progress >= c.target)) unlock('first_challenge')
-    if (goals.length >= 1) unlock('first_goal')
-    if (challenges.filter(c => c.progress >= c.target).length >= 5) unlock('challenge_5')
+  _toggleVideoPip() {
+    const el = document.getElementById('extVideoElement')
+    if (document.pictureInPictureElement) {
+      document.exitPictureInPicture?.()
+    } else {
+      el.requestPictureInPicture?.()
+    }
+  }
+
+  _videoSeek(e) {
+    const el = document.getElementById('extVideoElement')
+    if (!el.duration) return
+    const track = document.getElementById('extVideoProgress')
+    const rect = track.getBoundingClientRect()
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+    el.currentTime = pct * el.duration
+  }
+
+  _updateVideoControls() {
+    const el = document.getElementById('extVideoElement')
+    const fill = document.getElementById('extVideoProgressFill')
+    const timeEl = document.getElementById('extVideoTime')
+    if (!el || !fill || !timeEl) return
+    const pct = el.duration ? (el.currentTime / el.duration) * 100 : 0
+    fill.style.width = pct + '%'
+    timeEl.textContent = this._formatTime(el.currentTime) + ' / ' + this._formatTime(el.duration)
+  }
+
+  _updateVideoPlayIcon(playing) {
+    const icon = document.getElementById('extVideoPlayIcon')
+    if (!icon) return
+    icon.innerHTML = SVG[playing ? 'pause' : 'play']
+  }
+
+  _updateVideoVolumeUI() {
+    const el = document.getElementById('extVideoElement')
+    const slider = document.getElementById('extVideoVolume')
+    const icon = document.getElementById('extVideoMuteIcon')
+    if (!el || !slider || !icon) return
+    const name = el.muted || el.volume === 0 ? 'volume-x' : el.volume < 0.5 ? 'volume-1' : 'volume-2'
+    icon.innerHTML = SVG[name]
+    slider.value = el.muted ? 0 : el.volume
+  }
+
+  _updatePipIcon(active) {
+    const icon = document.getElementById('extVideoPipIcon')
+    if (!icon) return
+    icon.innerHTML = SVG[active ? 'picture-in-picture' : 'picture-in-picture-2']
+  }
+
+  _formatTime(s) {
+    if (!s || !isFinite(s)) return '0:00'
+    const m = Math.floor(s / 60)
+    const sec = Math.floor(s % 60)
+    return m + ':' + (sec < 10 ? '0' : '') + sec
   }
 
   _renderProgressBar(current, target, label) {
@@ -733,6 +955,15 @@ export class GridView extends Component {
     if (n.todos.length > 3) html += '<div style="font-size:9px;color:#8e8e93;padding-top:2px">+' + (n.todos.length - 3) + ' more</div>'
     html += '</div>'
     return html
+  }
+
+  _formatSize(bytes) {
+    if (!bytes) return ''
+    const units = ['B', 'KB', 'MB', 'GB']
+    let i = 0
+    let size = bytes
+    while (size >= 1024 && i < units.length - 1) { size /= 1024; i++ }
+    return size.toFixed(1) + ' ' + units[i]
   }
 
   _todoBurst(e) {

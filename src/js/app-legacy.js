@@ -17,7 +17,7 @@ function requestStoragePermission() {
 }
 
 function startApp() {
-  loadIcons(); renderCalendar(); renderSidebar(); renderGridView(); setView('grid')
+  loadIcons(); renderSidebar(); renderGridView(); setView('grid')
   requestStoragePermission()
 }
 if (getUserName()) {

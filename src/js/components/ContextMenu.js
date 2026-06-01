@@ -10,12 +10,13 @@ export class ContextMenu extends Component {
     this._ctxBookmark = null
     this._ctxNote = null
     this._ctxDA = null
+    this._ctxExt = null
     this._exposeGlobals()
   }
 
   _exposeGlobals() {
-    window.showContextMenu = (x, y, videoId, folderName, bookmarkId, noteId, daId) =>
-      this.show(x, y, videoId, folderName, bookmarkId, noteId, daId)
+    window.showContextMenu = (x, y, videoId, folderName, bookmarkId, noteId, daId, extId) =>
+      this.show(x, y, videoId, folderName, bookmarkId, noteId, daId, extId)
   }
 
   mount(rootEl) {
@@ -38,9 +39,13 @@ export class ContextMenu extends Component {
       const menu = document.getElementById('ctxMenu')
       if (menu) menu.classList.remove('open')
     })
+
+    this.bus.on('ui:context-menu:show', (e) => {
+      this.show(e.x, e.y, e.videoId, null, e.bookmarkId, e.noteId, e.daId, e.extId)
+    })
   }
 
-  show(x, y, videoId, folderName, bookmarkId, noteId, daId) {
+  show(x, y, videoId, folderName, bookmarkId, noteId, daId, extId) {
     const menu = document.getElementById('ctxMenu')
     if (!menu) return
 
@@ -49,6 +54,7 @@ export class ContextMenu extends Component {
     this._ctxBookmark = bookmarkId
     this._ctxNote = noteId
     this._ctxDA = daId
+    this._ctxExt = extId
 
     const isTouch = 'ontouchstart' in window
     menu.style.left = (isTouch ? x - 40 : x) + 'px'
@@ -65,30 +71,34 @@ export class ContextMenu extends Component {
     menu.style.left = left + 'px'
     menu.style.top = top + 'px'
 
+    const isExt = extId != null
     const isBm = bookmarkId != null
     const isNote = noteId != null
     const isDA = daId != null
     const showVideo = videoId != null
     const renameEl = menu.querySelector('[data-action="rename-folder"]')
-    renameEl.style.display = (showVideo || isBm || isNote || isDA || folderName) ? '' : 'none'
+    renameEl.style.display = (showVideo || isBm || isNote || isDA || isExt || folderName) ? '' : 'none'
     if (folderName) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename folder'
     else if (showVideo) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename video'
     else if (isNote) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename note'
     else if (isBm) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename bookmark'
     else if (isDA) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename direct access'
+    else if (isExt) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename file'
 
-    menu.querySelector('[data-action="delete-folder"]').style.display = videoId ? 'none' : (isBm || isNote || isDA) ? 'none' : ''
+    menu.querySelector('[data-action="delete-folder"]').style.display = videoId ? 'none' : (isBm || isNote || isDA || isExt) ? 'none' : ''
     menu.querySelector('[data-action="open-link"]').style.display = (showVideo || isBm || isDA) ? '' : 'none'
     menu.querySelector('[data-action="archive"]').style.display = showVideo ? '' : 'none'
+    menu.querySelector('[data-action="open-file-location"]').style.display = isExt ? '' : 'none'
 
     const hasUrl = showVideo ? !!window.getVideos?.()?.[videoId]?.url : isBm ? !!window.getBookmarks?.()?.filter(b => b.id === bookmarkId)[0]?.url : isDA
-    menu.querySelector('[data-action="blur"]').style.display = (showVideo && hasUrl) || isBm || isDA ? '' : 'none'
+    menu.querySelector('[data-action="blur"]').style.display = (showVideo && hasUrl) || isBm || isDA || isExt ? '' : 'none'
     if ((showVideo && hasUrl) || isBm || isDA) {
       let blurred = false
       let isAutoBlurred = false
       if (showVideo) { const v = window.getVideos?.()?.[videoId]; blurred = v?.blurred || window.isNSFW?.(v); isAutoBlurred = window.getBlurAllNSFW?.() && v && window.isNSFW?.(v) }
       else if (isBm) { const b = window.getBookmarks?.()?.filter(x => x.id === bookmarkId)[0]; blurred = b?.blurred || window.isNSFW?.(b); isAutoBlurred = window.getBlurAllNSFW?.() && b && window.isNSFW?.(b) }
       else if (isDA) { const d = window.getDirectAccess?.()?.filter(x => x.id === daId)[0]; blurred = d?.blurred || window.isNSFW?.(d); isAutoBlurred = window.getBlurAllNSFW?.() && d && window.isNSFW?.(d) }
+      else if (isExt) { const f = window.getExternalFiles?.()?.filter(x => x.id === extId)[0]; blurred = !!f?.blurred; isAutoBlurred = false }
       const blurEl = menu.querySelector('[data-action="blur"]')
       blurEl.innerHTML = `<i data-lucide="${blurred ? 'eye-off' : 'eye'}" class="ctx-icon"></i> ${blurred ? 'Unblur' : 'Blur'}`
       if (isAutoBlurred) blurEl.classList.add('disabled'); else blurEl.classList.remove('disabled')
@@ -97,39 +107,39 @@ export class ContextMenu extends Component {
     menu.querySelector('[data-action="pin"]').style.display = showVideo ? '' : 'none'
     menu.querySelector('[data-action="move-up"]').style.display = showVideo ? '' : 'none'
     menu.querySelector('[data-action="move-down"]').style.display = showVideo ? '' : 'none'
-    menu.querySelector('[data-action="delete"]').style.display = (showVideo || isBm || isNote || isDA) ? '' : 'none'
+    menu.querySelector('[data-action="delete"]').style.display = (showVideo || isBm || isNote || isDA || isExt) ? '' : 'none'
 
     const delItem = menu.querySelector('[data-action="delete"]')
-    delItem.innerHTML = `<i data-lucide="trash-2" class="ctx-icon"></i> ${isNote ? 'Delete note' : isBm ? 'Delete bookmark' : isDA ? 'Delete direct access' : 'Delete'}`
+    delItem.innerHTML = `<i data-lucide="trash-2" class="ctx-icon"></i> ${isNote ? 'Delete note' : isBm ? 'Delete bookmark' : isDA ? 'Delete direct access' : isExt ? 'Delete file' : 'Delete'}`
     delItem.className = 'ctx-item ctx-danger'
 
     document.getElementById('ctxDiv1').style.display = (showVideo || isBm || isDA) ? '' : 'none'
     document.getElementById('ctxDiv2').style.display = showVideo ? '' : 'none'
-    document.getElementById('ctxDiv3').style.display = (showVideo || isNote) ? '' : 'none'
+    document.getElementById('ctxDiv3').style.display = (showVideo || isNote || isExt) ? '' : 'none'
 
     const moveToEl = document.getElementById('ctxMoveTo')
     moveToEl.classList.remove('show')
     document.getElementById('ctxDiv4').style.display = 'none'
 
-    if (videoId || isNote) {
+    if (videoId || isNote || isExt) {
       const pinItem = menu.querySelector('[data-action="pin"]')
       if (videoId) {
         const isPinned = (window.getPins?.() || []).includes(videoId)
         pinItem.innerHTML = `<i data-lucide="${isPinned ? 'pin-off' : 'pin'}" class="ctx-icon"></i> ${isPinned ? 'Unpin' : 'Pin'}`
       }
       const folders = window.getFolders?.() || {}
-      const currentFolder = isNote ? (window.getNotes?.()?.filter(n => n.id === noteId)[0]?.folder || null) : folderName
+      const currentFolder = isNote ? (window.getNotes?.()?.filter(n => n.id === noteId)[0]?.folder || null) : isExt ? (window.getExternalFiles?.()?.filter(f => f.id === extId)[0]?.folder || null) : folderName
       const folderEntries = Object.keys(folders).filter(n => n !== currentFolder && n !== 'Archived')
       const moveDiv4 = document.getElementById('ctxDiv4')
       if (folderEntries.length) {
         let mHtml = ''
-        if (isNote && currentFolder) {
+        if ((isNote || isExt) && currentFolder) {
           mHtml += `<div class="ctx-item" data-action="unassign-folder"><i data-lucide="x" class="ctx-icon"></i> Remove from folder</div><div class="ctx-divider" style="margin:4px 8px"></div>`
         }
         for (const name of folderEntries) {
           const color = (window.getFolderMeta?.()?.[name]?.color || '')
           const f = window.getFolders?.() || {}
-          const hasContents = (f[name] || []).length || (window.getNotes?.()?.filter(n2 => n2.folder === name).length || 0)
+          const hasContents = (f[name] || []).length || (window.getNotes?.()?.filter(n2 => n2.folder === name).length || 0) || (window.getExternalFiles?.()?.filter(x => x.folder === name).length || 0)
           mHtml += `<div class="ctx-item" data-action="move-to" data-folder="${name}"><i data-lucide="${hasContents ? 'folder-fill' : 'folder'}" class="ctx-icon"${color ? ` style="color:${color}"` : ''}></i> Move to ${name}</div>`
         }
         moveToEl.innerHTML = mHtml
@@ -185,6 +195,13 @@ export class ContextMenu extends Component {
       window.saveDirectAccess?.(das)
       window.renderSidebar?.()
     }
+    if (a === 'delete' && this._ctxExt && !this._ctxTarget && !this._ctxBookmark && !this._ctxNote && !this._ctxDA) {
+      const files = (window.getExternalFiles?.() || []).filter(f => f.id !== this._ctxExt)
+      window.saveExternalFiles?.(files)
+      this.state.setState('externalFiles', files)
+      window.renderSidebar?.()
+      window.renderGridView?.()
+    }
     if (a === 'archive' && this._ctxTarget) {
       const fs = window.getFolders?.() || {}
       for (const ids of Object.values(fs)) { const i = ids.indexOf(this._ctxTarget); if (i > -1) ids.splice(i, 1) }
@@ -216,6 +233,10 @@ export class ContextMenu extends Component {
         const das = window.getDirectAccess?.() || []
         const d = das.filter(x => x.id === this._ctxDA)[0]
         if (d) { d.blurred = !d.blurred; window.saveDirectAccess?.(das); window.renderSidebar?.() }
+      } else if (this._ctxExt) {
+        const files = window.getExternalFiles?.() || []
+        const f = files.filter(x => x.id === this._ctxExt)[0]
+        if (f) { f.blurred = !f.blurred; window.saveExternalFiles?.(files); this.state.setState('externalFiles', files); window.renderSidebar?.(); window.renderGridView?.() }
       }
     }
     if (a === 'rename-folder') {
@@ -243,6 +264,16 @@ export class ContextMenu extends Component {
     if (a === 'open-link' && this._ctxDA && !this._ctxTarget && !this._ctxBookmark) {
       const da = (window.getDirectAccess?.() || []).filter(d => d.id === this._ctxDA)[0]
       if (da?.url) window.open(da.url)
+    }
+    if (a === 'open-file-location' && this._ctxExt) {
+      const files = window.getExternalFiles?.() || []
+      const f = files.filter(x => x.id === this._ctxExt)[0]
+      if (f?.path) {
+        const isElectron = typeof process !== 'undefined' && process.versions?.electron
+        if (isElectron) {
+          window.require('electron').shell.showItemInFolder(f.path)
+        }
+      }
     }
     if ((a === 'move-up' || a === 'move-down') && this._ctxTarget) {
       const fs = window.getFolders?.() || {}
@@ -280,6 +311,18 @@ export class ContextMenu extends Component {
       const n = notes.filter(x => x.id === this._ctxNote)[0]
       if (n) { delete n.folder; window.saveNotes?.(notes); window.renderSidebar?.() }
     }
+    if (a === 'move-to' && this._ctxExt && !this._ctxTarget && !this._ctxNote) {
+      const target = this._ctxMoveToFolder
+      if (!target) return
+      const files = window.getExternalFiles?.() || []
+      const f = files.filter(x => x.id === this._ctxExt)[0]
+      if (f) { f.folder = target; window.saveExternalFiles?.(files); this.state.setState('externalFiles', files); window.renderSidebar?.(); window.renderGridView?.() }
+    }
+    if (a === 'unassign-folder' && this._ctxExt) {
+      const files = window.getExternalFiles?.() || []
+      const f = files.filter(x => x.id === this._ctxExt)[0]
+      if (f) { delete f.folder; window.saveExternalFiles?.(files); this.state.setState('externalFiles', files); window.renderSidebar?.(); window.renderGridView?.() }
+    }
   }
 
   _handleRename() {
@@ -289,6 +332,7 @@ export class ContextMenu extends Component {
     else if (this._ctxNote) selector = `[data-note-id="${this._ctxNote}"] .tree-label`
     else if (this._ctxBookmark) selector = `[data-bookmark-id="${this._ctxBookmark}"] .tree-label`
     else if (this._ctxDA) selector = `[data-da-id="${this._ctxDA}"] .tree-label`
+    else if (this._ctxExt) selector = `[data-ext-id="${this._ctxExt}"] .grid-item-title, [data-ext-id="${this._ctxExt}"] .tree-label`
     if (!selector) return
 
     const label = document.querySelector(selector)
@@ -338,6 +382,10 @@ export class ContextMenu extends Component {
         const das = window.getDirectAccess?.() || []
         const d = das.filter(x => x.id === this._ctxDA)[0]
         if (d) { d.title = name; window.saveDirectAccess?.(das) }
+      } else if (this._ctxExt) {
+        const files = window.getExternalFiles?.() || []
+        const f = files.filter(x => x.id === this._ctxExt)[0]
+        if (f) { f.name = name; window.saveExternalFiles?.(files); this.state.setState('externalFiles', files); window.renderGridView?.() }
       }
       window.renderSidebar?.()
     }

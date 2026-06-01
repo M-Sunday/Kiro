@@ -1,5 +1,29 @@
 [
   {
+    "version": "3.1.0",
+    "date": "2026-06-01",
+    "title": "External Files, Camera, Video Player, Goal Cleanup",
+    "changes": [
+      "External file import: Electron native picker (IPC), Capacitor file-picker, Web/PWA fallback — images, videos, text files",
+      "External files displayed in grid view with thumbnails (base64 for small images, file:// for large, canvas-captured for videos)",
+      "External file text viewer overlay with <pre> content and close button",
+      "External file video player overlay with custom controls: play/pause, skip ±10s via buttons and double-tap edges, volume slider, mute, fullscreen, picture-in-picture, seek bar, centered play/pause overlay feedback",
+      "External files in sidebar with thumbnails, drag-to-reorder, context menu, blur/unblur toggle",
+      "External files now appear under their assigned folders in the sidebar tree (drag-to-folder or context menu Move to folder)",
+      "Unassigned external files shown in External Files section",
+      "Camera overlay: take picture via getUserMedia, flip front/back, capture JPEG as external file with thumbnail set to captured image",
+      "Camera overlay redesigned with Jeju Myeongjo serif title, Rethink Sans labels, gradient overlays, two-ring capture button, borderless controls",
+      "All goal and achievement code removed across 15 files; GoalRepository.js, GoalService.js, ChallengeService.js deleted",
+      "CalendarView.js and calendar.js removed",
+      "\"New Goal\" button replaced with \"Take Picture\" camera button in workbench",
+      "All icon swaps rewritten: pre-cached SVGs injected as innerHTML on stable <span> containers — no data-lucide + loadIcons() for dynamic buttons",
+      "YouTube video thumbnails (28×28) in sidebar using bm-thumb/bm-thumb-wrap classes",
+      "Storage info in settings separates external files into own bar/legend segment, auto-refreshes on data change",
+      "Icon sizing unified via CSS rule on .ext-video-ctrl-btn svg",
+      "API restructured, settings consolidated, various bug fixes"
+    ]
+  },
+  {
     "version": "3.0.1",
     "date": "2026-05-30",
     "title": "Kiro — Full rebrand from Vault",

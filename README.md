@@ -1,6 +1,6 @@
 # Kiro
 
-A local-first desktop + PWA app for capturing ideas, organizing thoughts, tracking goals, and exploring connections. Save videos, bookmarks, notes, and direct-access links. All data stays in your browser — no servers, no login.
+A local-first desktop + PWA app for capturing ideas, organizing files, and exploring content. Save videos, bookmarks, notes, external files, and direct-access links. All data stays in your browser — no servers, no login.
 
 Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android, and iOS.
 
@@ -8,19 +8,20 @@ Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android,
 
 - **YouTube videos** — Paste a link, fetch metadata (title, channel, duration, thumbnail), save to folders
 - **Download videos** — Download via yt-dlp (desktop only). Supports quality selection, codec, audio format, and bitrate settings. Output is forced to MP4 (h264 preferred).
+- **External files** — Import images, videos, and text files from your device. Grid view with thumbnails (base64 data URLs for small images, `file://` for large, canvas-captured frames for videos). In-app text viewer and video player with full custom controls. Assign to folders, blur/unblur, drag-to-reorder sidebar. Files appear under their assigned folders in the sidebar tree.
+- **Camera capture** — Take pictures directly in-app via `getUserMedia`. Flip front/back camera, capture as JPEG, saved as external file with instant thumbnail. Redesigned minimal overlay with Jeju Myeongjo typography and gradient controls.
 - **Bookmarks** — Save any URL with auto-fetched preview image, organized separately
 - **Notes** — Rich-text notes with image paste, assignable to folders. Built-in todo lists with editable checkboxes, custom SVG circle-check/circle-x toggle icons, particle burst animations on completion
 - **Direct Access** — Quick-launch links with thumbnail previews
 - **Grid view** — Browse all content in a visual grid with sections per type. Cascade animation on load (sections stagger in 220ms apart, items within at 60ms). Workbench header always visible at top.
 - **Search landing** — Centered search prompt with recent history miniatures (click to reload). Shows when focusing the search input or the sidebar search.
 - **Bulk select** — Ctrl+click grid items for batch delete, move, pin, or blur
-- **Drag to reorder** — Reorder grid items within sections (videos, bookmarks, notes, DAs) with blue drop-line indicators. Touch drag via long-press on mobile.
-- **Drag to folder** — Drag video grid items onto sidebar folders to move them. Also drag sidebar items between folders. Grid section headers also accept drops (videos and notes).
+- **Drag to reorder** — Reorder grid items within sections (videos, bookmarks, notes, external files, DAs) with blue drop-line indicators. Touch drag via long-press on mobile.
+- **Drag to folder** — Drag video, note, or external file grid items onto sidebar folders to move them. Also drag sidebar items between folders. Grid section headers also accept drops.
 - **Context menus** — Right-click, long-press (mobile), or three-dot button on any item
 - **Keyboard shortcuts** — Press `?` to view all shortcuts
-- **Settings panel** — Theme, toolbar toggles, file/link history options, NSFW filters, download options, patch notes. About User pane with editable username, version, device info, and Reset Account.
+- **Settings panel** — Theme, toolbar toggles, file/link history options, NSFW filters, download options, storage breakdown, patch notes. About User pane with editable username, version, device info, and Reset Account.
 - **Themes** — White and Black
-- **Calendar view** — Browse videos by publish date
 - **Search** — Filter sidebar items by title
 - **Pin items** — Pin important videos to the top
 - **Offline mode** — Detects connection status, greys search bar when offline, shows persistent online indicator (green/yellow/red badge in top-bar)
@@ -69,6 +70,7 @@ Storage keys:
 - `kiroBookmarks` — bookmark entries
 - `kiroDirectAccess` — direct access entries
 - `kiroNotes` — rich-text notes
+- `kiroExternalFiles` — external file entries (images, videos, text) with path, thumbnail, folder, blurred
 - `kiroSettings` — user preferences
 - `kiroPins` — pinned video IDs
 - `kiroNSFW` — NSFW domain list
@@ -94,37 +96,45 @@ Storage keys:
 ```
 src/
 ├── main.js              # Electron main process (window, Debug menu, IPC folder picker)
-├── index.html           # App shell with inline splash script
+├── index.html           # App shell with splash, camera overlay, external file viewers
 ├── css/
 │   ├── base.css         # Reset, splash, scrollbars, keyframes
 │   ├── layout.css       # Sidebar, top-bar, main area, backdrop, drop zone
-│   ├── components.css   # Card, toast, calendar, ctx menu, settings, grid, notes, dialogs
+│   ├── components.css   # Card, toast, ctx menu, settings, grid, notes, dialogs, external files
 │   ├── themes.css       # All body.theme-* + body.compact rules
 │   └── mobile.css       # @media (max-width: 640px) responsive overrides
 ├── js/
-│   ├── data.js          # localStorage CRUD helpers, selectedGridItems, APP_VERSION (3.0.1)
-│   ├── views.js         # setView(), showCardView(), clearCard(), renderSearchLanding()
-│   ├── calendar.js      # Calendar rendering, published date, privacy
-│   ├── settings.js      # Settings panel, load/save history, toolbar toggles, About User, Reset Account
-│   ├── sidebar.js       # Sidebar tree, folder drag, toolbar events
-│   ├── context-menu.js  # Context menu positioning and actions
-│   ├── notes.js         # Rich-text editor, undo/redo, paste handler, todo lists with particles
-│   ├── dialogs.js       # Create folder, bookmark dialog
-│   ├── grid.js          # Grid view, batch actions, drag/touch reorder
-│   ├── card.js          # Video card view, add/unlink, pin badge
-│   ├── download.js      # yt-dlp/ffmpeg auto-download, progress bar
-│   ├── search.js        # Video link fetch, Direct Access dialog
-│   ├── extras.js        # Patch notes, keyboard shortcuts, debug inspector, SW update, online indicator
-│   ├── icons.js         # Local SVG icon loader
-│   ├── onboarding.js    # First-time user onboarding flow
-│   └── app.js           # Bootstrap init sequence
+│   ├── components/
+│   │   ├── GridView.js      # Grid rendering, external file viewers, video player w/ custom controls, camera capture, thumbnail generation
+│   │   ├── SidebarView.js   # Sidebar tree with folders, external files under folders, drag-drop, context menu
+│   │   ├── ContextMenu.js   # Context menu actions for all item types including external files (move, rename, blur, delete)
+│   │   ├── CardView.js      # Video card view with player, metadata, download integration
+│   │   ├── SearchView.js    # Search landing, history miniatures, YouTube search
+│   │   ├── SettingsPanel.js # Settings with storage breakdown, patch notes, theme/toolbar/NSFW panes
+│   │   └── Dialogs.js       # Folder/bookmark dialogs
+│   ├── core/
+│   │   └── Api.js           # Event bus, state management
+│   ├── data/
+│   │   ├── db.js            # IndexedDB wrapper
+│   │   ├── MigrationEngine.js # localStorage key migration (yt* → kiro*, vault_* → kiro_*)
+│   │   ├── repositories/    # FolderRepository, etc.
+│   │   └── data.js          # localStorage CRUD helpers, selectedGridItems, APP_VERSION
+│   ├── platform/
+│   │   └── NotificationService.js
+│   ├── services/
+│   │   ├── SearchService.js, VideoService.js, NoteService.js, ExtrasService.js
+│   ├── utils/
+│   │   ├── IconService.js   # Pre-cached SVG definitions for dynamic icon swaps
+│   │   └── icons.js         # Local SVG icon loader (data-lucide replacement)
+│   ├── app.js               # Bootstrap init sequence
+│   ├── grid.js              # Legacy grid helpers
+│   ├── card.js              # Legacy card helpers
+│   ├── search.js            # Legacy search helpers
+│   ├── ... (legacy modules)
 ├── assets/
 │   ├── changelog.json   # Version history
 │   ├── manifest.json    # PWA manifest
-│   ├── icons/
-│   │   ├── app-icon-*.svg
-│   │   ├── app-icon-splash.svg
-│   │   └── ui/          # 36 Lucide-style SVG icons (including download.svg)
+│   ├── icons/           # App icons + 40+ Lucide-style SVGs
 ├── sw.js                # Service worker (network-first, offline fallback)
 ```
 

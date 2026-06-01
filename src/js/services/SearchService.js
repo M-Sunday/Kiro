@@ -35,8 +35,22 @@ export class SearchService {
     this.bus.emit('search:started', { videoId })
 
     try {
-      const metadata = await this.fetchYouTubeMetadata(videoId)
+      const data = await this._fetchOembed(videoId)
+      const metadata = {
+        title: data.title || 'Unknown',
+        channel: data.author_name || 'Unknown',
+        duration: 0,
+        thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        url: `https://youtube.com/watch?v=${videoId}`,
+        videoId,
+        privacy: 'public',
+        pubDate: null,
+      }
+
       this.bus.emit('search:complete', { videoId, metadata })
+
+      this._enrichWithPiped(videoId, metadata)
+
       return { videoId, ...metadata }
     } catch (err) {
       this.bus.emit('search:failed', { videoId, error: err.message })
@@ -44,28 +58,34 @@ export class SearchService {
     }
   }
 
-  async fetchYouTubeMetadata(videoId) {
-    const data = await this._fetchOembed(videoId)
-    let extra = {}
-    try { extra = await this._fetchPiped(videoId) } catch {}
+  async _enrichWithPiped(videoId, metadata) {
+    try {
+      const extra = await this._fetchPiped(videoId)
+      if (!extra) return
 
-    return {
-      title: data.title || extra.title || 'Unknown',
-      channel: data.author_name || extra.uploader || 'Unknown',
-      duration: extra.duration || 0,
-      thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-      url: `https://youtube.com/watch?v=${videoId}`,
-      videoId,
-      privacy: extra.privacy || 'public',
-      pubDate: data.pubDate || extra.publishDate || null,
-    }
+      let changed = false
+      if (extra.title && extra.title !== metadata.title) { metadata.title = extra.title; changed = true }
+      if (extra.uploader && extra.uploader !== metadata.channel) { metadata.channel = extra.uploader; changed = true }
+      if (extra.duration) { metadata.duration = extra.duration; changed = true }
+      if (extra.publishDate) { metadata.pubDate = extra.publishDate; changed = true }
+      if (extra.privacyStatus) { metadata.privacy = extra.privacyStatus; changed = true }
+      if (changed) {
+        this.bus.emit('search:enriched', { videoId, metadata })
+      }
+    } catch {}
   }
 
   async _fetchOembed(videoId) {
-    const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
-    const res = await fetch(url)
-    if (!res.ok) throw new Error(`oEmbed failed: ${res.status}`)
-    return res.json()
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 8000)
+    try {
+      const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
+      const res = await fetch(url, { signal: controller.signal })
+      if (!res.ok) throw new Error(`oEmbed failed: ${res.status}`)
+      return res.json()
+    } finally {
+      clearTimeout(timer)
+    }
   }
 
   async _fetchPiped(videoId) {
@@ -74,12 +94,18 @@ export class SearchService {
       'https://pipedapi.smnz.de',
     ]
     for (const base of instances) {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 5000)
       try {
-        const res = await fetch(`${base}/streams/${videoId}`)
+        const res = await fetch(`${base}/streams/${videoId}`, { signal: controller.signal })
         if (!res.ok) continue
         return res.json()
-      } catch {}
+      } catch {
+        continue
+      } finally {
+        clearTimeout(timer)
+      }
     }
-    return {}
+    return null
   }
 }

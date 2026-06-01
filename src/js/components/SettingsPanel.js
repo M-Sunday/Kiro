@@ -17,6 +17,8 @@ export class SettingsPanel extends Component {
     super.mount(rootEl)
     this._bindEvents()
     this._initState()
+    this.bus.on('ui:grid:refresh', () => this._renderStorageInfo())
+    this.bus.on('ui:sidebar:refresh', () => this._renderStorageInfo())
   }
 
   _bindEvents() {
@@ -24,6 +26,7 @@ export class SettingsPanel extends Component {
       document.getElementById('settingsOverlay')?.classList.add('open')
       const icon = document.querySelector('#settingsBtn .sidebar-icon')
       if (icon) { icon.classList.remove('spin'); void icon.offsetWidth; icon.classList.add('spin') }
+      this._renderStorageInfo()
     })
     this.listenTo(document.getElementById('settingsClose'), 'click', () => {
       document.getElementById('settingsOverlay')?.classList.remove('open')
@@ -386,11 +389,13 @@ export class SettingsPanel extends Component {
       videos: document.getElementById('storageBarVideos'),
       notes: document.getElementById('storageBarNotes'),
       bookmarks: document.getElementById('storageBarBookmarks'),
+      external: document.getElementById('storageBarExternal'),
       other: document.getElementById('storageBarOther')
     }
     if (bars.videos) bars.videos.style.width = pct(brk.videos) + '%'
     if (bars.notes) bars.notes.style.width = pct(brk.notes) + '%'
     if (bars.bookmarks) bars.bookmarks.style.width = pct(brk.bookmarks) + '%'
+    if (bars.external) bars.external.style.width = pct(brk.externalFiles) + '%'
     if (bars.other) bars.other.style.width = pct(brk.direct + brk.other) + '%'
 
     const totalLabel = document.getElementById('storageTotalLabel')
@@ -400,11 +405,13 @@ export class SettingsPanel extends Component {
       videos: document.getElementById('storageSizeVideos'),
       notes: document.getElementById('storageSizeNotes'),
       bookmarks: document.getElementById('storageSizeBookmarks'),
+      external: document.getElementById('storageSizeExternal'),
       other: document.getElementById('storageSizeOther')
     }
     if (sizes.videos) sizes.videos.textContent = this._formatBytes(brk.videos)
     if (sizes.notes) sizes.notes.textContent = this._formatBytes(brk.notes)
     if (sizes.bookmarks) sizes.bookmarks.textContent = this._formatBytes(brk.bookmarks)
+    if (sizes.external) sizes.external.textContent = this._formatBytes(brk.externalFiles)
     if (sizes.other) sizes.other.textContent = this._formatBytes(brk.direct + brk.other)
 
     const installedAt = document.getElementById('storageInstalledAt')
@@ -423,6 +430,8 @@ export class SettingsPanel extends Component {
     if (noteCount) noteCount.textContent = (window.getNotes?.() || []).length
     const bmCount = document.getElementById('storageBookmarkCount')
     if (bmCount) bmCount.textContent = (window.getBookmarks?.() || []).length
+    const efCount = document.getElementById('storageExtCount')
+    if (efCount) efCount.textContent = (window.getExternalFiles?.() || []).length
 
     const locationEl = document.getElementById('storageLocation')
     if (locationEl) {
@@ -452,7 +461,8 @@ export class SettingsPanel extends Component {
       notes: ['kiroNotes'],
       bookmarks: ['kiroBookmarks'],
       direct: ['kiroDirectAccess'],
-      other: ['kiroNSFW','kiroCollapsed','kiroSettings','kiroUserName','kiro_challenges','kiro_achievements','kiro_goals','linkHistory']
+      externalFiles: ['kiro_external_files'],
+      other: ['kiroNSFW','kiroCollapsed','kiroSettings','kiroUserName','linkHistory']
     }
     let total = 0
     const result = {}

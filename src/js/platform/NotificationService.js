@@ -7,12 +7,6 @@ const CHANNELS = {
     description: 'General app notifications',
     importance: 3,
   },
-  'kiro-achievements': {
-    id: 'kiro-achievements',
-    name: 'Achievements',
-    description: 'Achievement and milestone notifications',
-    importance: 4,
-  },
   'kiro-reminders': {
     id: 'kiro-reminders',
     name: 'Reminders',

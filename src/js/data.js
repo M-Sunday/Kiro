@@ -7,14 +7,15 @@ let currentVideo = null
 let dragVideoId = null
 let currentNoteId = null
 
-const APP_VERSION = '3.0.1'
+const APP_VERSION = '3.1.0'
 
 const STORAGE_GROUPS = {
   videos: ['kiroVideos','kiroFolders','kiroFolderMeta','kiroPins'],
   notes: ['kiroNotes'],
   bookmarks: ['kiroBookmarks'],
   direct: ['kiroDirectAccess'],
-  other: ['kiroNSFW','kiroCollapsed','kiroSettings','kiroUserName','kiro_challenges','kiro_achievements','kiro_goals','linkHistory']
+  externalFiles: ['kiro_external_files'],
+  other: ['kiroNSFW','kiroCollapsed','kiroSettings','kiroUserName','linkHistory']
 }
 
 function migrateStorage() {
@@ -34,9 +35,6 @@ function migrateStorage() {
     ['ytSettings', 'kiroSettings'],
     ['ytSwVersion', 'kiroSwVersion'],
     ['ytLastVersion', 'kiroLastVersion'],
-    ['vault_challenges', 'kiro_challenges'],
-    ['vault_achievements', 'kiro_achievements'],
-    ['vault_goals', 'kiro_goals']
   ]
   for (var i = 0; i < map.length; i++) {
     var old = localStorage.getItem(map[i][0])
@@ -165,14 +163,8 @@ function sanitizeHtml(str) {
 function getUserName() { return localStorage.getItem('kiroUserName') || '' }
 function saveUserName(name) { localStorage.setItem('kiroUserName', name) }
 
-function getKiroChallenges() { try { return JSON.parse(localStorage.getItem('kiro_challenges') || '[]') } catch { return [] } }
-function saveKiroChallenges(c) { safeSetItem('kiro_challenges', JSON.stringify(c)) }
-
-function getKiroAchievements() { try { return JSON.parse(localStorage.getItem('kiro_achievements') || '[]') } catch { return [] } }
-function saveKiroAchievements(a) { safeSetItem('kiro_achievements', JSON.stringify(a)) }
-
-function getKiroGoals() { try { return JSON.parse(localStorage.getItem('kiro_goals') || '[]') } catch { return [] } }
-function saveKiroGoals(g) { safeSetItem('kiro_goals', JSON.stringify(g)) }
+function getExternalFiles() { try { return JSON.parse(localStorage.getItem('kiro_external_files') || '[]') } catch { return [] } }
+function saveExternalFiles(f) { safeSetItem('kiro_external_files', JSON.stringify(f)) }
 
 function getInstalledAt() { return localStorage.getItem('kiroInstalledAt') || null }
 function getLastOpenedAt() { return localStorage.getItem('kiroLastOpenedAt') || null }
@@ -245,12 +237,8 @@ window.safeSetItem = safeSetItem
 window.sanitizeHtml = sanitizeHtml
 window.getUserName = getUserName
 window.saveUserName = saveUserName
-window.getKiroChallenges = getKiroChallenges
-window.saveKiroChallenges = saveKiroChallenges
-window.getKiroAchievements = getKiroAchievements
-window.saveKiroAchievements = saveKiroAchievements
-window.getKiroGoals = getKiroGoals
-window.saveKiroGoals = saveKiroGoals
+window.getExternalFiles = getExternalFiles
+window.saveExternalFiles = saveExternalFiles
 window.selectedGridItems = selectedGridItems
 window.currentVideo = currentVideo
 window.dragVideoId = dragVideoId
@@ -298,12 +286,8 @@ export {
   sanitizeHtml,
   getUserName,
   saveUserName,
-  getKiroChallenges,
-  saveKiroChallenges,
-  getKiroAchievements,
-  saveKiroAchievements,
-  getKiroGoals,
-  saveKiroGoals,
+  getExternalFiles,
+  saveExternalFiles,
   selectedGridItems,
   currentVideo,
   dragVideoId,

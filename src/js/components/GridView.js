@@ -352,6 +352,8 @@ export class GridView extends Component {
           this._openExternalText(f)
         } else if (isVideo && f.path) {
           this._openExternalVideo(f)
+        } else if (f._stale) {
+          this._reimportStaleFile(f)
         } else if (f.path) {
           if (isElectron) {
             window.require('electron').shell.openPath(f.path)
@@ -621,6 +623,37 @@ export class GridView extends Component {
     if (window.renderGridView) window.renderGridView()
   }
 
+  async _reimportStaleFile(entry) {
+    return new Promise((resolve) => {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = '*/*'
+      input.onchange = (e) => {
+        const file = e.target.files?.[0]
+        if (!file) { resolve(false); return }
+        const ext = file.name.split('.').pop().toLowerCase()
+        const videoExts = ['mp4', 'webm', 'mkv', 'avi', 'mov', 'flv', 'wmv', 'm4v', '3gp', 'mpeg', 'mpg']
+        const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico']
+        const isVideo = file.type.startsWith('video/') || videoExts.includes(ext)
+        const isImage = file.type.startsWith('image/') || imageExts.includes(ext)
+        const path = isVideo || isImage ? URL.createObjectURL(file) : file.name
+        entry.name = file.name
+        entry.path = path
+        entry.size = file.size
+        entry.mimeType = file.type || ''
+        delete entry.thumbnail
+        delete entry._stale
+        const files = window.getExternalFiles?.() || []
+        window.saveExternalFiles?.(files)
+        this.state.setState('externalFiles', files)
+        this._generateThumbnail(entry)
+        if (window.renderGridView) window.renderGridView()
+        resolve(true)
+      }
+      input.click()
+    })
+  }
+
   _generateThumbnail(entry) {
     const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(entry.name)
     const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv|m4v|3gp|mpeg|mpg)$/i.test(entry.name)
@@ -725,7 +758,7 @@ export class GridView extends Component {
     let dirty = false
     const isElectron = typeof process !== 'undefined' && process.versions?.electron
     for (const entry of ext) {
-      if (!entry.thumbnail && entry.path && !isElectron && entry.path.startsWith('blob:')) {
+      if (!isElectron && entry.path && entry.path.startsWith('blob:')) {
         entry._stale = true
         dirty = true
       }
@@ -876,11 +909,15 @@ export class GridView extends Component {
     return 'file://' + parts.join('/')
   }
 
-  _openExternalVideo(f) {
+  async _openExternalVideo(f) {
     if (!f.path) return
     const isElectron = typeof process !== 'undefined' && process.versions?.electron
     const el = document.getElementById('extVideoElement')
     const errEl = document.getElementById('extVideoError')
+    if (!isElectron && f._stale) {
+      const ok = await this._reimportStaleFile(f)
+      if (!ok) return
+    }
     this._hideAllViews()
     if (errEl) errEl.style.display = 'none'
     el.addEventListener('error', function () {

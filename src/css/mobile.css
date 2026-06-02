@@ -53,6 +53,8 @@
   .settings-content { padding: 16px 20px; overflow-y: auto; flex: 1; min-height: 0; max-height: calc(90vh - 60px); }
 
   .top-bar { padding: 6px 10px; gap: 6px; }
+  body.frosted .top-bar { left: 6px; right: 6px; top: 6px; border-radius: 12px; }
+  body.frosted .media-view { padding-top: 44px; }
   .top-bar.search-expanded .menu-btn { display: none; }
   .top-bar.search-expanded .top-bar-input { flex: 1; min-width: 0; }
   .top-bar-input { min-width: 0; flex: 1; }

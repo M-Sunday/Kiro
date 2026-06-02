@@ -537,6 +537,23 @@ export class GridView extends Component {
     if (window.openNote) window.openNote(id)
   }
 
+  async _capacitorContentToBlobUrl(contentUri, mimeType) {
+    if (!window.Capacitor?.Plugins?.Filesystem) return null
+    try {
+      const fs = window.Capacitor.Plugins.Filesystem
+      const r = await fs.readFile({ path: contentUri })
+      if (!r?.data) return null
+      const binary = atob(r.data)
+      const bytes = new Uint8Array(binary.length)
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+      const blob = new Blob([bytes], { type: mimeType || 'application/octet-stream' })
+      return URL.createObjectURL(blob)
+    } catch (e) {
+      console.warn('[CapacitorContent] readFile failed:', e)
+      return null
+    }
+  }
+
   async _importFile() {
     // Capacitor native (Android, iOS, macOS via Mac Catalyst)
     if (window.Capacitor?.isNativePlatform?.()) {
@@ -561,7 +578,12 @@ export class GridView extends Component {
         const result = await fp.pickFiles({ limit: 1 })
         if (!result?.files?.length) return
         const file = result.files[0]
-        const path = file.path || file.uri || file.name
+        let path = file.path || file.uri || file.name
+        // For content:// URIs on video files, try to convert to blob URL
+        if (path && (path.startsWith('content://') || path.startsWith('file://'))) {
+          const blobUrl = await this._capacitorContentToBlobUrl(path, file.mimeType)
+          if (blobUrl) path = blobUrl
+        }
         this._addExternalFile(file.name, path, file.size || 0, file.mimeType || '')
       } catch (e) {
         if (e.message?.includes?.('canceled')) return
@@ -643,7 +665,11 @@ export class GridView extends Component {
         const result = await fp.pickFiles({ limit: 1 })
         if (!result?.files?.length) return false
         const file = result.files[0]
-        const path = file.path || file.uri || file.name
+        let path = file.path || file.uri || file.name
+        if (path && (path.startsWith('content://') || path.startsWith('file://'))) {
+          const blobUrl = await this._capacitorContentToBlobUrl(path, file.mimeType)
+          if (blobUrl) path = blobUrl
+        }
         entry.name = file.name
         entry.path = path
         entry.size = file.size || 0
@@ -653,7 +679,7 @@ export class GridView extends Component {
         const files = window.getExternalFiles?.() || []
         window.saveExternalFiles?.(files)
         this.state.setState('externalFiles', files)
-        this._generateThumbnail(entry)
+        await this._generateThumbnail(entry)
         if (window.renderGridView) window.renderGridView()
         return true
       } catch (e) {
@@ -692,7 +718,7 @@ export class GridView extends Component {
     })
   }
 
-  _generateThumbnail(entry) {
+  async _generateThumbnail(entry) {
     const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(entry.name)
     const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv|m4v|3gp|mpeg|mpg)$/i.test(entry.name)
     if (!entry.path || !(isImage || isVideo)) return
@@ -750,9 +776,14 @@ export class GridView extends Component {
           console.warn('[Thumbnail] Failed to read video file:', e)
           return
         }
+      } else if (entry.path && (entry.path.startsWith('content://') || entry.path.startsWith('file://')) && window.Capacitor?.isNativePlatform?.()) {
+        const blobUrl = await this._capacitorContentToBlobUrl(entry.path, '')
+        if (blobUrl) vid.src = blobUrl
+        else vid.src = entry.path
       } else {
         vid.src = entry.path
       }
+      if (!vid.src) { console.warn('[Thumbnail] No valid video source'); return }
       vid.style.position = 'absolute'
       vid.style.left = '-9999px'
       document.body.appendChild(vid)
@@ -958,13 +989,16 @@ export class GridView extends Component {
     }
     this._hideAllViews()
     if (errEl) errEl.style.display = 'none'
+    let reimportGuard = false
     el.addEventListener('error', () => {
-      if (!isElectron && f.path && f.path.startsWith('content://') && window.Capacitor?.isNativePlatform?.()) {
-        console.warn('[Video] content:// URI failed, attempting re-import')
-        this._reimportStaleFile(f).then((ok) => {
-          if (ok) {
+      if (!isElectron && !reimportGuard && f.path && f.path.startsWith('content://') && window.Capacitor?.isNativePlatform?.()) {
+        reimportGuard = true
+        console.warn('[Video] content:// URI failed, attempting conversion')
+        this._capacitorContentToBlobUrl(f.path, f.mimeType).then((blobUrl) => {
+          if (blobUrl) {
+            f.path = blobUrl
             errEl.style.display = 'none'
-            el.src = f.path
+            el.src = blobUrl
             el.play().catch(() => {})
           } else {
             if (errEl) errEl.style.display = 'block'
@@ -993,6 +1027,14 @@ export class GridView extends Component {
         console.warn('[Video] Failed to read file:', e)
         if (errEl) errEl.style.display = 'block'
         return
+      }
+    } else if (f.path && (f.path.startsWith('content://') || f.path.startsWith('file://')) && window.Capacitor?.isNativePlatform?.()) {
+      const blobUrl = await this._capacitorContentToBlobUrl(f.path, f.mimeType)
+      if (blobUrl) {
+        f.path = blobUrl
+        el.src = blobUrl
+      } else {
+        el.src = f.path
       }
     } else {
       el.src = f.path

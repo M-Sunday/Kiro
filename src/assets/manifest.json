@@ -1,7 +1,7 @@
 {
   "name": "Kiro",
   "short_name": "Kiro",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "A creative operating system for chaotic minds. Save ideas, build islands, track what matters.",
   "start_url": "../index.html",
   "scope": "../",

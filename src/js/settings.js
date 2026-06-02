@@ -51,32 +51,58 @@ document.getElementById('settingsClearHistoryBtn')?.addEventListener('click', ()
   if (confirm('Clear link history?')) { saveHistory([]); renderSettingsHistory(); if (document.getElementById('searchLanding').style.display === 'flex') renderSearchLanding() }
 })
 document.querySelectorAll('.settings-toggle').forEach(t => t.addEventListener('click', function () { this.classList.toggle('on') }))
+document.getElementById('frostedToggle')?.addEventListener('click', function () {
+  saveSetting('frosted', this.classList.contains('on'))
+  applyFrosted()
+})
+document.querySelectorAll('.frosted-intensity-opt').forEach(opt => {
+  opt.addEventListener('click', function () {
+    document.querySelectorAll('.frosted-intensity-opt').forEach(o => o.classList.remove('active'))
+    this.classList.add('active')
+    const level = this.dataset.level
+    safeSetItem('frostedIntensity', level)
+    document.body.className = document.body.className.replace(/\bfrosted-\w+/g, '').trim()
+    if (level !== 'normal') document.body.classList.add('frosted-' + level)
+  })
+})
+function applyFrosted() {
+  const on = loadSetting('frosted', false)
+  const toggle = document.getElementById('frostedToggle')
+  const intensity = document.getElementById('frostedIntensity')
+  if (toggle) { if (on) toggle.classList.add('on'); else toggle.classList.remove('on') }
+  document.body.classList.toggle('frosted', on)
+  if (intensity) intensity.classList.toggle('disabled', !on)
+  const savedLevel = (on ? (localStorage.getItem('frostedIntensity') || 'normal') : null)
+  document.querySelectorAll('.frosted-intensity-opt').forEach(o => o.classList.toggle('active', o.dataset.level === savedLevel))
+  document.body.className = document.body.className.replace(/\bfrosted-\w+/g, '').trim()
+  if (savedLevel && savedLevel !== 'normal') document.body.classList.add('frosted-' + savedLevel)
+}
 document.querySelectorAll('.theme-option').forEach(opt => {
   opt.addEventListener('click', function () {
     document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'))
     this.classList.add('active')
     const t = this.dataset.theme
-    document.body.classList.remove('theme-black')
-    if (t === 'black') document.body.classList.add('theme-black')
+    document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim()
+    if (t !== 'white') document.body.classList.add('theme-' + t)
     safeSetItem('theme', t); document.getElementById('systemTheme').checked = false
   })
 })
 document.getElementById('systemTheme').addEventListener('change', function () {
   document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'))
   if (this.checked) {
-    document.body.classList.remove('theme-black')
+    document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim()
     if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('theme-black')
     safeSetItem('theme', 'system')
   } else {
     const s = localStorage.getItem('theme') || 'white'
-    document.body.classList.remove('theme-black')
+    document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim()
     if (s !== 'white') document.body.classList.add('theme-' + s)
     document.querySelector(`.theme-option[data-theme="${s}"]`)?.classList.add('active')
   }
 })
 const savedTheme = localStorage.getItem('theme') || 'white'
 document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'))
-document.body.classList.remove('theme-black')
+document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim()
 if (savedTheme === 'system') {
   document.getElementById('systemTheme').checked = true
   if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('theme-black')
@@ -277,6 +303,8 @@ function renderStorageInfo() {
 document.getElementById('settingsClearStorageBtn')?.addEventListener('click', function() {
   document.getElementById('resetOverlay').classList.add('open')
 })
+
+applyFrosted()
 
 // ─── Download settings persistence ──────────────
 const dlTypeEl = document.getElementById('dlType')

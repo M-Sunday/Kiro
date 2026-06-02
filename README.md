@@ -8,7 +8,7 @@ Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android,
 
 - **YouTube videos** — Paste a link, fetch metadata (title, channel, duration, thumbnail), save to folders
 - **Download videos** — Download via yt-dlp (desktop only). Supports quality selection, codec, audio format, and bitrate settings. Output is forced to MP4 (h264 preferred).
-- **External files** — Import images, videos, and text files from your device. Grid view with thumbnails (base64 data URLs for small images, `file://` for large, canvas-captured frames for videos). In-app text viewer and video player with full custom controls. Assign to folders, blur/unblur, drag-to-reorder sidebar. Files appear under their assigned folders in the sidebar tree.
+- **External files** — Import images, videos, and text files from your device. Grid view with thumbnails (base64 data URLs for small images, `file://` for large, canvas-captured frames for videos). In-app text viewer and video player with full custom controls. Assign to folders, blur/unblur, drag-to-reorder sidebar. Files appear under their assigned folders in the sidebar tree. Re-import stale files via native file picker on Android/iOS (Capacitor).
 - **Camera capture** — Take pictures directly in-app via `getUserMedia`. Flip front/back camera, capture as JPEG, saved as external file with instant thumbnail. Redesigned minimal overlay with Jeju Myeongjo typography and gradient controls.
 - **Bookmarks** — Save any URL with auto-fetched preview image, organized separately
 - **Notes** — Rich-text notes with image paste, assignable to folders. Built-in todo lists with editable checkboxes, custom SVG circle-check/circle-x toggle icons, particle burst animations on completion
@@ -20,13 +20,15 @@ Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android,
 - **Drag to folder** — Drag video, note, or external file grid items onto sidebar folders to move them. Also drag sidebar items between folders. Grid section headers also accept drops.
 - **Context menus** — Right-click, long-press (mobile), or three-dot button on any item
 - **Keyboard shortcuts** — Press `?` to view all shortcuts
-- **Settings panel** — Theme, toolbar toggles, file/link history options, NSFW filters, download options, storage breakdown, patch notes. About User pane with editable username, version, device info, and Reset Account.
-- **Themes** — White and Black
+- **Settings panel** — Theme, toolbar toggles, frosted glass effect with 3 intensity levels (normal/more/extreme), file/link history options, NSFW filters, download options, storage breakdown, patch notes. About User pane with editable username, version, device info, and Reset Account.
+- **Themes** — White and Black, with optional frosted glass blur effect on sidebar and top-bar
+- **Frosted glass** — Toggleable backdrop-blur effect on sidebar and top-bar. Three intensity levels: Normal (8px), More (16px), Extreme (24px). Persisted across sessions.
+- **Onboarding flow** — First-launch walkthrough for new users
 - **Search** — Filter sidebar items by title
 - **Pin items** — Pin important videos to the top
 - **Offline mode** — Detects connection status, greys search bar when offline, shows persistent online indicator (green/yellow/red badge in top-bar)
 - **Slow connection detection** — Shows yellow indicator when `effectiveType` is 2g/3g
-- **Patch notes** — In-app changelog shown on version updates and in Settings
+- **Patch notes** — In-app changelog shown on version updates and in Settings, with splash animation showing "Updating..." then "Welcome" on version change
 - **Service worker** — Network-first strategy with offline fallback; CSS cache-busting via versioned query strings; Update notification with Update/Later buttons (3-min reminder)
 - **Debug inspector** — Ctrl+D to toggle element inspector (colored overlay, title label, dims, style badges). Ctrl+Shift+H for hierarchy sidebar panel. Click to lock and copy CSS selector. Network simulation available via Debug menu.
 
@@ -96,7 +98,7 @@ Storage keys:
 ```
 src/
 ├── main.js              # Electron main process (window, Debug menu, IPC folder picker)
-├── index.html           # App shell with splash, camera overlay, external file viewers
+├── index.html           # App shell with splash, onboarding, camera overlay, external file viewers, frosted glass controls
 ├── css/
 │   ├── base.css         # Reset, splash, scrollbars, keyframes
 │   ├── layout.css       # Sidebar, top-bar, main area, backdrop, drop zone
@@ -110,7 +112,8 @@ src/
 │   │   ├── ContextMenu.js   # Context menu actions for all item types including external files (move, rename, blur, delete)
 │   │   ├── CardView.js      # Video card view with player, metadata, download integration
 │   │   ├── SearchView.js    # Search landing, history miniatures, YouTube search
-│   │   ├── SettingsPanel.js # Settings with storage breakdown, patch notes, theme/toolbar/NSFW panes
+│   │   ├── SettingsPanel.js # Settings with storage breakdown, patch notes, theme/toolbar/frosted glass/NSFW panes
+│   │   ├── OnboardingFlow.js # First-launch walkthrough for new users
 │   │   └── Dialogs.js       # Folder/bookmark dialogs
 │   ├── core/
 │   │   └── Api.js           # Event bus, state management
@@ -159,9 +162,9 @@ Requires Electron. The app auto-opens in grid view by default.
 ## Tech stack
 
 - **Electron** — desktop wrapper
-- **Vanilla JS** — no frameworks (14 modular JS files)
+- **Vanilla JS** — no frameworks (15+ modular JS files)
 - **localStorage** — persistence
 - **Service Worker** — offline caching + update detection
-- **Custom SVG icons** — 40 local icons (no CDN)
+- **Custom SVG icons** — 45+ local icons (no CDN)
 - **yt-dlp** — video download engine (auto-downloaded on first use)
 - **ffmpeg** — audio/video processing for high-quality downloads (auto-downloaded when needed)

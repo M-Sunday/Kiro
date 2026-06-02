@@ -8,15 +8,15 @@
     <link rel="manifest" href="assets/manifest.json">
     <link rel="icon" href="assets/icons/app-icon-192.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/app-icon-192.svg">
-    <link rel="stylesheet" href="css/base.css?v=3.0.1">
-    <link rel="stylesheet" href="css/layout.css?v=3.0.1">
-    <link rel="stylesheet" href="css/components.css?v=3.0.1">
-    <link rel="stylesheet" href="css/themes.css?v=3.0.1">
-    <link rel="stylesheet" href="css/mobile.css?v=3.0.1">
-    <link rel="stylesheet" href="css/kiro.css?v=3.0.1">
+    <link rel="stylesheet" href="css/base.css?v=3.1.0">
+    <link rel="stylesheet" href="css/layout.css?v=3.1.0">
+    <link rel="stylesheet" href="css/components.css?v=3.1.0">
+    <link rel="stylesheet" href="css/themes.css?v=3.1.0">
+    <link rel="stylesheet" href="css/mobile.css?v=3.1.0">
+    <link rel="stylesheet" href="css/kiro.css?v=3.1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Jeju+Myeongjo&family=Rethink+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=Geist+Mono:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Jeju+Myeongjo&family=Rethink+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         body.native-android { padding-top: 0 !important; }
         body.native-android .main-area {
@@ -390,7 +390,7 @@
                     </div>
                     <div class="settings-field-row mt-12">
                         <label class="settings-field-label">Version</label>
-                        <p class="settings-user-value" id="appVersionLabel">3.0.1</p>
+                        <p class="settings-user-value" id="appVersionLabel">3.1.0</p>
                     </div>
                     <div class="settings-field-row mt-12">
                         <label class="settings-field-label">Device</label>
@@ -420,12 +420,27 @@
                             <div class="theme-preview theme-black"></div>
                             <span>Black</span>
                         </div>
+                        <div class="theme-option" data-theme="shader">
+                            <div class="theme-preview theme-shader"></div>
+                            <span>Shader</span>
+                        </div>
                     </div>
                     <label class="settings-checkbox">
                         <input type="checkbox" id="systemTheme">
                         <span class="settings-checkbox-mark"></span>
                         <span>Have system theme</span>
                     </label>
+                    <div class="settings-plugin" style="margin-top:14px">
+                        <span class="settings-plugin-name">Frosted glass</span>
+                        <div class="settings-toggle" id="frostedToggle"></div>
+                    </div>
+                    <div class="frosted-intensity" id="frostedIntensity">
+                        <div class="frosted-intensity-options">
+                            <span class="frosted-intensity-opt" data-level="normal">Normal</span>
+                            <span class="frosted-intensity-opt" data-level="more">More</span>
+                            <span class="frosted-intensity-opt" data-level="extreme">Extreme</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="settings-pane" id="pane-toolbar" style="display:none">
                     <div class="settings-pane-header">
@@ -686,6 +701,11 @@
             <div id="onbStep1" class="onb-step onb-hidden">
                 <p class="onb-prompt">what should I call you?</p>
                 <input type="text" id="onbNameInput" class="onb-input" placeholder="" maxlength="30" autocomplete="off">
+                <div class="onb-actions" id="onbActions" style="display:none">
+                    <span class="onb-choice" id="onbYes">yes</span>
+                    <span class="onb-choice-divider">·</span>
+                    <span class="onb-choice" id="onbNo">no</span>
+                </div>
             </div>
         </div>
     </div>
@@ -726,6 +746,7 @@
             var splashText = document.getElementById('splashText');
             if (!splash) return;
             var faded = false;
+            window.__splashTimers = [];
             var icon = splash.querySelector('.splash-content svg, .splash-content img');
             if (icon) {
                 if (!navigator.onLine) {
@@ -755,6 +776,10 @@
             }
             function dismissSplash() {
                 if (faded) return;
+                if (window.__splashBlockDismiss) {
+                    setTimeout(dismissSplash, 300);
+                    return;
+                }
                 faded = true;
                 splash.classList.add('fade');
                 setTimeout(function () {
@@ -780,10 +805,10 @@
                 }
             } else {
                 if (navigator.onLine) {
-                    setTimeout(function () { splashText.textContent = 'Up to date'; }, 2000);
-                    setTimeout(function () { splashText.textContent = 'Welcome, ' + localStorage.getItem('kiroUserName'); }, 3400);
+                    window.__splashTimers.push(setTimeout(function () { splashText.textContent = 'Up to date'; }, 2000));
+                    window.__splashTimers.push(setTimeout(function () { splashText.textContent = 'Welcome, ' + localStorage.getItem('kiroUserName'); }, 3400));
                 }
-                setTimeout(dismissSplash, navigator.onLine ? 4600 : 2000);
+                window.__splashTimers.push(setTimeout(dismissSplash, navigator.onLine ? 4600 : 2000));
             }
 
             document.getElementById('eulaDecline').addEventListener('click', function () {

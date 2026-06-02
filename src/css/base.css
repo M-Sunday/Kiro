@@ -74,6 +74,13 @@
 .onb-btn-row { display: flex; gap: 12px; }
 .onb-btn-row .onb-btn { min-width: 100px; }
 .onb-btn.primary { background: #007aff; color: #fff; }
+.onb-actions {
+    display: flex; align-items: center; gap: 6px;
+    opacity: 0; transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    margin-top: 16px;
+}
+.onb-actions.onb-visible { opacity: 1; transform: translateY(0); }
 .onb-visible { opacity: 1; transform: translateY(0); }
 .onb-fade-out { opacity: 0; transform: translateY(-10px); transition: opacity 0.3s ease, transform 0.3s ease; }
 .onb-hidden { opacity: 0; transform: translateY(10px); pointer-events: none; }

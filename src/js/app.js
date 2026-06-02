@@ -38,7 +38,7 @@ import { Dialogs } from './components/Dialogs.js'
 import { SettingsPanel } from './components/SettingsPanel.js'
 import { OnboardingFlow } from './components/OnboardingFlow.js'
 
-const APP_VERSION = '3.0.1'
+const APP_VERSION = '3.1.0'
 
 function loadStateFromStorage(state) {
   state.setState('videos', window.getVideos?.() || {})

@@ -624,6 +624,44 @@ export class GridView extends Component {
   }
 
   async _reimportStaleFile(entry) {
+    if (window.Capacitor?.isNativePlatform?.()) {
+      try {
+        const fp = window.Capacitor.Plugins.FilePicker
+        if (!fp) throw new Error('FilePicker plugin not available')
+        if (window.Capacitor.getPlatform() === 'android') {
+          try {
+            const permResult = await fp.checkPermissions()
+            if (permResult.readExternalStorage !== 'granted') {
+              const reqResult = await fp.requestPermissions({ permissions: ['readExternalStorage'] })
+              if (reqResult.readExternalStorage !== 'granted') {
+                console.warn('[Reimport] Storage permission denied')
+                return false
+              }
+            }
+          } catch (permErr) {}
+        }
+        const result = await fp.pickFiles({ limit: 1 })
+        if (!result?.files?.length) return false
+        const file = result.files[0]
+        const path = file.path || file.uri || file.name
+        entry.name = file.name
+        entry.path = path
+        entry.size = file.size || 0
+        entry.mimeType = file.mimeType || ''
+        delete entry.thumbnail
+        delete entry._stale
+        const files = window.getExternalFiles?.() || []
+        window.saveExternalFiles?.(files)
+        this.state.setState('externalFiles', files)
+        this._generateThumbnail(entry)
+        if (window.renderGridView) window.renderGridView()
+        return true
+      } catch (e) {
+        if (e.message?.includes?.('canceled')) return false
+        console.warn('[Reimport] Capacitor file-picker failed:', e)
+        return false
+      }
+    }
     return new Promise((resolve) => {
       const input = document.createElement('input')
       input.type = 'file'
@@ -920,9 +958,22 @@ export class GridView extends Component {
     }
     this._hideAllViews()
     if (errEl) errEl.style.display = 'none'
-    el.addEventListener('error', function () {
-      console.warn('[Video] Failed to load:', el.error?.message, el.error?.code, el.src)
-      if (errEl) errEl.style.display = 'block'
+    el.addEventListener('error', () => {
+      if (!isElectron && f.path && f.path.startsWith('content://') && window.Capacitor?.isNativePlatform?.()) {
+        console.warn('[Video] content:// URI failed, attempting re-import')
+        this._reimportStaleFile(f).then((ok) => {
+          if (ok) {
+            errEl.style.display = 'none'
+            el.src = f.path
+            el.play().catch(() => {})
+          } else {
+            if (errEl) errEl.style.display = 'block'
+          }
+        })
+      } else {
+        console.warn('[Video] Failed to load:', el.error?.message, el.error?.code, el.src)
+        if (errEl) errEl.style.display = 'block'
+      }
     }, { once: true })
     document.getElementById('extVideoTitle').textContent = f.name
     document.getElementById('extVideoView').style.display = 'flex'

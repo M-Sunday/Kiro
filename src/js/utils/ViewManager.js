@@ -125,8 +125,8 @@ export class ViewManager {
     const s = document.getElementById('splash')
     if (!s) return
     s.style.display = ''
-    s.classList.remove('fade')
-    s.classList.remove('onboarding')
+    s.classList.remove('fade', 'onboarding')
+    s.classList.add('info-bg')
     const img = s.querySelector('.splash-content img')
     if (img) { img.style.transition = 'none'; img.style.transform = 'rotate(0deg)' }
     const t = document.getElementById('splashText')

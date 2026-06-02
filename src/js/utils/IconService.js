@@ -1,5 +1,5 @@
 const ICON_DIR_MAP = {
-  'panel-left': 'nav/', 'arrow-right': 'nav/', 'x': 'nav/', 'plus': 'nav/', 'chevron-down': 'nav/', 'chevron-up': 'nav/', 'ellipsis': 'nav/', 'ellipsis-vertical': 'nav/', 'hard-drive': 'nav/', 'download': 'nav/',
+  'panel-left': 'nav/', 'arrow-right': 'nav/', 'x': 'nav/', 'plus': 'nav/', 'chevron-down': 'nav/', 'chevron-up': 'nav/', 'ellipsis': 'nav/', 'ellipsis-vertical': 'nav/', 'hard-drive': 'nav/', 'download': 'action/',
   'archive': 'action/', 'bookmark': 'action/', 'bookmark-fill': 'action/', 'check': 'action/', 'edit-3': 'action/', 'eye': 'action/', 'eye-off': 'action/', 'external-link': 'action/', 'folder': 'action/', 'folder-fill': 'action/', 'folder-plus': 'action/', 'link': 'action/', 'pin': 'action/', 'pin-off': 'action/', 'redo-2': 'action/', 'search': 'action/', 'settings': 'action/', 'trash-2': 'action/', 'undo-2': 'action/', 'circle-check': 'action/', 'circle-x': 'action/',
   'file-video-2': 'media/',
   'file-text': 'content/', 'file-text-fill': 'content/', 'list-checks': 'content/', 'list-todo': 'content/', 'sparkles': 'content/',
@@ -47,6 +47,9 @@ function tryFetch(el, name, i) {
     }).then(function (svg) {
       setCached(name, svg)
       if (el.parentNode) applySvg(el, svg)
+    }).catch(function () {
+      var idx = ICON_SUBDIRS.indexOf(known)
+      tryFetch(el, name, idx !== -1 ? idx + 1 : 0)
     })
     return
   }

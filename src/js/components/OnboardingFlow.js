@@ -89,9 +89,48 @@ export class OnboardingFlow extends Component {
       }, 200)
     }
 
+    const actions = document.getElementById('onbActions')
+    const yesBtn = document.getElementById('onbYes')
+    const noBtn = document.getElementById('onbNo')
+
+    function showActions() {
+      if (!actions) return
+      actions.style.display = 'flex'
+      requestAnimationFrame(() => actions.classList.add('onb-visible'))
+    }
+    function hideActions() {
+      if (!actions) return
+      actions.classList.remove('onb-visible')
+      actions.style.display = 'none'
+    }
+
     if (nameInput) {
+      nameInput.addEventListener('input', function () {
+        if (this.value.trim()) showActions()
+        else hideActions()
+      })
       nameInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && this.value.trim()) finishOnboarding(this.value.trim())
+      })
+    }
+
+    if (yesBtn) {
+      yesBtn.addEventListener('click', function () {
+        const val = nameInput?.value.trim()
+        if (val) finishOnboarding(val)
+      })
+    }
+
+    if (noBtn) {
+      noBtn.addEventListener('click', function () {
+        hideActions()
+        if (nameInput) { nameInput.value = ''; nameInput.style.opacity = '0'; nameInput.style.transform = 'translateY(20px)' }
+        if (step1) { step1.style.display = 'none'; step1.classList.add('onb-hidden') }
+        onboarding.style.display = 'none'
+        onboarding.classList.add('onb-hidden')
+        splash.style.display = 'flex'
+        const step0 = document.getElementById('onbStep0')
+        if (step0) step0.classList.remove('onb-hidden')
       })
     }
 

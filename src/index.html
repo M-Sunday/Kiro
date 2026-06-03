@@ -21,9 +21,9 @@
         body.native-android { padding-top: 0 !important; }
         body.native-android.theme-black .main-area { background: #1c1c1e; }
         body.native-android .sidebar { padding-top: 40px !important; }
+
         body.native-android.frosted .media-view { padding-top: calc(46px + max(30px, env(safe-area-inset-top, 0px))) !important; }
         body.native-android.frosted .top-bar { top: calc(10px + max(30px, env(safe-area-inset-top, 0px))); }
-        body.native-android .top-bar { margin-top: calc(10px + max(24px, env(safe-area-inset-top, 0px))); }
     </style>
 </head>
 <body>
@@ -135,6 +135,9 @@
                     <div class="note-view-actions">
                         <button class="note-view-btn" id="noteTodoBtn" title="Add todo">
                             <i data-lucide="list-checks" class="icon-md"></i>
+                        </button>
+                        <button class="note-view-btn" id="notePasteBtn" title="Paste from clipboard">
+                            <i data-lucide="clipboard" class="icon-md"></i>
                         </button>
                         <button class="note-view-btn" id="noteUndoBtn">
                             <i data-lucide="undo-2" class="icon-md"></i>

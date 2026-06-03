@@ -176,6 +176,10 @@ export type AppEvent =
   | { type: 'ui:folder:create-dialog' }
   | { type: 'ui:bookmark:create-dialog' }
   | { type: 'ui:file:import' }
+  | { type: 'ui:file:selected'; payload: { name: string; size: number; type: string; data: string } }
+  | { type: 'ui:camera:open' }
+  | { type: 'ui:camera:captured'; payload: { dataUrl: string } }
+  | { type: 'ui:clipboard:paste'; payload: { data: string; type: string } }
   | { type: 'data:video:created'; payload: { video: Video } }
   | { type: 'data:video:deleted'; payload: { videoId: string } }
   | { type: 'data:video:moved'; payload: { videoId: string; fromFolder?: string; toFolder?: string } }

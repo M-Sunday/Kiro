@@ -20,6 +20,7 @@ export class NoteView extends Component {
     this.listenTo(this.rootEl.querySelector('#noteCloseBtn'), 'click', this.close.bind(this) as EventListener)
     this.listenTo(this.rootEl.querySelector('#noteDeleteBtn'), 'click', this._deleteNote.bind(this) as EventListener)
     this.listenTo(this.rootEl.querySelector('#noteTodoBtn'), 'click', this._addTodo.bind(this) as EventListener)
+    this.listenTo(this.rootEl.querySelector('#notePasteBtn'), 'click', this._pasteFromClipboard.bind(this) as EventListener)
 
     if (this._titleInput) {
       this.listenTo(this._titleInput, 'input', this._scheduleSave.bind(this) as EventListener)
@@ -28,6 +29,24 @@ export class NoteView extends Component {
       this.listenTo(this._contentEl, 'input', this._scheduleSave.bind(this) as EventListener)
       this.listenTo(this._contentEl, 'paste', this._handlePaste as EventListener)
     }
+
+    this.on('ui:clipboard:paste', (payload: { data: string; type: string }) => {
+      if (!this._currentNoteId || !this._contentEl) return
+      if (payload.type.startsWith('image/')) {
+        this._contentEl.innerHTML += `<img src="${payload.data}" />`
+      } else {
+        const text = document.createElement('div')
+        text.textContent = payload.data
+        this._contentEl.innerHTML += text.innerHTML
+      }
+      this._scheduleSave()
+    })
+
+    this.on('ui:camera:captured', (payload: { dataUrl: string }) => {
+      if (!this._currentNoteId || !this._contentEl) return
+      this._contentEl.innerHTML += `<img src="${payload.dataUrl}" />`
+      this._scheduleSave()
+    })
 
     this.on('ui:note:open', (payload: { id: string }) => this.open(payload.id))
     this.on('ui:note:create', (payload: { data: Partial<Note> }) => {
@@ -82,6 +101,9 @@ export class NoteView extends Component {
         <div class="note-view-actions">
           <button class="note-view-btn" id="noteTodoBtn" data-ref="noteTodoBtn" title="Add todo">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </button>
+          <button class="note-view-btn" id="notePasteBtn" data-ref="notePasteBtn" title="Paste from clipboard">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
           </button>
           <button class="note-view-btn" id="noteUndoBtn" data-ref="noteUndoBtn" title="Undo">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
@@ -190,6 +212,10 @@ export class NoteView extends Component {
         this.emit('data:note:updated', { id: this._currentNoteId, changes: { todos, updated: Date.now() } })
       }) as EventListener)
     }
+  }
+
+  private _pasteFromClipboard(): void {
+    this.emit('ui:clipboard:paste')
   }
 
   private _handlePaste(e: ClipboardEvent): void {

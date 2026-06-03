@@ -23,6 +23,10 @@ import { SearchService } from './services/SearchService'
 import { SettingsService } from './services/SettingsService'
 import { DownloadService } from './services/DownloadService'
 
+import { Camera } from '@capacitor/camera'
+import { FilePicker } from '@capawesome/capacitor-file-picker'
+import { Clipboard } from '@capacitor/clipboard'
+
 import { MediaView } from './views/MediaView'
 import { GalleryViewMode } from './views/GalleryView'
 import { CardViewMode } from './views/CardView'
@@ -131,26 +135,98 @@ if (typeof document !== 'undefined') {
   bus.on('ui:folder:create-dialog', () => dialogs.openFolder())
   bus.on('ui:bookmark:create-dialog', () => dialogs.openBookmark())
   bus.on('ui:settings:open', () => settingsPanel.open())
-  bus.on('ui:file:import', () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.multiple = true
-    input.accept = '*/*'
-    input.addEventListener('change', () => {
-      const files = input.files
-      if (!files || files.length === 0) return
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        if (!file) continue
-        bus.emit('ui:file:selected', {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          data: URL.createObjectURL(file),
-        })
+  bus.on('ui:file:import', async () => {
+    const isNative = state.get<boolean>('platform.isNative') ?? false
+    if (isNative) {
+      try {
+        const result = await FilePicker.pickFiles({ types: ['*/*'], readData: true })
+        for (const file of result.files) {
+          bus.emit('ui:file:selected', {
+            name: file.name,
+            size: file.size,
+            type: file.mimeType,
+            data: file.data ? `data:${file.mimeType};base64,${file.data}` : '',
+          })
+        }
+      } catch (err) {
+        console.warn('[FilePicker] cancelled or failed:', err)
       }
-    })
-    input.click()
+    } else {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.multiple = true
+      input.accept = '*/*'
+      input.addEventListener('change', () => {
+        const files = input.files
+        if (!files || files.length === 0) return
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i]
+          if (!file) continue
+          bus.emit('ui:file:selected', {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            data: URL.createObjectURL(file),
+          })
+        }
+      })
+      input.click()
+    }
+  })
+
+  bus.on('ui:camera:open', async () => {
+    const isNative = state.get<boolean>('platform.isNative') ?? false
+    if (isNative) {
+      try {
+        const permResult = await Camera.requestPermissions()
+        if (permResult.camera !== 'granted') {
+          console.warn('[Camera] permission denied by user')
+          return
+        }
+        const image = await Camera.getPhoto({ quality: 90, source: 'CAMERA', saveToGallery: false })
+        const dataUrl = image.webPath ?? image.thumbnail ?? ''
+        if (dataUrl) {
+          bus.emit('ui:camera:captured', { dataUrl })
+        }
+      } catch (err: any) {
+        if (err.code === 'OS-PLUG-CAMR-0003' || err.message?.includes?.('denied')) {
+          console.warn('[Camera] permission denied')
+        } else if (err.code === 'OS-PLUG-CAMR-0006' || err.message?.includes?.('cancel')) {
+          console.warn('[Camera] cancelled')
+        } else {
+          console.warn('[Camera] failed:', err)
+        }
+      }
+    } else {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.capture = 'environment'
+      input.addEventListener('change', () => {
+        const file = input.files?.[0]
+        if (!file) return
+        const reader = new FileReader()
+        reader.onload = () => {
+          bus.emit('ui:camera:captured', { dataUrl: reader.result as string })
+        }
+        reader.readAsDataURL(file)
+      })
+      input.click()
+    }
+  })
+
+  bus.on('ui:clipboard:paste', async () => {
+    const isNative = state.get<boolean>('platform.isNative') ?? false
+    if (isNative) {
+      try {
+        const result = await Clipboard.read()
+        if (result.value) {
+          bus.emit('ui:clipboard:paste', { data: result.value, type: result.type })
+        }
+      } catch (err) {
+        console.warn('[Clipboard] read failed:', err)
+      }
+    }
   })
 
   // Global keyboard shortcut for focus

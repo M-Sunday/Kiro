@@ -934,18 +934,39 @@ export class GridView extends Component {
   }
 
   async _takePicture() {
+    if (window.Capacitor?.Plugins?.Camera) {
+      try {
+        const cam = window.Capacitor.Plugins.Camera
+        const permResult = await cam.requestPermissions()
+        if (permResult.camera !== 'granted') {
+          console.warn('[Camera] permission not granted')
+          return
+        }
+        const image = await cam.getPhoto({ quality: 90, source: 'CAMERA', saveToGallery: false })
+        const dataUrl = image.webPath ?? image.dataUrl ?? image.thumbnail ?? ''
+        if (!dataUrl) return
+        const now = Date.now()
+        const name = 'Photo_' + new Date().toISOString().slice(0, 10) + '_' + now + '.jpg'
+        const ext = window.getExternalFiles?.() || []
+        const id = '_ext_' + now
+        const entry = { id, name, path: dataUrl, size: 0, mimeType: 'image/jpeg', added: now, blurred: false, thumbnail: dataUrl }
+        ext.push(entry)
+        window.saveExternalFiles?.(ext)
+        this.state.setState('externalFiles', ext)
+        if (window.renderSidebar) window.renderSidebar()
+        if (window.renderGridView) window.renderGridView()
+      } catch (e) {
+        if (e.message?.includes?.('cancel')) return
+        console.warn('[Camera] failed:', e)
+      }
+      return
+    }
+    // Web fallback: browser camera
     try {
       const permService = this.api.services.get('permissionService')
       if (permService) {
         const granted = await permService.ensure('camera')
-        if (!granted) {
-          if (window.Capacitor?.Plugins?.Permissions) {
-            alert('Camera permission denied. Please enable it in App Settings > Permissions > Camera.')
-          } else {
-            alert('Camera permission denied. Please allow camera access in your browser settings.')
-          }
-          return
-        }
+        if (!granted) return
       }
       if (this._cameraStream) {
         this._cameraStream.getTracks().forEach(t => t.stop())
@@ -960,12 +981,7 @@ export class GridView extends Component {
       document.getElementById('cameraPreviewShot').style.display = 'none'
       if (window.loadIcons) window.loadIcons()
     } catch (e) {
-      if (e.name === 'NotAllowedError') {
-        alert('Camera permission denied. Please allow camera access in your browser settings.')
-      } else {
-        console.warn('[Camera] Failed to open:', e)
-        alert('Could not open camera: ' + e.message)
-      }
+      console.warn('[Camera] Failed to open:', e)
     }
   }
 

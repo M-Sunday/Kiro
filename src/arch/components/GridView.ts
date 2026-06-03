@@ -142,6 +142,7 @@ export class GridView extends Component {
           <button class="wb-btn" data-action="new-bookmark">+ Bookmark</button>
           <button class="wb-btn" data-action="new-folder">+ Folder</button>
           <button class="wb-btn" data-action="import-file">+ File</button>
+          <button class="wb-btn" data-action="camera">📷 Camera</button>
         </div>
       </div>
     `
@@ -220,6 +221,9 @@ export class GridView extends Component {
             break
           case 'import-file':
             this.emit('ui:file:import')
+            break
+          case 'camera':
+            this.emit('ui:camera:open')
             break
         }
       }) as EventListener)

@@ -59,6 +59,32 @@ export class NoteView extends Component {
     })
     this.listenTo(document.getElementById('noteViewContent'), 'paste', (e) => this._handleNotePaste(e))
     this.listenTo(document.getElementById('noteTodoBtn'), 'click', () => this.addTodo())
+    this.listenTo(document.getElementById('notePasteBtn'), 'click', async () => {
+      if (!window.currentNoteId) return
+      if (window.Capacitor?.Plugins?.Clipboard) {
+        try {
+          const result = await window.Capacitor.Plugins.Clipboard.read()
+          if (result.value) {
+            const div = document.createElement('div')
+            div.textContent = result.value
+            document.execCommand('insertHTML', false, div.innerHTML)
+            this._noteSaveContent()
+          }
+        } catch (e) {
+          console.warn('[Clipboard] read failed:', e)
+        }
+      } else {
+        try {
+          const text = await navigator.clipboard.readText()
+          if (text) {
+            const el = document.getElementById('noteViewContent')
+            if (el) { el.focus(); document.execCommand('insertText', false, text); this._noteSaveContent() }
+          }
+        } catch (e) {
+          console.warn('[Clipboard] web read failed:', e)
+        }
+      }
+    })
   }
 
   openNote(id) {
@@ -153,24 +179,20 @@ export class NoteView extends Component {
     const items = e.clipboardData?.items
     if (items) {
       for (const item of items) {
-        if (item.type.startsWith('image/') && typeof item.getAsFile === 'function') {
-          const blob = item.getAsFile()
-          if (!blob) continue
-          e.preventDefault()
-          this._noteInsertImage(blob, el)
+        if (item.type.startsWith('image/')) {
+          const blob = typeof item.getAsFile === 'function' ? item.getAsFile() : null
+          if (blob) {
+            e.preventDefault()
+            this._noteInsertImage(blob, el)
+            return
+          }
+          // getAsFile returned null (Android WebView) — let browser paste natively
           return
         }
       }
     }
 
-    this._noteReadClipboardImage(el).then(done => {
-      if (done) { e.preventDefault(); return }
-    })
-
-    if (!e.clipboardData) {
-      e.preventDefault()
-      return
-    }
+    if (!e.clipboardData) return
 
     try {
       const html = e.clipboardData.getData('text/html')

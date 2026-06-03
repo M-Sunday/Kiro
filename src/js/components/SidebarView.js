@@ -277,8 +277,10 @@ export class SidebarView extends Component {
             if (f) {
               const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv)$/i.test(f.name)
               const isText = /\.(txt|md|json|xml|html|css|js|py|java|c|cpp|h|ts)$/i.test(f.name)
+              const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(f.name)
               if (isText && window.openExternalText) window.openExternalText(f)
               else if (isVideo && window.openExternalVideo) window.openExternalVideo(f)
+              else if (isImage && window.openExternalImage) window.openExternalImage(f)
               else if (f.path) {
                 const isElectron = typeof process !== 'undefined' && process.versions?.electron
                 if (isElectron) window.require('electron').shell.openPath(f.path)

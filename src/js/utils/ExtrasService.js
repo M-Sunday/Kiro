@@ -1,6 +1,6 @@
 export class ExtrasService {
   constructor(appVersion) {
-    this._appVersion = appVersion || '3.1.0'
+    this._appVersion = appVersion || '3.1.1'
     this._debugOn = false
     this._debugHierarchy = false
     this._listenersActive = false

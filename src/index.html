@@ -8,25 +8,20 @@
     <link rel="manifest" href="assets/manifest.json">
     <link rel="icon" href="assets/icons/app-icon-192.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/app-icon-192.svg">
-    <link rel="stylesheet" href="css/base.css?v=3.1.0">
-    <link rel="stylesheet" href="css/layout.css?v=3.1.0">
-    <link rel="stylesheet" href="css/components.css?v=3.1.0">
-    <link rel="stylesheet" href="css/themes.css?v=3.1.0">
-    <link rel="stylesheet" href="css/mobile.css?v=3.1.0">
-    <link rel="stylesheet" href="css/kiro.css?v=3.1.0">
+    <link rel="stylesheet" href="css/base.css?v=3.1.1">
+    <link rel="stylesheet" href="css/layout.css?v=3.1.1">
+    <link rel="stylesheet" href="css/components.css?v=3.1.1">
+    <link rel="stylesheet" href="css/themes.css?v=3.1.1">
+    <link rel="stylesheet" href="css/mobile.css?v=3.1.1">
+    <link rel="stylesheet" href="css/kiro.css?v=3.1.1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=Geist+Mono:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Jeju+Myeongjo&family=Rethink+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         body.native-android { padding-top: 0 !important; }
-        body.native-android .main-area {
-            padding-top: max(30px, env(safe-area-inset-top, 0px)) !important;
-            padding-bottom: max(20px, env(safe-area-inset-bottom, 0px)) !important;
-            background: #f5f5f7;
-        }
         body.native-android.theme-black .main-area { background: #1c1c1e; }
         body.native-android .sidebar { padding-top: 40px !important; }
-        body.native-android.frosted .media-view { padding-top: 50px !important; }
+        body.native-android.frosted .media-view { padding-top: calc(46px + max(30px, env(safe-area-inset-top, 0px))) !important; }
         body.native-android.frosted .top-bar { top: calc(10px + max(30px, env(safe-area-inset-top, 0px))); }
     </style>
 </head>
@@ -158,38 +153,49 @@
                 <div class="note-view-todos" id="noteViewTodos"></div>
                 <div class="note-view-footer" id="noteViewFooter"></div>
             </div>
-        <div class="ext-text-view" id="extTextView" style="display:none">
-            <div class="ext-text-header">
-                <i data-lucide="file-text" class="ext-text-icon"></i>
-                <span class="ext-text-title" id="extTextTitle"></span>
-                <button class="ext-text-close" id="extTextClose"><i data-lucide="x" class="icon-md"></i></button>
+            <div class="ext-text-view" id="extTextView" style="display:none">
+                <div class="ext-text-header">
+                    <i data-lucide="file-text" class="ext-text-icon"></i>
+                    <span class="ext-text-title" id="extTextTitle"></span>
+                    <button class="ext-text-close" id="extTextClose"><i data-lucide="x" class="icon-md"></i></button>
+                </div>
+                <pre class="ext-text-content" id="extTextContent"></pre>
             </div>
-            <pre class="ext-text-content" id="extTextContent"></pre>
-        </div>
-        <div class="ext-video-view" id="extVideoView" style="display:none">
-            <div class="ext-video-header">
-                <i data-lucide="file-video-2" class="ext-video-icon"></i>
-                <span class="ext-video-title" id="extVideoTitle"></span>
-                <button class="ext-video-close" id="extVideoClose"><i data-lucide="x" class="icon-md"></i></button>
-            </div>
-            <div class="ext-video-body">
-                <div class="ext-video-overlay-icon" id="extVideoOverlayIcon"></div>
-                <div class="ext-video-error" id="extVideoError" style="display:none">Video could not be loaded</div>
-                <video class="ext-video-element" id="extVideoElement" playsinline preload="metadata"></video>
-                <div class="ext-video-controls" id="extVideoControls">
-                    <button class="ext-video-ctrl-btn" id="extVideoPlayBtn" title="Play/Pause" type="button"><span class="icon-sm" id="extVideoPlayIcon"></span></button>
-                    <button class="ext-video-ctrl-btn" id="extVideoSkipBackBtn" title="Skip back 10s" type="button"><i data-lucide="skip-back" class="icon-sm"></i></button>
-                    <button class="ext-video-ctrl-btn" id="extVideoSkipFwdBtn" title="Skip forward 10s" type="button"><i data-lucide="skip-forward" class="icon-sm"></i></button>
-                    <button class="ext-video-ctrl-btn" id="extVideoPipBtn" title="Picture in picture" type="button"><span class="icon-sm" id="extVideoPipIcon"></span></button>
-                    <div class="ext-video-progress" id="extVideoProgress">
-                        <div class="ext-video-progress-track" id="extVideoProgressTrack">
-                            <div class="ext-video-progress-fill" id="extVideoProgressFill"></div>
+            <div class="ext-video-view" id="extVideoView" style="display:none">
+                <div class="ext-video-header">
+                    <i data-lucide="file-video-2" class="ext-video-icon"></i>
+                    <span class="ext-video-title" id="extVideoTitle"></span>
+                    <button class="ext-video-close" id="extVideoClose"><i data-lucide="x" class="icon-md"></i></button>
+                </div>
+                <div class="ext-video-body">
+                    <div class="ext-video-overlay-icon" id="extVideoOverlayIcon"></div>
+                    <div class="ext-video-error" id="extVideoError" style="display:none">Video could not be loaded</div>
+                    <video class="ext-video-element" id="extVideoElement" playsinline preload="metadata"></video>
+                    <div class="ext-video-controls" id="extVideoControls">
+                        <button class="ext-video-ctrl-btn" id="extVideoPlayBtn" title="Play/Pause" type="button"><span class="icon-sm" id="extVideoPlayIcon"></span></button>
+                        <button class="ext-video-ctrl-btn" id="extVideoSkipBackBtn" title="Skip back 10s" type="button"><i data-lucide="skip-back" class="icon-sm"></i></button>
+                        <button class="ext-video-ctrl-btn" id="extVideoSkipFwdBtn" title="Skip forward 10s" type="button"><i data-lucide="skip-forward" class="icon-sm"></i></button>
+                        <button class="ext-video-ctrl-btn" id="extVideoPipBtn" title="Picture in picture" type="button"><span class="icon-sm" id="extVideoPipIcon"></span></button>
+                        <div class="ext-video-progress" id="extVideoProgress">
+                            <div class="ext-video-progress-track" id="extVideoProgressTrack">
+                                <div class="ext-video-progress-fill" id="extVideoProgressFill"></div>
+                            </div>
                         </div>
+                        <span class="ext-video-time" id="extVideoTime">0:00 / 0:00</span>
+                        <button class="ext-video-ctrl-btn" id="extVideoMuteBtn" title="Mute/Unmute" type="button"><span class="icon-sm" id="extVideoMuteIcon"></span></button>
+                        <input class="ext-video-volume" id="extVideoVolume" type="range" min="0" max="1" step="0.05" value="1" title="Volume">
+                        <button class="ext-video-ctrl-btn" id="extVideoFullscreenBtn" title="Fullscreen" type="button"><i data-lucide="maximize" class="icon-sm"></i></button>
                     </div>
-                    <span class="ext-video-time" id="extVideoTime">0:00 / 0:00</span>
-                    <button class="ext-video-ctrl-btn" id="extVideoMuteBtn" title="Mute/Unmute" type="button"><span class="icon-sm" id="extVideoMuteIcon"></span></button>
-                    <input class="ext-video-volume" id="extVideoVolume" type="range" min="0" max="1" step="0.05" value="1" title="Volume">
-                    <button class="ext-video-ctrl-btn" id="extVideoFullscreenBtn" title="Fullscreen" type="button"><i data-lucide="maximize" class="icon-sm"></i></button>
+                </div>
+            </div>
+            <div class="ext-image-view" id="extImageView" style="display:none">
+                <div class="ext-image-header">
+                    <i data-lucide="image" class="ext-image-icon"></i>
+                    <span class="ext-image-title" id="extImageTitle"></span>
+                    <button class="ext-image-close" id="extImageClose"><i data-lucide="x" class="icon-md"></i></button>
+                </div>
+                <div class="ext-image-body">
+                    <img class="ext-image-element" id="extImageElement" alt="">
                 </div>
             </div>
         </div>
@@ -368,7 +374,7 @@
                     </div>
                     <div class="settings-field-row mt-12">
                         <label class="settings-field-label">Version</label>
-                        <p class="settings-user-value" id="appVersionLabel">3.1.0</p>
+                        <p class="settings-user-value" id="appVersionLabel">3.1.1</p>
                     </div>
                     <div class="settings-field-row mt-12">
                         <label class="settings-field-label">Device</label>

@@ -99,11 +99,12 @@
 
 /* ─── External text viewer ─────────────────────────── */
 .ext-text-view {
-  display: none; flex: 1; flex-direction: column; min-height: 0; padding: 10px;
+  display: none; flex: 1; flex-direction: column; padding: 20px;
 }
 .ext-text-header {
   display: flex; align-items: center; gap: 10px; padding: 8px 14px; margin: 0 0 8px;
   border-radius: 14px; background: #f5f5f7; border: 1px solid #e8e8ed;
+  user-select: none; -webkit-user-select: none;
 }
 .ext-text-icon { width: 18px; height: 18px; color: #8e8e93; flex-shrink: 0; }
 .ext-text-title { flex: 1; font-size: 16px; font-weight: 600; color: #1d1d1f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -113,7 +114,7 @@
 
 /* ─── External video player ────────────────────────── */
 .ext-video-view {
-  display: none; flex: 1; flex-direction: column; min-height: 0; padding: 10px;
+  display: none; flex: 1; flex-direction: column; padding: 20px;
 }
 .ext-video-header {
   display: flex; align-items: center; gap: 10px; padding: 8px 14px; margin: 0 0 8px;
@@ -158,6 +159,21 @@
 .ext-video-volume { width: 60px; height: 4px; cursor: pointer; accent-color: #fff; flex-shrink: 0; }
 .ext-video-ctrl-btn svg { width: 14px; height: 14px; display: block; }
 
+/* ─── External image viewer ──────────────────────────── */
+.ext-image-view {
+  display: none; flex: 1; flex-direction: column; padding: 20px;
+}
+.ext-image-header {
+  display: flex; align-items: center; gap: 10px; padding: 8px 14px; margin: 0 0 8px;
+  border-radius: 14px; background: #f5f5f7; border: 1px solid #e8e8ed;
+}
+.ext-image-icon { width: 18px; height: 18px; color: #8e8e93; flex-shrink: 0; }
+.ext-image-title { flex: 1; font-size: 16px; font-weight: 600; color: #1d1d1f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ext-image-close { background: none; border: 1px solid #e8e8ed; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; color: #8e8e93; flex-shrink: 0; }
+.ext-image-close:hover { background: #f5f5f7; }
+.ext-image-body { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 10px 0; }
+.ext-image-element { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 12px; }
+
 /* ─── Dark theme for external viewers ──────────────── */
 body.theme-black .ext-text-header { background: #2c2c2e; border-color: #3a3a3c; }
 body.theme-black .ext-text-title { color: #f5f5f7; }
@@ -168,6 +184,10 @@ body.theme-black .ext-video-header { background: #2c2c2e; border-color: #3a3a3c;
 body.theme-black .ext-video-title { color: #f5f5f7; }
 body.theme-black .ext-video-close { border-color: #3a3a3c; color: #a1a1a6; }
 body.theme-black .ext-video-close:hover { background: #3a3a3c; }
+body.theme-black .ext-image-header { background: #2c2c2e; border-color: #3a3a3c; }
+body.theme-black .ext-image-title { color: #f5f5f7; }
+body.theme-black .ext-image-close { border-color: #3a3a3c; color: #a1a1a6; }
+body.theme-black .ext-image-close:hover { background: #3a3a3c; }
 
 /* ─── Camera overlay ────────────────────────────────── */
 .camera-overlay {
@@ -622,5 +642,11 @@ body.theme-black .ext-video-close:hover { background: #3a3a3c; }
   .gallery-modal-panel {
     width: 100%;
     max-width: 340px;
+  }
+  .gallery-bottom-nav {
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+  .gallery-coords {
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   }
 }

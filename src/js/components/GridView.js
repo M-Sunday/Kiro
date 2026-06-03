@@ -51,6 +51,8 @@ export class GridView extends Component {
     window.openExternalVideo = (f) => this._openExternalVideo(f)
     window.closeExternalText = () => this._closeExternalText()
     window.closeExternalVideo = () => this._closeExternalVideo()
+    window.openExternalImage = (f) => this._openExternalImage(f)
+    window.closeExternalImage = () => this._closeExternalImage()
     window.backfillExtThumbnails = () => this._backfillThumbnails()
   }
 
@@ -89,6 +91,7 @@ export class GridView extends Component {
 
     this.listenTo(document.getElementById('extTextClose'), 'click', () => this._closeExternalText())
     this.listenTo(document.getElementById('extVideoClose'), 'click', () => this._closeExternalVideo())
+    this.listenTo(document.getElementById('extImageClose'), 'click', () => this._closeExternalImage())
 
     this.listenTo(document.getElementById('extVideoPlayBtn'), 'click', () => this._toggleVideoPlay())
     this.listenTo(document.getElementById('extVideoSkipBackBtn'), 'click', () => { this._videoSkip(-10); this._showSkipOverlay('skip-back') })
@@ -898,6 +901,7 @@ export class GridView extends Component {
     document.body.classList.remove('gallery-open')
     document.getElementById('extTextView').style.display = 'none'
     document.getElementById('extVideoView').style.display = 'none'
+    document.getElementById('extImageView').style.display = 'none'
     const ct = document.querySelector('.content')
     if (ct) ct.style.display = 'none'
     const sl = document.getElementById('searchLanding')
@@ -1103,6 +1107,37 @@ export class GridView extends Component {
   _closeExternalVideo() {
     const el = document.getElementById('extVideoElement')
     el.pause()
+    el.src = ''
+    this._hideAllViews()
+    document.getElementById('gridView').classList.add('open')
+  }
+
+  async _openExternalImage(f) {
+    if (!f.path) return
+    const el = document.getElementById('extImageElement')
+    document.getElementById('extImageTitle').textContent = f.name
+    this._hideAllViews()
+    document.getElementById('extImageView').style.display = 'flex'
+    if (window.loadIcons) window.loadIcons()
+    const isElectron = typeof process !== 'undefined' && process.versions?.electron
+    if (isElectron) {
+      try {
+        const fs = window.require('fs')
+        const buf = fs.readFileSync(f.path)
+        const blob = new Blob([buf], { type: 'image/' + (f.name.split('.').pop().toLowerCase() === 'png' ? 'png' : 'jpeg') })
+        el.src = URL.createObjectURL(blob)
+      } catch (e) {
+        console.warn('[Image] Failed to read:', e)
+      }
+    } else if (window.Capacitor?.isNativePlatform?.() && f._blobUrl) {
+      el.src = f._blobUrl
+    } else {
+      el.src = f.path
+    }
+  }
+
+  _closeExternalImage() {
+    const el = document.getElementById('extImageElement')
     el.src = ''
     this._hideAllViews()
     document.getElementById('gridView').classList.add('open')

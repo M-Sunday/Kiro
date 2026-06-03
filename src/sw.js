@@ -1,4 +1,4 @@
-var CACHE = 'kiro-3.1.0'
+var CACHE = 'kiro-3.1.1'
 var URLS = [
   'css/base.css',
   'css/layout.css',

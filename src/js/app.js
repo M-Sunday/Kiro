@@ -39,7 +39,7 @@ import { Dialogs } from './components/Dialogs.js'
 import { SettingsPanel } from './components/SettingsPanel.js'
 import { OnboardingFlow } from './components/OnboardingFlow.js'
 
-const APP_VERSION = '3.1.0'
+const APP_VERSION = '3.1.1'
 
 function loadStateFromStorage(state) {
   state.setState('videos', window.getVideos?.() || {})
@@ -287,26 +287,19 @@ async function bootstrap() {
     document.body.classList.add('native-android')
   }
 
-  window.applyStatusBarTheme = function () {
+  if (PlatformDetector.isNativeAndroid()) {
     try {
-      if (!PlatformDetector.isNativeAndroid()) return
-      if (!window.Capacitor || !window.Capacitor.Plugins || !window.Capacitor.Plugins.StatusBar) return
-      var sb = window.Capacitor.Plugins.StatusBar
-      if (!sb) return
-      var cls = document.body.className
-      if (cls.indexOf('theme-black') > -1) {
-        sb.setStyle({ style: 'LIGHT' })
-        sb.setBackgroundColor({ color: '#2c2c2e' })
-      } else {
-        sb.setStyle({ style: 'DARK' })
-        sb.setBackgroundColor({ color: '#ffffff' })
+      var sb = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar
+      if (sb) {
+        function syncStyle() {
+          sb.setStyle({ style: document.body.className.indexOf('theme-black') > -1 ? 'DARK' : 'LIGHT' })
+        }
+        setTimeout(syncStyle, 100)
+        var obs = new MutationObserver(syncStyle)
+        obs.observe(document.body, { attributes: true, attributeFilter: ['class'] })
       }
-      sb.setOverlaysWebView({ overlay: false })
     } catch (e) {}
   }
-  window.applyStatusBarTheme()
-  var observer = new MutationObserver(function () { window.applyStatusBarTheme() })
-  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })
 
   bus.emit('app:ready')
 

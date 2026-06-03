@@ -219,7 +219,7 @@ body.theme-shader .onb-choice { font-family: 'Geist Mono', 'Courier New', monosp
 /* ─── FROSTED GLASS (all themes) ─────────────────────── */
 body.frosted .main-area { position: relative; }
 body.frosted .top-bar {
-  position: absolute; left: 10px; right: 10px; top: 10px; margin: 0; z-index: 2;
+  position: absolute; left: 10px; right: 10px; top: 10px; margin: 0; z-index: 30;
   background: var(--frost-bg, rgba(255,255,255,0.06));
   backdrop-filter: blur(var(--frost-blur, 12px));
   -webkit-backdrop-filter: blur(var(--frost-blur, 12px));

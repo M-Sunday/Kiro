@@ -7,7 +7,7 @@ let currentVideo = null
 let dragVideoId = null
 let currentNoteId = null
 
-const APP_VERSION = '3.1.0'
+const APP_VERSION = '3.1.1'
 
 const STORAGE_GROUPS = {
   videos: ['kiroVideos','kiroFolders','kiroFolderMeta','kiroPins'],

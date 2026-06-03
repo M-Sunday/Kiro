@@ -17,7 +17,7 @@ export class ViewManager {
     const sl = document.getElementById('searchLanding')
     const ct = document.querySelector('.content')
     const nv = document.getElementById('noteView')
-    const dv = document.getElementById('deckView')
+    const dv = document.getElementById('canvasGallery')
     const gb = document.getElementById('gridBtn')
     const db = document.getElementById('deckBtn')
 
@@ -32,7 +32,7 @@ export class ViewManager {
     if (view === 'grid') {
       if (gv) gv.classList.add('open')
       if (gb) gb.classList.add('active')
-    } else if (view === 'deck') {
+    } else if (view === 'gallery') {
       if (dv) dv.classList.add('open')
       if (db) db.classList.add('active')
     } else if (view === 'card') {

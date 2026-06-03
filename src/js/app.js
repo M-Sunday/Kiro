@@ -32,6 +32,7 @@ import { GridView } from './components/GridView.js'
 import { SidebarView } from './components/SidebarView.js'
 import { CardStackView } from './components/CardStackView.js'
 import { CardView } from './components/CardView.js'
+import { GalleryView } from './components/GalleryView.js'
 import { NoteView } from './components/NoteView.js'
 import { ContextMenu } from './components/ContextMenu.js'
 import { Dialogs } from './components/Dialogs.js'
@@ -136,6 +137,7 @@ async function bootstrap() {
   const cardStackView = new CardStackView()
   const cardView = new CardView()
   const noteView = new NoteView()
+  const galleryView = new GalleryView(bus, state)
   const contextMenu = new ContextMenu()
   const dialogs = new Dialogs()
   const settingsPanel = new SettingsPanel()
@@ -147,6 +149,7 @@ async function bootstrap() {
   services.register('cardStackView', cardStackView)
   services.register('cardView', cardView)
   services.register('noteView', noteView)
+  services.register('galleryView', galleryView)
   services.register('contextMenu', contextMenu)
   services.register('dialogs', dialogs)
   services.register('settingsPanel', settingsPanel)
@@ -155,6 +158,8 @@ async function bootstrap() {
   // Platform services
   const permissionService = new PermissionService(bus, state)
   services.register('permissionService', permissionService)
+  // Request storage permission on startup (Android native dialog)
+  permissionService.ensure('storage').catch(() => {})
 
   const notificationService = new NotificationService(bus, permissionService)
   services.register('notificationService', notificationService)
@@ -172,6 +177,8 @@ async function bootstrap() {
   cardView.mount(document.querySelector('.card'))
   contextMenu.mount(document.getElementById('ctxMenu'))
   noteView.mount(document.getElementById('noteView'))
+  const galleryEl = document.getElementById('canvasGallery')
+  if (galleryEl) galleryView.mount(galleryEl)
   dialogs.mount(document.getElementById('folderDialog'))
   settingsPanel.mount(document.getElementById('settingsOverlay'))
   onboardingFlow.mount(document.getElementById('splash'))
@@ -195,6 +202,7 @@ async function bootstrap() {
       sidebarView,
       cardView,
       noteView,
+      galleryView,
       contextMenu,
       dialogs,
       settingsPanel,
@@ -234,8 +242,6 @@ async function bootstrap() {
   bus.on('ui:grid:refresh', () => { if (window.renderGridView) window.renderGridView() })
   bus.on('ui:view:set', (e) => {
     viewManager.setView(e.view)
-    if (e.view === 'deck') { cardStackView.mount() }
-    else { cardStackView.unmount() }
   })
 
   // Load existing localStorage data into state

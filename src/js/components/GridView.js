@@ -76,12 +76,13 @@ export class GridView extends Component {
     })
 
     this.listenTo(document.getElementById('deckBtn'), 'click', () => {
-      const dv = document.getElementById('deckView')
-      if (dv.classList.contains('open')) return
+      const gv = document.getElementById('canvasGallery')
+      if (gv.classList.contains('open')) return
       this._hideAllViews()
-      dv.classList.add('open')
+      gv.classList.add('open')
+      document.body.classList.add('gallery-open')
       document.getElementById('deckBtn')?.classList.add('active')
-      this.bus.emit('ui:view:set', { view: 'deck' })
+      this.bus.emit('ui:view:set', { view: 'gallery' })
       const input = document.getElementById('kiroInput')
       if (input) input.value = ''
     })
@@ -537,19 +538,31 @@ export class GridView extends Component {
     if (window.openNote) window.openNote(id)
   }
 
-  async _capacitorContentToBlobUrl(contentUri, mimeType) {
+  _base64ToBlobUrl(b64, ext) {
+    const mimeMap = { mp4: 'video/mp4', webm: 'video/webm', mkv: 'video/x-matroska', avi: 'video/x-msvideo', mov: 'video/quicktime', flv: 'video/x-flv', wmv: 'video/x-ms-wmv', m4v: 'video/mp4', '3gp': 'video/3gpp', mpeg: 'video/mpeg', mpg: 'video/mpeg', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp' }
+    const raw = atob(b64)
+    const bytes = new Uint8Array(raw.length)
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i)
+    return URL.createObjectURL(new Blob([bytes], { type: mimeMap[ext] || 'application/octet-stream' }))
+  }
+
+  async _persistCapacitorFile(contentUri, fileName) {
     if (!window.Capacitor?.Plugins?.Filesystem) return null
     try {
       const fs = window.Capacitor.Plugins.Filesystem
       const r = await fs.readFile({ path: contentUri })
       if (!r?.data) return null
-      const binary = atob(r.data)
-      const bytes = new Uint8Array(binary.length)
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-      const blob = new Blob([bytes], { type: mimeType || 'application/octet-stream' })
-      return URL.createObjectURL(blob)
+      const ext = fileName && fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : ''
+      const localName = 'ext_' + Date.now() + (ext ? '.' + ext : '')
+      await fs.writeFile({ path: localName, data: r.data, directory: 'Data' })
+      const uriResult = await fs.getUri({ path: localName, directory: 'Data' })
+      const displayUrl = window.Capacitor.convertFileSrc
+        ? window.Capacitor.convertFileSrc(uriResult.uri)
+        : uriResult.uri
+      const blobUrl = this._base64ToBlobUrl(r.data, ext)
+      return { url: displayUrl, localName, blobUrl }
     } catch (e) {
-      console.warn('[CapacitorContent] readFile failed:', e)
+      console.warn('[PersistCapacitor] Failed:', e)
       return null
     }
   }
@@ -575,16 +588,31 @@ export class GridView extends Component {
             // checkPermissions/requestPermissions only work on Android; carry on
           }
         }
-        const result = await fp.pickFiles({ limit: 1 })
-        if (!result?.files?.length) return
-        const file = result.files[0]
-        let path = file.path || file.uri || file.name
-        // For content:// URIs on video files, try to convert to blob URL
-        if (path && (path.startsWith('content://') || path.startsWith('file://'))) {
-          const blobUrl = await this._capacitorContentToBlobUrl(path, file.mimeType)
-          if (blobUrl) path = blobUrl
+        let pickerResult
+        if (window.Capacitor.Plugins.PhotoPicker) {
+          try {
+            pickerResult = await window.Capacitor.Plugins.PhotoPicker.pick({ limit: 1 })
+          } catch (e) {
+            if (e.message !== 'canceled') console.warn('[Import] PhotoPicker failed, falling back:', e)
+          }
         }
-        this._addExternalFile(file.name, path, file.size || 0, file.mimeType || '')
+        if (!pickerResult?.files?.length) {
+          pickerResult = await fp.pickMedia({ limit: 1 })
+        }
+        if (!pickerResult?.files?.length) return
+        const file = pickerResult.files[0]
+        let path = file.path || file.uri || file.name
+        let localName = null
+        let blobUrl = null
+        if (path && (path.startsWith('content://') || path.startsWith('file://'))) {
+          const persistResult = await this._persistCapacitorFile(path, file.name)
+          if (persistResult) {
+            path = persistResult.url
+            localName = persistResult.localName
+            blobUrl = persistResult.blobUrl
+          }
+        }
+        this._addExternalFile(file.name, path, file.size || 0, file.mimeType || '', localName, blobUrl)
       } catch (e) {
         if (e.message?.includes?.('canceled')) return
         console.warn('[Import] Capacitor file-picker failed:', e)
@@ -633,10 +661,12 @@ export class GridView extends Component {
     input.click()
   }
 
-  _addExternalFile(name, path, size, mimeType) {
+  _addExternalFile(name, path, size, mimeType, localName, blobUrl) {
     const ext = window.getExternalFiles?.() || []
     const id = '_ext_' + Date.now()
     const entry = { id, name, path, size: size || 0, mimeType: mimeType || '', added: Date.now(), blurred: false }
+    if (localName) entry._fn = localName
+    if (blobUrl) entry._blobUrl = blobUrl
     ext.push(entry)
     window.saveExternalFiles?.(ext)
     this.state.setState('externalFiles', ext)
@@ -662,16 +692,34 @@ export class GridView extends Component {
             }
           } catch (permErr) {}
         }
-        const result = await fp.pickFiles({ limit: 1 })
-        if (!result?.files?.length) return false
-        const file = result.files[0]
+        let pickerResult
+        if (window.Capacitor.Plugins.PhotoPicker) {
+          try {
+            pickerResult = await window.Capacitor.Plugins.PhotoPicker.pick({ limit: 1 })
+          } catch (e) {
+            if (e.message !== 'canceled') console.warn('[Reimport] PhotoPicker failed, falling back:', e)
+          }
+        }
+        if (!pickerResult?.files?.length) {
+          pickerResult = await fp.pickMedia({ limit: 1 })
+        }
+        if (!pickerResult?.files?.length) return false
+        const file = pickerResult.files[0]
         let path = file.path || file.uri || file.name
+        let localName = null
+        let blobUrl = null
         if (path && (path.startsWith('content://') || path.startsWith('file://'))) {
-          const blobUrl = await this._capacitorContentToBlobUrl(path, file.mimeType)
-          if (blobUrl) path = blobUrl
+          const persistResult = await this._persistCapacitorFile(path, file.name)
+          if (persistResult) {
+            path = persistResult.url
+            localName = persistResult.localName
+            blobUrl = persistResult.blobUrl
+          }
         }
         entry.name = file.name
         entry.path = path
+        if (localName) entry._fn = localName
+        if (blobUrl) entry._blobUrl = blobUrl
         entry.size = file.size || 0
         entry.mimeType = file.mimeType || ''
         delete entry.thumbnail
@@ -748,8 +796,9 @@ export class GridView extends Component {
         img.onload = () => {
           try {
             const c = document.createElement('canvas')
-            c.width = Math.min(img.naturalWidth, 320)
-            c.height = Math.min(img.naturalHeight, 180)
+            const s = Math.min(320 / img.naturalWidth, 180 / img.naturalHeight, 1)
+            c.width = Math.round(img.naturalWidth * s)
+            c.height = Math.round(img.naturalHeight * s)
             const ctx = c.getContext('2d')
             if (ctx) { ctx.drawImage(img, 0, 0, c.width, c.height); entry.thumbnail = c.toDataURL('image/jpeg', 0.6); this._saveThumbnail(entry) }
           } catch (e) { console.warn('[Thumbnail] Image canvas failed:', e) }
@@ -776,10 +825,6 @@ export class GridView extends Component {
           console.warn('[Thumbnail] Failed to read video file:', e)
           return
         }
-      } else if (entry.path && (entry.path.startsWith('content://') || entry.path.startsWith('file://')) && window.Capacitor?.isNativePlatform?.()) {
-        const blobUrl = await this._capacitorContentToBlobUrl(entry.path, '')
-        if (blobUrl) vid.src = blobUrl
-        else vid.src = entry.path
       } else {
         vid.src = entry.path
       }
@@ -795,8 +840,9 @@ export class GridView extends Component {
         try {
           if (vid.videoWidth > 0 && vid.videoHeight > 0) {
             const canvas = document.createElement('canvas')
-            canvas.width = Math.min(vid.videoWidth, 320)
-            canvas.height = Math.min(vid.videoHeight, 180)
+            const scale = Math.min(320 / vid.videoWidth, 180 / vid.videoHeight, 1)
+            canvas.width = Math.round(vid.videoWidth * scale)
+            canvas.height = Math.round(vid.videoHeight * scale)
             const ctx = canvas.getContext('2d')
             if (ctx) { ctx.drawImage(vid, 0, 0, canvas.width, canvas.height); entry.thumbnail = canvas.toDataURL('image/jpeg', 0.6) }
           }
@@ -848,7 +894,8 @@ export class GridView extends Component {
   _hideAllViews() {
     document.getElementById('noteView').style.display = 'none'
     document.getElementById('gridView').classList.remove('open')
-    document.getElementById('deckView')?.classList.remove('open')
+    document.getElementById('canvasGallery')?.classList.remove('open')
+    document.body.classList.remove('gallery-open')
     document.getElementById('extTextView').style.display = 'none'
     document.getElementById('extVideoView').style.display = 'none'
     const ct = document.querySelector('.content')
@@ -856,7 +903,7 @@ export class GridView extends Component {
     const sl = document.getElementById('searchLanding')
     if (sl) sl.style.display = 'none'
     const ve = document.getElementById('extVideoElement')
-    if (ve) { ve.pause(); ve.src = '' }
+    if (ve) ve.pause()
   }
 
   _openExternalText(f) {
@@ -883,6 +930,18 @@ export class GridView extends Component {
 
   async _takePicture() {
     try {
+      const permService = this.api.services.get('permissionService')
+      if (permService) {
+        const granted = await permService.ensure('camera')
+        if (!granted) {
+          if (window.Capacitor?.Plugins?.Permissions) {
+            alert('Camera permission denied. Please enable it in App Settings > Permissions > Camera.')
+          } else {
+            alert('Camera permission denied. Please allow camera access in your browser settings.')
+          }
+          return
+        }
+      }
       if (this._cameraStream) {
         this._cameraStream.getTracks().forEach(t => t.stop())
         this._cameraStream = null
@@ -984,37 +1043,19 @@ export class GridView extends Component {
     const el = document.getElementById('extVideoElement')
     const errEl = document.getElementById('extVideoError')
     if (!isElectron && f._stale) {
+      f._stale = false
       const ok = await this._reimportStaleFile(f)
       if (!ok) return
     }
-    this._hideAllViews()
     if (errEl) errEl.style.display = 'none'
-    let reimportGuard = false
-    el.addEventListener('error', () => {
-      if (!isElectron && !reimportGuard && f.path && f.path.startsWith('content://') && window.Capacitor?.isNativePlatform?.()) {
-        reimportGuard = true
-        console.warn('[Video] content:// URI failed, attempting conversion')
-        this._capacitorContentToBlobUrl(f.path, f.mimeType).then((blobUrl) => {
-          if (blobUrl) {
-            f.path = blobUrl
-            errEl.style.display = 'none'
-            el.src = blobUrl
-            el.play().catch(() => {})
-          } else {
-            if (errEl) errEl.style.display = 'block'
-          }
-        })
-      } else {
-        console.warn('[Video] Failed to load:', el.error?.message, el.error?.code, el.src)
-        if (errEl) errEl.style.display = 'block'
+    el.addEventListener('error', (ev) => {
+      const msg = el.error?.message || ''
+      if (!msg.includes('empty src') && !msg.includes('MEDIA_ELEMENT_ERROR')) {
+        console.warn('[Video]', msg, 'src:', (el.src || '').substring(0, 80))
+        if (errEl) { errEl.textContent = msg; errEl.style.display = 'block' }
       }
     }, { once: true })
     document.getElementById('extVideoTitle').textContent = f.name
-    document.getElementById('extVideoView').style.display = 'flex'
-    this._updateVideoPlayIcon(false)
-    this._updateVideoVolumeUI()
-    this._updatePipIcon(false)
-    this._updateVideoControls()
     if (isElectron) {
       try {
         const fs = window.require('fs')
@@ -1028,17 +1069,34 @@ export class GridView extends Component {
         if (errEl) errEl.style.display = 'block'
         return
       }
-    } else if (f.path && (f.path.startsWith('content://') || f.path.startsWith('file://')) && window.Capacitor?.isNativePlatform?.()) {
-      const blobUrl = await this._capacitorContentToBlobUrl(f.path, f.mimeType)
-      if (blobUrl) {
-        f.path = blobUrl
-        el.src = blobUrl
-      } else {
+    } else if (window.Capacitor?.isNativePlatform?.() && f._fn) {
+      try { if (f._blobUrl) URL.revokeObjectURL(f._blobUrl) } catch {}
+      try {
+        const fs = window.Capacitor.Plugins.Filesystem
+        const r = await fs.readFile({ path: f._fn, directory: 'Data' })
+        if (r?.data) {
+          const ext = f.name.split('.').pop().toLowerCase()
+          el.src = this._base64ToBlobUrl(r.data, ext)
+        } else {
+          el.src = f.path
+        }
+      } catch (e) {
+        if (errEl) {
+          errEl.textContent = 'Read failed: ' + (e.message || e) + '. Using direct path.'
+          errEl.style.display = 'block'
+        }
         el.src = f.path
       }
     } else {
       el.src = f.path
     }
+    this._hideAllViews()
+    document.getElementById('extVideoView').style.display = 'flex'
+    if (window.loadIcons) window.loadIcons()
+    this._updateVideoPlayIcon(false)
+    this._updateVideoVolumeUI()
+    this._updatePipIcon(false)
+    this._updateVideoControls()
     el.play().catch(() => {})
   }
 

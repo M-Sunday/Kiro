@@ -55,6 +55,10 @@ export class ExtrasService {
           overlay.style.display = overlay.style.display === 'none' ? 'flex' : 'none'
         }
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
+        e.preventDefault()
+        this._toggleDebug()
+      }
     })
 
     document.getElementById('shortcutsClose')?.addEventListener('click', () => {

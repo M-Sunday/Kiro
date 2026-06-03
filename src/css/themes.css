@@ -225,7 +225,7 @@ body.frosted .top-bar {
   -webkit-backdrop-filter: blur(var(--frost-blur, 12px));
   border-color: var(--frost-border, rgba(255,255,255,0.2));
 }
-body.frosted .media-view { padding-top: 54px; }
+body.frosted .media-view { padding-top: 50px; }
 body:not([class*="theme-"]).frosted .top-bar { border-color: rgba(0,0,0,0.12); }
 
 /* ─── FROSTED INTENSITY: MORE ────────────────────────── */

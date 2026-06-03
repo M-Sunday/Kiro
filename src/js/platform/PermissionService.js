@@ -93,12 +93,24 @@ export class PermissionService {
 
     try {
       const Permissions = window.Capacitor.Plugins.Permissions
-      if (!Permissions) return 'granted'
-
-      const result = await Permissions.query({ name: alias.android })
-      this._cache[permission] = result.state
-      this._updateState(permission, result.state)
-      return result.state
+      if (Permissions) {
+        const result = await Permissions.query({ name: alias.android })
+        this._cache[permission] = result.state
+        this._updateState(permission, result.state)
+        return result.state
+      }
+      // Fallback: use known plugin permission APIs
+      if (permission === 'storage') {
+        const fs = window.Capacitor.Plugins.Filesystem
+        if (fs) {
+          const result = await fs.checkPermissions()
+          const state = result.publicStorage === 'granted' ? 'granted' : 'prompt'
+          this._cache[permission] = state
+          this._updateState(permission, state)
+          return state
+        }
+      }
+      return 'granted'
     } catch (err) {
       console.warn(`[PermissionService] check("${permission}") failed:`, err)
       return 'denied'
@@ -111,24 +123,40 @@ export class PermissionService {
 
     try {
       const Permissions = window.Capacitor.Plugins.Permissions
-      if (!Permissions) return 'granted'
+      if (Permissions) {
+        const result = await Permissions.request({ name: alias.android })
+        this._cache[permission] = result.state
+        this._updateState(permission, result.state)
 
-      const result = await Permissions.request({ name: alias.android })
-      this._cache[permission] = result.state
-      this._updateState(permission, result.state)
+        if (result.state === 'denied') {
+          this.bus.emit('platform:permission:denied', {
+            permission,
+            canRequestAgain: result.canRequestAgain !== false,
+          })
+        }
 
-      if (result.state === 'denied') {
-        this.bus.emit('platform:permission:denied', {
-          permission,
-          canRequestAgain: result.canRequestAgain !== false,
-        })
+        if (result.state === 'granted') {
+          this.bus.emit('platform:permission:granted', { permission })
+        }
+        return result.state
       }
-
-      if (result.state === 'granted') {
-        this.bus.emit('platform:permission:granted', { permission })
+      // Fallback: use known plugin permission APIs
+      if (permission === 'storage') {
+        const fs = window.Capacitor.Plugins.Filesystem
+        if (fs) {
+          const result = await fs.requestPermissions()
+          const state = result.publicStorage === 'granted' ? 'granted' : 'denied'
+          this._cache[permission] = state
+          this._updateState(permission, state)
+          if (state === 'granted') {
+            this.bus.emit('platform:permission:granted', { permission })
+          } else {
+            this.bus.emit('platform:permission:denied', { permission, canRequestAgain: true })
+          }
+          return state
+        }
       }
-
-      return result.state
+      return 'granted'
     } catch (err) {
       console.warn(`[PermissionService] request("${permission}") failed:`, err)
       return 'denied'

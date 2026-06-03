@@ -3,7 +3,11 @@
   "appName": "Kiro",
   "webDir": "src",
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "allowNavigation": [
+      "pdimagearchive.org",
+      "images.pdimagearchive.org"
+    ]
   },
   "plugins": {
     "StatusBar": {

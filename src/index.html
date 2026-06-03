@@ -26,7 +26,7 @@
         }
         body.native-android.theme-black .main-area { background: #1c1c1e; }
         body.native-android .sidebar { padding-top: 40px !important; }
-        body.native-android.frosted .media-view { padding-top: calc(54px + max(30px, env(safe-area-inset-top, 0px))) !important; }
+        body.native-android.frosted .media-view { padding-top: 50px !important; }
         body.native-android.frosted .top-bar { top: calc(10px + max(30px, env(safe-area-inset-top, 0px))); }
     </style>
 </head>
@@ -121,31 +121,7 @@
                     <div class="search-landing-history" id="searchLandingHistory"></div>
                 </div>
             </div>
-            <div class="deck-view" id="deckView">
-                <div class="deck-container">
-                    <div class="deck-content">
-                        <div class="deck-card" data-index="0">
-                            <img src="assets/state2.png" alt="State 2">
-                            <div class="deck-card-content"><span class="deck-card-title">State 2</span></div>
-                        </div>
-                        <div class="deck-card" data-index="1">
-                            <img src="assets/state3.png" alt="State 3">
-                            <div class="deck-card-content"><span class="deck-card-title">State 3</span></div>
-                        </div>
-                        <div class="deck-card" data-index="2">
-                            <img src="assets/state4.png" alt="State 4">
-                            <div class="deck-card-content"><span class="deck-card-title">State 4</span></div>
-                        </div>
-                        <div class="deck-card" data-index="3">
-                            <img src="assets/state1.png" alt="State 1">
-                            <div class="deck-card-content"><span class="deck-card-title">State 1</span></div>
-                        </div>
-                    </div>
-                </div>
-                <button class="deck-settings-btn" id="deckSettingsBtn">
-                    <img src="assets/settings-gear.png" alt="Settings">
-                </button>
-            </div>
+            <div class="canvas-gallery" id="canvasGallery"></div>
             <div class="grid-view" id="gridView"></div>
             <div class="batch-bar" id="batchBar" style="display:none">
                 <span class="batch-count" id="batchCount">0 selected</span>

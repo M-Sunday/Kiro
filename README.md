@@ -14,6 +14,7 @@ Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android,
 - **Notes** — Rich-text notes with image paste, assignable to folders. Built-in todo lists with editable checkboxes, custom SVG circle-check/circle-x toggle icons, particle burst animations on completion
 - **Direct Access** — Quick-launch links with thumbnail previews
 - **Grid view** — Browse all content in a visual grid with sections per type. Cascade animation on load (sections stagger in 220ms apart, items within at 60ms). Workbench header always visible at top.
+- **Canvas gallery** — Infinite canvas view with public domain image archive (750+ images from pdimagearchive.org, cached locally). Masonry layout, pan & drag, search, surprise me button. Falls back to curated vintage illustration collection when offline.
 - **Search landing** — Centered search prompt with recent history miniatures (click to reload). Shows when focusing the search input or the sidebar search.
 - **Bulk select** — Ctrl+click grid items for batch delete, move, pin, or blur
 - **Drag to reorder** — Reorder grid items within sections (videos, bookmarks, notes, external files, DAs) with blue drop-line indicators. Touch drag via long-press on mobile.
@@ -42,9 +43,10 @@ Built with vanilla JS/CSS and Electron. Works on Windows, macOS, Linux, Android,
 6. **Bulk select** — Ctrl+click multiple grid items, then use the batch bar at the bottom
 7. **Reorder** — Drag grid items within a section to reorder them; drag sidebar items to move between folders
 8. **Download** — Open a saved video, click the Download button below the player (desktop Electron only — uses yt-dlp)
-9. **Settings** — Click the gear icon in the sidebar header
-10. **Search landing** — Click the search input or the sidebar search to open the search landing with recent history
-11. **Debug** — Press Ctrl+D to inspect elements; Ctrl+Shift+H for hierarchy sidebar
+9. **Canvas gallery** — Click the layers icon in the top bar to open the infinite canvas gallery. Pan by dragging, click items to view details, use Surprise Me for a random pick, or search by title.
+10. **Settings** — Click the gear icon in the sidebar header
+11. **Search landing** — Click the search input or the sidebar search to open the search landing with recent history
+12. **Debug** — Press Ctrl+D to inspect elements; Ctrl+Shift+H for hierarchy sidebar
 
 ## Keyboard shortcuts
 
@@ -108,6 +110,7 @@ src/
 ├── js/
 │   ├── components/
 │   │   ├── GridView.js      # Grid rendering, external file viewers, video player w/ custom controls, camera capture, thumbnail generation
+│   │   ├── GalleryView.js   # Infinite canvas gallery with public domain image archive
 │   │   ├── SidebarView.js   # Sidebar tree with folders, external files under folders, drag-drop, context menu
 │   │   ├── ContextMenu.js   # Context menu actions for all item types including external files (move, rename, blur, delete)
 │   │   ├── CardView.js      # Video card view with player, metadata, download integration
@@ -138,6 +141,7 @@ src/
 │   ├── changelog.json   # Version history
 │   ├── manifest.json    # PWA manifest
 │   ├── icons/           # App icons + 40+ Lucide-style SVGs
+│   └── gallery/         # Curated vintage illustrations and page-1 API data for canvas gallery
 ├── sw.js                # Service worker (network-first, offline fallback)
 ```
 

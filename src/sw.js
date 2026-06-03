@@ -54,7 +54,7 @@ var URLS = [
   'assets/icons/ui/action/circle-x.svg',
   'assets/icons/ui/media/file-video-2.svg',
   'assets/icons/ui/content/file-text.svg',
-  'assets/icons/ui/content/file-text-fill.svg',
+  'assets/icons/ui/content/file-text-fill.svg', 
   'assets/icons/ui/content/list-checks.svg',
   'assets/icons/ui/content/list-todo.svg',
   'assets/icons/ui/content/sparkles.svg',

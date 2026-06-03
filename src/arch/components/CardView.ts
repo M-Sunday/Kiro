@@ -78,23 +78,33 @@ export class CardView extends Component {
 
   private _baseHTML(): string {
     return `
-      <div class="content" style="display:none">
-        <div class="card">
-          <div class="card-image">
-            <div id="imageWrap" style="cursor:pointer">
-              <img id="thumbnail" data-ref="thumbnail" src="" alt="Video thumbnail" />
-              <span id="durationBadge" data-ref="durationBadge" class="duration-badge"></span>
-              <div id="pinBadge" data-ref="pinBadge" class="pin-badge" style="display:none">📌</div>
-            </div>
+      <div class="container">
+        <div class="card" id="videoCard">
+          <div class="image-wrap" id="imageWrap">
+            <div class="badge" id="durationBadge">–</div>
+            <img id="thumbnail" data-ref="thumbnail" src="" alt="Video thumbnail">
           </div>
-          <div class="card-info">
-            <h2 id="videoTitle" data-ref="videoTitle"></h2>
-            <p id="channelName" data-ref="channelName"></p>
-            <div class="card-actions" id="cardAddRow">
-              <button id="cardAddBtn" data-ref="cardAddBtn">Save</button>
-              <button id="copyLinkBtn" data-ref="copyLinkBtn">Copy link</button>
-              <button id="dlBtn" data-ref="dlBtn">Download</button>
-            </div>
+          <div class="card-body">
+            <h1 id="videoTitle" data-ref="videoTitle">Paste a video link above</h1>
+            <p class="subtitle" id="channelName" data-ref="channelName"></p>
+          </div>
+          <div class="card-add-row" id="cardAddRow">
+            <button class="card-add-btn" id="cardAddBtn" data-ref="cardAddBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="card-add-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add video
+            </button>
+            <button class="card-add-btn" id="copyLinkBtn" data-ref="copyLinkBtn" style="display:none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="card-add-icon"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              Copy link
+            </button>
+            <button class="card-add-btn" id="dlBtn" data-ref="dlBtn" style="display:none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="card-add-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download
+            </button>
+          </div>
+          <div class="dl-progress" id="dlProgress" style="display:none">
+            <div class="dl-progress-track"><div class="dl-progress-fill" id="dlProgressFill"></div></div>
+            <span class="dl-progress-text" id="dlProgressText">0%</span>
           </div>
         </div>
       </div>

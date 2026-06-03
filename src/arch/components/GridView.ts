@@ -17,8 +17,7 @@ export class GridView extends Component {
 
   override render(): void {
     if (!this.rootEl) return
-    this.rootEl.innerHTML = this._baseHTML()
-    this._gridEl = this.rootEl.querySelector('#gridView')
+    this._gridEl = this.rootEl
     this._batchBarEl = this.rootEl.querySelector('#batchBar')
     this._batchCountEl = this.rootEl.querySelector('#batchCount')
 
@@ -53,23 +52,9 @@ export class GridView extends Component {
     super.destroy()
   }
 
-  private _baseHTML(): string {
-    return `
-      <div id="gridView" data-ref="gridView" class="grid-view">
-        <div id="batchBar" data-ref="batchBar" class="batch-bar" style="display:none">
-          <span id="batchCount" data-ref="batchCount">0 selected</span>
-          <button class="batch-clear">Clear</button>
-        </div>
-        <div class="grid-sections" data-ref="gridSections"></div>
-      </div>
-    `
-  }
-
   private _rerender(): void {
     if (!this._gridEl || !this.isMounted) return
     const state = this.state.fullState
-    const sectionsEl = this._gridEl.querySelector('.grid-sections')
-    if (!sectionsEl) return
 
     let html = ''
 
@@ -143,7 +128,7 @@ export class GridView extends Component {
       html += this._sectionHTML('External Files', items, 'ext')
     }
 
-    sectionsEl.innerHTML = html
+    this._gridEl.innerHTML = html
     this._bindItemEvents()
   }
 
@@ -216,6 +201,29 @@ export class GridView extends Component {
 
   private _bindItemEvents(): void {
     if (!this._gridEl) return
+
+    // Workbench button clicks
+    const wbBtns = this._gridEl.querySelectorAll('.wb-btn')
+    for (const btn of wbBtns) {
+      this.listenTo(btn, 'click', ((e: Event) => {
+        const action = (e.currentTarget as HTMLElement).getAttribute('data-action')
+        if (!action) return
+        switch (action) {
+          case 'new-note':
+            this.emit('ui:note:create', { data: { title: 'Untitled' } })
+            break
+          case 'new-bookmark':
+            this.emit('ui:bookmark:create-dialog')
+            break
+          case 'new-folder':
+            this.emit('ui:folder:create-dialog')
+            break
+          case 'import-file':
+            this.emit('ui:file:import')
+            break
+        }
+      }) as EventListener)
+    }
 
     // Section header toggle
     const headers = this._gridEl.querySelectorAll('.grid-section-header')

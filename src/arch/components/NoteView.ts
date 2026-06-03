@@ -12,15 +12,14 @@ export class NoteView extends Component {
   override render(): void {
     if (!this.rootEl) return
     this.rootEl.innerHTML = this._baseHTML()
-    this._panelEl = this.rootEl.querySelector('#noteView')
+    this._panelEl = this.rootEl
     this._titleInput = this.rootEl.querySelector('#noteViewTitle')
     this._contentEl = this.rootEl.querySelector('#noteViewContent')
     this._todosEl = this.rootEl.querySelector('#noteViewTodos')
 
     this.listenTo(this.rootEl.querySelector('#noteCloseBtn'), 'click', this.close.bind(this) as EventListener)
     this.listenTo(this.rootEl.querySelector('#noteDeleteBtn'), 'click', this._deleteNote.bind(this) as EventListener)
-    this.listenTo(this.rootEl.querySelector('#newNoteBtn'), 'click', this._createNew.bind(this) as EventListener)
-    this.listenTo(this.rootEl.querySelector('#todoAddBtn'), 'click', this._addTodo.bind(this) as EventListener)
+    this.listenTo(this.rootEl.querySelector('#noteTodoBtn'), 'click', this._addTodo.bind(this) as EventListener)
 
     if (this._titleInput) {
       this.listenTo(this._titleInput, 'input', this._scheduleSave.bind(this) as EventListener)
@@ -78,19 +77,29 @@ export class NoteView extends Component {
 
   private _baseHTML(): string {
     return `
-      <div id="noteView" data-ref="noteView" class="note-panel" style="display:none">
-        <div class="note-header">
-          <button id="newNoteBtn" data-ref="newNoteBtn" title="New note">+</button>
-          <input id="noteViewTitle" data-ref="noteTitle" type="text" placeholder="Note title" />
-          <button id="noteDeleteBtn" data-ref="noteDeleteBtn" title="Delete note">🗑</button>
-          <button id="noteCloseBtn" data-ref="noteCloseBtn" title="Close">&times;</button>
+      <div class="note-view-header">
+        <input class="note-view-title" id="noteViewTitle" data-ref="noteTitle" placeholder="Note title" spellcheck="false">
+        <div class="note-view-actions">
+          <button class="note-view-btn" id="noteTodoBtn" data-ref="noteTodoBtn" title="Add todo">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </button>
+          <button class="note-view-btn" id="noteUndoBtn" data-ref="noteUndoBtn" title="Undo">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+          </button>
+          <button class="note-view-btn" id="noteRedoBtn" data-ref="noteRedoBtn" title="Redo">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+          </button>
+          <button class="note-view-btn" id="noteDeleteBtn" data-ref="noteDeleteBtn" title="Delete note">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#ff453a"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+          <button class="note-view-btn" id="noteCloseBtn" data-ref="noteCloseBtn" title="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
-        <div id="noteViewContent" data-ref="noteContent" class="note-content" contenteditable="true" placeholder="Write something..."></div>
-        <div class="note-footer">
-          <button id="todoAddBtn" data-ref="todoAddBtn">+ Add todo</button>
-        </div>
-        <div id="noteViewTodos" data-ref="noteTodos" class="note-todos"></div>
       </div>
+      <div class="note-view-content" id="noteViewContent" data-ref="noteContent" contenteditable="true" spellcheck="false"></div>
+      <div class="note-view-todos" id="noteViewTodos" data-ref="noteTodos"></div>
+      <div class="note-view-footer" id="noteViewFooter" data-ref="noteFooter"></div>
     `
   }
 

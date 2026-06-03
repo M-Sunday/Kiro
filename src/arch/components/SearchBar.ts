@@ -8,12 +8,10 @@ export class SearchBar extends Component {
   override render(): void {
     if (!this.rootEl) return
     this.rootEl.innerHTML = `
-      <div class="top-bar" data-ref="topBar">
-        <input type="text" id="kiroInput" placeholder="Paste a video URL..." aria-label="Search" data-ref="input" />
-        <button id="kiroBtn" data-ref="btn" aria-label="Search">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        </button>
-      </div>
+      <input type="text" id="kiroInput" placeholder="Paste a link" spellcheck="false" data-ref="input" />
+      <button id="kiroBtn" data-ref="btn" aria-label="Search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </button>
     `
     this._inputEl = this.rootEl.querySelector('#kiroInput')
     this._btnEl = this.rootEl.querySelector('#kiroBtn')

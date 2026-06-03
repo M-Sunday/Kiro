@@ -127,15 +127,32 @@ if (typeof document !== 'undefined') {
 
   archComponents = { searchBar, sidebarView, ctxMenu, dialogs, settingsPanel, noteView, cardView, gridView }
 
-  // Dialog triggers from sidebar workbench buttons
-  const sidebarFooterBtns = document.querySelector('.sidebar-footer')
-  if (sidebarFooterBtns) {
-    sidebarFooterBtns.querySelector('#newFolderBtn')?.addEventListener('click', () => dialogs.openFolder())
-    sidebarFooterBtns.querySelector('#newBookmarkBtn')?.addEventListener('click', () => dialogs.openBookmark())
-    sidebarFooterBtns.querySelector('#newNoteBtn')?.addEventListener('click', () => {
-      bus.emit('ui:note:create', { data: { title: 'Untitled' } })
+  // Wire sidebar footer button events to dialogs
+  bus.on('ui:folder:create-dialog', () => dialogs.openFolder())
+  bus.on('ui:bookmark:create-dialog', () => dialogs.openBookmark())
+  bus.on('ui:settings:open', () => settingsPanel.open())
+  bus.on('ui:file:import', () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.multiple = true
+    input.accept = '*/*'
+    input.addEventListener('change', () => {
+      const files = input.files
+      if (!files || files.length === 0) return
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        if (!file) continue
+        bus.emit('ui:file:selected', {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          data: URL.createObjectURL(file),
+        })
+      }
     })
-  }
+    input.click()
+  })
+
   // Global keyboard shortcut for focus
   document.addEventListener('keydown', (e: KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'l') {

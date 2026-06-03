@@ -8,12 +8,10 @@ export class SidebarView extends Component {
 
   override render(): void {
     if (!this.rootEl) return
-    this.rootEl.innerHTML = this._baseHTML()
+    this._sidebarEl = this.rootEl
     this._treeEl = this.rootEl.querySelector('#sidebarTree')
-    this._searchInput = this.rootEl.querySelector('#sidebarFilterInput')
-    this._sidebarEl = this.rootEl.querySelector('#sidebar')
+    this._searchInput = this.rootEl.querySelector('#searchInput')
 
-    this.listenTo(this.rootEl.querySelector('#menuBtn'), 'click', this._toggleSidebar.bind(this) as EventListener)
     this._searchInput && this.listenTo(this._searchInput, 'input', this._onFilter.bind(this) as EventListener)
 
     this.subscribe('folders', () => this._rerenderTree())
@@ -26,6 +24,16 @@ export class SidebarView extends Component {
     this.subscribe('collapsed', () => this._rerenderTree())
     this.subscribe('ui.currentVideoId', () => this._rerenderTree())
     this.subscribe('ui.currentNoteId', () => this._rerenderTree())
+
+    // Hook into existing sidebar footer buttons
+    const newFolderBtn = this.rootEl.querySelector('#newFolderBtn')
+    const newBookmarkBtn = this.rootEl.querySelector('#newBookmarkBtn')
+    const newNoteBtn = this.rootEl.querySelector('#newNoteBtn')
+    if (newFolderBtn) this.listenTo(newFolderBtn, 'click', () => this.emit('ui:folder:create-dialog'))
+    if (newBookmarkBtn) this.listenTo(newBookmarkBtn, 'click', () => this.emit('ui:bookmark:create-dialog'))
+    if (newNoteBtn) this.listenTo(newNoteBtn, 'click', () => this.emit('ui:note:create', { data: { title: 'Untitled' } }))
+    const settingsBtn = this.rootEl.querySelector('#settingsBtn')
+    if (settingsBtn) this.listenTo(settingsBtn, 'click', () => this.emit('ui:settings:open'))
 
     this._rerenderTree()
   }
@@ -45,24 +53,6 @@ export class SidebarView extends Component {
     this._searchInput = null
     this._sidebarEl = null
     super.destroy()
-  }
-
-  private _baseHTML(): string {
-    return `
-      <div id="sidebar" data-ref="sidebar">
-        <div class="sidebar-header">
-          <button id="menuBtn" data-ref="menuBtn" aria-label="Toggle sidebar">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          </button>
-          <input id="sidebarFilterInput" data-ref="sidebarFilter" type="text" placeholder="Filter..." />
-        </div>
-        <div id="sidebarTree" data-ref="sidebarTree"></div>
-      </div>
-    `
-  }
-
-  private _toggleSidebar(): void {
-    this.toggle()
   }
 
   private _onFilter(): void {

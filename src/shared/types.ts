@@ -173,6 +173,9 @@ export type AppEvent =
   | { type: 'ui:settings:open' }
   | { type: 'ui:settings:close' }
   | { type: 'ui:sidebar:refresh' }
+  | { type: 'ui:folder:create-dialog' }
+  | { type: 'ui:bookmark:create-dialog' }
+  | { type: 'ui:file:import' }
   | { type: 'data:video:created'; payload: { video: Video } }
   | { type: 'data:video:deleted'; payload: { videoId: string } }
   | { type: 'data:video:moved'; payload: { videoId: string; fromFolder?: string; toFolder?: string } }

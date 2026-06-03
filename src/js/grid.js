@@ -376,11 +376,12 @@ document.getElementById('gridBtn').addEventListener('click', function () {
 document.getElementById('batchDelete')?.addEventListener('click', () => {
   if (!selectedGridItems.size || !confirm(`Delete ${selectedGridItems.size} item(s)?`)) return
   for (const id of selectedGridItems) {
-    const vs = getVideos(); const bms = getBookmarks(); const notes = getNotes(); const das = getDirectAccess()
+    const vs = getVideos(); const bms = getBookmarks(); const notes = getNotes(); const das = getDirectAccess(); const exts = getExternalFiles()
     if (vs[id]) { delete vs[id]; saveVideos(vs); const fs = getFolders(); for (const ids of Object.values(fs)) { const i = ids.indexOf(id); if (i > -1) ids.splice(i, 1) }; saveFolders(fs) }
     const bm = bms.find(b => b.id === id); if (bm) { saveBookmarks(bms.filter(b => b.id !== id)) }
     const n = notes.find(n => n.id === id); if (n) { saveNotes(notes.filter(x => x.id !== id)) }
     const d = das.find(d => d.id === id); if (d) { saveDirectAccess(das.filter(x => x.id !== id)) }
+    if (exts.find(x => x.id === id)) { saveExternalFiles(exts.filter(x => x.id !== id)) }
   }
   selectedGridItems.clear(); renderGridView(); renderSidebar()
 })
@@ -402,12 +403,15 @@ document.getElementById('batchMove')?.addEventListener('click', () => {
   dd.querySelectorAll('.ctx-item').forEach(el => {
     el.addEventListener('click', () => {
       const target = el.dataset.folder; if (!target) return
-      const fs = getFolders()
+      const fs = getFolders(); const exts = getExternalFiles()
       for (const id of selectedGridItems) {
         for (const ids of Object.values(fs)) { const i = ids.indexOf(id); if (i > -1) ids.splice(i, 1) }
         if (!fs[target].includes(id)) fs[target].push(id)
+        const ext = exts.find(x => x.id === id)
+        if (ext) { ext.folder = target }
       }
-      saveFolders(fs); selectedGridItems.clear(); dd.style.display = 'none'; renderGridView(); renderSidebar()
+      saveFolders(fs); saveExternalFiles(exts)
+      selectedGridItems.clear(); dd.style.display = 'none'; renderGridView(); renderSidebar()
     })
   })
   loadIcons(dd); dd.style.display = 'block'

@@ -155,7 +155,8 @@ export class SidebarView extends Component {
     const unassignedExt = externalFiles.filter(f => !f.folder)
     if (unassignedExt.length) {
       const efCollapsed = collapsed['section:externalfiles']
-      html += '<div class="tree-item ' + (efCollapsed ? '' : 'expanded') + '" data-externalfiles="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="folder" class="tree-folder-icon"></i><span class="tree-label">External Files</span></div><div class="tree-children">'
+      const extIcon = externalFiles.length ? 'folder-fill' : 'folder'
+      html += '<div class="tree-item ' + (efCollapsed ? '' : 'expanded') + '" data-externalfiles="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="' + extIcon + '" class="tree-folder-icon"></i><span class="tree-label">External Files</span></div><div class="tree-children">'
       for (const f of unassignedExt) {
         if (query && !f.name.toLowerCase().includes(query)) continue
         const nsfw = f.blurred || false
@@ -388,6 +389,7 @@ export class SidebarView extends Component {
       let longTimer = null, longPressed = false
       el.addEventListener('touchstart', (e) => {
         if (el.closest('.folder-rename')) return
+        if (document.getElementById('ctxMenu')?.classList.contains('open')) return
         longPressed = false
         longTimer = setTimeout(() => {
           longPressed = true

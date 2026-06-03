@@ -25,10 +25,12 @@ export class ContextMenu extends Component {
   }
 
   _bindEvents() {
-    this.listenTo(document, 'click', () => {
+    const close = () => {
       const menu = document.getElementById('ctxMenu')
       if (menu) menu.classList.remove('open')
-    })
+    }
+    this.listenTo(document, 'click', close)
+    this.listenTo(document, 'touchstart', close)
 
     this._ctxMoveToFolder = ''
     this.listenTo(document.getElementById('ctxMenu'), 'click', (e) => {
@@ -48,6 +50,9 @@ export class ContextMenu extends Component {
   show(x, y, videoId, folderName, bookmarkId, noteId, daId, extId) {
     const menu = document.getElementById('ctxMenu')
     if (!menu) return
+
+    document.querySelectorAll('.grid-item.dragging').forEach(el => el.classList.remove('dragging'))
+    document.querySelectorAll('.grid-item.drag-before, .grid-item.drag-after').forEach(el => el.classList.remove('drag-before', 'drag-after'))
 
     this._ctxTarget = videoId
     this._ctxFolder = folderName

@@ -200,7 +200,7 @@ export class GridView extends Component {
 
     const unassignedExt = externalFiles.filter(f => !f.folder)
     if (unassignedExt.length) {
-      html += `<div class="grid-section"><div class="grid-section-header"><i data-lucide="folder" style="width:16px;height:16px;flex-shrink:0"></i> External Files</div><div class="grid-items">`
+      html += `<div class="grid-section"><div class="grid-section-header"><i data-lucide="folder-fill" style="width:16px;height:16px;flex-shrink:0"></i> External Files</div><div class="grid-items">`
       for (const f of unassignedExt) html += this._externalFileCard(f)
       html += '</div></div>'
     }
@@ -416,6 +416,7 @@ export class GridView extends Component {
     let tdState = null
 
     item.addEventListener('touchstart', (e) => {
+      if (document.getElementById('ctxMenu')?.classList.contains('open')) return
       const t = e.touches[0]
       tdState = {
         dragId: item.dataset.videoId || item.dataset.bookmarkId || item.dataset.noteId || item.dataset.daId || item.dataset.extId,
@@ -444,7 +445,7 @@ export class GridView extends Component {
     item.addEventListener('touchend', () => {
       if (!tdState) return
       clearTimeout(tdState.timer)
-      if (tdState.active) this._handleDropReorder(tdState.dragId, tdState.dragType, tdState.folder, tdState.lastX, tdState.lastY, container)
+      if (tdState.active && !document.getElementById('ctxMenu')?.classList.contains('open')) this._handleDropReorder(tdState.dragId, tdState.dragType, tdState.folder, tdState.lastX, tdState.lastY, container)
       tdState = null
     })
 

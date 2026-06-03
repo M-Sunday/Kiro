@@ -35,6 +35,8 @@ export class GridView extends Component {
     this.state.subscribe('externalFiles', () => this.render())
 
     this.on('ui:grid:refresh', () => this.render())
+    this.on('ui:camera:open', () => this._handleCameraOpen())
+    this.on('ui:file:import', () => this._handleFileImport())
 
     this._exposeGlobals()
   }
@@ -572,6 +574,10 @@ export class GridView extends Component {
   }
 
   async _importFile() {
+    this.bus.emit('ui:file:import')
+  }
+
+  async _handleFileImport() {
     // Capacitor native (Android, iOS, macOS via Mac Catalyst)
     if (window.Capacitor?.isNativePlatform?.()) {
       try {
@@ -934,15 +940,22 @@ export class GridView extends Component {
   }
 
   async _takePicture() {
+    this.bus.emit('ui:camera:open')
+  }
+
+  async _handleCameraOpen() {
     if (window.Capacitor?.Plugins?.Camera) {
       try {
         const cam = window.Capacitor.Plugins.Camera
-        const permResult = await cam.requestPermissions()
-        if (permResult.camera !== 'granted') {
-          console.warn('[Camera] permission not granted')
-          return
+        const Permissions = window.Capacitor.Plugins.Permissions
+        if (Permissions) {
+          const permResult = await Permissions.request({ name: 'camera' })
+          if (permResult.state !== 'granted') {
+            console.warn('[Camera] permission not granted:', permResult.state)
+            return
+          }
         }
-        const image = await cam.getPhoto({ quality: 90, source: 'CAMERA', saveToGallery: false })
+        const image = await cam.getPhoto({ quality: 90, source: 'CAMERA', saveToGallery: false, resultType: 'uri' })
         const dataUrl = image.webPath ?? image.dataUrl ?? image.thumbnail ?? ''
         if (!dataUrl) return
         const now = Date.now()

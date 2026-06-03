@@ -43,6 +43,10 @@ const INITIAL_STATE: AppState = {
     currentVideoId: null,
     currentNoteId: null,
   },
+  permissions: {
+    records: {},
+    dialog: { open: false, type: null, resolve: null },
+  },
   platform: {
     isOnline: navigator.onLine,
     isNative: false,

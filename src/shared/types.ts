@@ -36,6 +36,7 @@ export interface Folder {
 }
 
 export interface FolderMeta {
+  name?: string
   color: string
 }
 
@@ -70,6 +71,22 @@ export interface ExternalFile {
   _fn?: string
   _blobUrl?: string
   _stale?: boolean
+}
+
+// ─── Permission System ────────────────────────────────────
+
+export type PermissionType = 'camera' | 'files' | 'folder' | 'photos' | 'clipboard'
+
+export type PermissionValue = 'granted' | 'denied' | 'prompt'
+
+export type PermissionScope = 'session' | 'permanent'
+
+export interface PermissionRecord {
+  id: string
+  type: PermissionType
+  value: PermissionValue
+  scope: PermissionScope
+  timestamp: number
 }
 
 // ─── Settings ─────────────────────────────────────────────
@@ -115,6 +132,15 @@ export interface PlatformState {
   permissions: Record<string, string>
 }
 
+export interface PermissionState {
+  records: Partial<Record<PermissionType, PermissionRecord>>
+  dialog: {
+    open: boolean
+    type: PermissionType | null
+    resolve: ((value: PermissionValue) => void) | null
+  }
+}
+
 export interface AppState {
   videos: Record<string, Video>
   folders: Record<string, string[]>
@@ -132,6 +158,7 @@ export interface AppState {
   download: DownloadPrefs
   ui: UIState
   platform: PlatformState
+  permissions: PermissionState
 }
 
 // ─── Events ───────────────────────────────────────────────
@@ -180,6 +207,14 @@ export type AppEvent =
   | { type: 'ui:camera:open' }
   | { type: 'ui:camera:captured'; payload: { dataUrl: string } }
   | { type: 'ui:clipboard:paste'; payload: { data: string; type: string } }
+  | { type: 'ui:permission:request'; payload: { type: PermissionType } }
+  | { type: 'ui:permission:granted'; payload: { type: PermissionType; scope: PermissionScope } }
+  | { type: 'ui:permission:denied'; payload: { type: PermissionType } }
+  | { type: 'ui:permission:revoke'; payload: { type: PermissionType } }
+  | { type: 'ui:settings:reset-permissions' }
+  | { type: 'permission:dialog:show'; payload: { type: PermissionType } }
+  | { type: 'permission:dialog:resolve'; payload: { type: PermissionType; value: PermissionValue; scope?: PermissionScope } }
+  | { type: 'permission:state:changed'; payload: { type: PermissionType; value: PermissionValue; scope: PermissionScope } }
   | { type: 'data:video:created'; payload: { video: Video } }
   | { type: 'data:video:deleted'; payload: { videoId: string } }
   | { type: 'data:video:moved'; payload: { videoId: string; fromFolder?: string; toFolder?: string } }
@@ -255,4 +290,13 @@ export interface StorageAdapter {
   delete(store: string, id: string): Promise<void>
   clear(store: string): Promise<void>
   queryByIndex<T>(store: string, index: string, value: unknown): Promise<T[]>
+
+  /** Execute a raw SQL query (SQLite adapters only) */
+  query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>
+  /** Execute a transaction */
+  transaction<T = void>(fn: () => Promise<T>): Promise<T>
+  /** Runs a write SQL (INSERT/UPDATE/DELETE/CREATE) — returns rows affected */
+  execute(sql: string, params?: unknown[]): Promise<number>
+  /** Check if adapter is connected */
+  isConnected(): boolean
 }

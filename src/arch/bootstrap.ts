@@ -6,7 +6,7 @@
 
 import { EventBus, AppStateManager, ServiceRegistry, ViewRouter } from './core'
 import type { View } from './core/ViewRouter'
-import { IndexedDbAdapter } from './storage/StorageAdapter'
+import { DatabaseManager } from './storage/DatabaseManager'
 
 import { VideoRepo } from './repositories/VideoRepository'
 import { NoteRepo } from './repositories/NoteRepository'
@@ -14,6 +14,7 @@ import { FolderRepo } from './repositories/FolderRepository'
 import { BookmarkRepo } from './repositories/BookmarkRepository'
 import { DirectAccessRepo } from './repositories/DirectAccessRepository'
 import { SettingsRepo } from './repositories/SettingsRepository'
+import { PermissionRepository } from './repositories/PermissionRepository'
 
 import { VideoService } from './services/VideoService'
 import { NoteService } from './services/NoteService'
@@ -22,6 +23,11 @@ import { BookmarkService } from './services/BookmarkService'
 import { SearchService } from './services/SearchService'
 import { SettingsService } from './services/SettingsService'
 import { DownloadService } from './services/DownloadService'
+import { CameraService } from './services/CameraService'
+import { FileService } from './services/FileService'
+
+import { PermissionService } from './platform/PermissionService'
+import { PermissionDialogView } from './views/PermissionDialogView'
 
 import { Camera } from '@capacitor/camera'
 import { FilePicker } from '@capawesome/capacitor-file-picker'
@@ -49,213 +55,190 @@ const services = new ServiceRegistry()
 const router = new ViewRouter(bus, state)
 
 // ── Storage ──
-const db = new IndexedDbAdapter()
+const dbManager = new DatabaseManager({ autoMigrate: true })
 
-// ── Repositories ──
-const videoRepo = new VideoRepo(db)
-const noteRepo = new NoteRepo(db)
-const folderRepo = new FolderRepo(db)
-const bookmarkRepo = new BookmarkRepo(db)
-const directAccessRepo = new DirectAccessRepo(db)
-const settingsRepo = new SettingsRepo(db)
+let videoRepo!: VideoRepo
+let noteRepo!: NoteRepo
+let folderRepo!: FolderRepo
+let bookmarkRepo!: BookmarkRepo
+let directAccessRepo!: DirectAccessRepo
+let settingsRepo!: SettingsRepo
+let permissionRepo!: PermissionRepository
 
-// ── Services ──
-const videoService = new VideoService(videoRepo, bus, state)
-const noteService = new NoteService(noteRepo, bus, state)
-const folderService = new FolderService(folderRepo, bus, state)
-const bookmarkService = new BookmarkService(bookmarkRepo, bus, state)
-const searchService = new SearchService(bus)
-const settingsService = new SettingsService(settingsRepo, bus, state)
-const downloadService = new DownloadService(bus, state)
+let permissionService!: PermissionService
 
-services.register('videoService', videoService)
-services.register('noteService', noteService)
-services.register('folderService', folderService)
-services.register('bookmarkService', bookmarkService)
-services.register('searchService', searchService)
-services.register('settingsService', settingsService)
-services.register('downloadService', downloadService)
+let videoService!: VideoService
+let noteService!: NoteService
+let folderService!: FolderService
+let bookmarkService!: BookmarkService
+let searchService!: SearchService
+let settingsService!: SettingsService
+let downloadService!: DownloadService
+let cameraService!: CameraService
+let fileService!: FileService
 
-// ── Views ──
-router.register(new MediaView(bus, state))
-router.register(new GalleryViewMode(bus, state))
-router.register(new CardViewMode(bus, state))
-router.register(new SearchLandingView(bus, state))
+async function initStorage(): Promise<void> {
+  const db = await dbManager.connect()
 
-// ── Platform state ──
-state.set('platform.isOnline', navigator.onLine)
-const isNative = !!((window as any).Capacitor && (window as any).Capacitor.isNativePlatform?.())
-const isElectron = !!(typeof process !== 'undefined' && (process as any).versions?.electron)
-state.set('platform.isNative', isNative)
-state.set('platform.isElectron', isElectron)
+  videoRepo = new VideoRepo(db)
+  noteRepo = new NoteRepo(db)
+  folderRepo = new FolderRepo(db)
+  bookmarkRepo = new BookmarkRepo(db)
+  directAccessRepo = new DirectAccessRepo(db)
+  settingsRepo = new SettingsRepo(db)
+  permissionRepo = new PermissionRepository(db)
 
-window.addEventListener('online', () => state.set('platform.isOnline', true))
-window.addEventListener('offline', () => state.set('platform.isOnline', false))
+  permissionService = new PermissionService(bus, state)
 
-// ── Mount Presentational Components ──
-function safeMount(selector: string, component: { mount: (el: HTMLElement) => void }): void {
-  const el = document.querySelector(selector) as HTMLElement | null
-  if (el) component.mount(el)
-  else console.warn(`[bootstrap] Mount target "${selector}" not found`)
+  videoService = new VideoService(videoRepo, bus, state)
+  noteService = new NoteService(noteRepo, bus, state)
+  folderService = new FolderService(folderRepo, bus, state)
+  bookmarkService = new BookmarkService(bookmarkRepo, bus, state)
+  searchService = new SearchService(bus)
+  settingsService = new SettingsService(settingsRepo, bus, state)
+  downloadService = new DownloadService(bus, state)
+  cameraService = new CameraService(bus, state, permissionService)
+  fileService = new FileService(bus, state, permissionService)
+
+  services.register('videoService', videoService)
+  services.register('noteService', noteService)
+  services.register('folderService', folderService)
+  services.register('bookmarkService', bookmarkService)
+  services.register('searchService', searchService)
+  services.register('settingsService', settingsService)
+  services.register('downloadService', downloadService)
+  services.register('cameraService', cameraService)
+  services.register('fileService', fileService)
+  services.register('permissionService', permissionService)
 }
 
-let archComponents: Record<string, any> = {}
+const storageReady = initStorage()
 
-if (typeof document !== 'undefined') {
-  const searchBar = new SearchBar(bus, state)
-  safeMount('.top-bar-input', searchBar)
+async function finishBootstrap(): Promise<void> {
+  await storageReady
 
-  const sidebarView = new SidebarView(bus, state)
-  safeMount('.sidebar', sidebarView)
+  // ── Views ──
+  router.register(new MediaView(bus, state))
+  router.register(new GalleryViewMode(bus, state))
+  router.register(new CardViewMode(bus, state))
+  router.register(new SearchLandingView(bus, state))
 
-  const ctxMenu = new ContextMenu(bus, state)
-  safeMount('#ctxMenu', ctxMenu)
+  // ── Platform state ──
+  state.set('platform.isOnline', navigator.onLine)
+  const isNative = !!((window as any).Capacitor && (window as any).Capacitor.isNativePlatform?.())
+  const isElectron = !!(typeof process !== 'undefined' && (process as any).versions?.electron)
+  state.set('platform.isNative', isNative)
+  state.set('platform.isElectron', isElectron)
 
-  const dialogs = new Dialogs(bus, state)
-  const dialogsContainer = document.createElement('div')
-  dialogsContainer.id = 'arch-dialogs'
-  document.body.appendChild(dialogsContainer)
-  dialogs.mount(dialogsContainer)
+  window.addEventListener('online', () => state.set('platform.isOnline', true))
+  window.addEventListener('offline', () => state.set('platform.isOnline', false))
 
-  const settingsPanel = new SettingsPanel(bus, state)
-  safeMount('#settingsOverlay', settingsPanel)
+  // ── Mount Presentational Components ──
+  function safeMount(selector: string, component: { mount: (el: HTMLElement) => void }): void {
+    const el = document.querySelector(selector) as HTMLElement | null
+    if (el) component.mount(el)
+    else console.warn(`[bootstrap] Mount target "${selector}" not found`)
+  }
 
-  const noteView = new NoteView(bus, state)
-  safeMount('#noteView', noteView)
+  let archComponents: Record<string, any> = {}
 
-  const cardView = new CardView(bus, state)
-  safeMount('.content', cardView)
+  if (typeof document !== 'undefined') {
+    const searchBar = new SearchBar(bus, state)
+    safeMount('.top-bar-input', searchBar)
 
-  const gridView = new GridView(bus, state)
-  safeMount('#gridView', gridView)
+    const sidebarView = new SidebarView(bus, state)
+    safeMount('.sidebar', sidebarView)
 
-  archComponents = { searchBar, sidebarView, ctxMenu, dialogs, settingsPanel, noteView, cardView, gridView }
+    const ctxMenu = new ContextMenu(bus, state)
+    safeMount('#ctxMenu', ctxMenu)
 
-  // Wire sidebar footer button events to dialogs
-  bus.on('ui:folder:create-dialog', () => dialogs.openFolder())
-  bus.on('ui:bookmark:create-dialog', () => dialogs.openBookmark())
-  bus.on('ui:settings:open', () => settingsPanel.open())
-  bus.on('ui:file:import', async () => {
-    const isNative = state.get<boolean>('platform.isNative') ?? false
-    if (isNative) {
-      try {
-        const result = await FilePicker.pickFiles({ types: ['*/*'], readData: true })
-        for (const file of result.files) {
-          bus.emit('ui:file:selected', {
-            name: file.name,
-            size: file.size,
-            type: file.mimeType,
-            data: file.data ? `data:${file.mimeType};base64,${file.data}` : '',
-          })
-        }
-      } catch (err) {
-        console.warn('[FilePicker] cancelled or failed:', err)
-      }
-    } else {
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.multiple = true
-      input.accept = '*/*'
-      input.addEventListener('change', () => {
-        const files = input.files
-        if (!files || files.length === 0) return
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i]
-          if (!file) continue
-          bus.emit('ui:file:selected', {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            data: URL.createObjectURL(file),
-          })
-        }
-      })
-      input.click()
-    }
-  })
+    const dialogs = new Dialogs(bus, state)
+    const dialogsContainer = document.createElement('div')
+    dialogsContainer.id = 'arch-dialogs'
+    document.body.appendChild(dialogsContainer)
+    dialogs.mount(dialogsContainer)
 
-  bus.on('ui:camera:open', async () => {
-    const isNative = state.get<boolean>('platform.isNative') ?? false
-    if (isNative) {
-      try {
-        const permResult = await Camera.requestPermissions()
-        if (permResult.camera !== 'granted') {
-          console.warn('[Camera] permission denied by user')
-          return
-        }
-        const image = await Camera.getPhoto({ quality: 90, source: 'CAMERA', saveToGallery: false })
-        const dataUrl = image.webPath ?? image.thumbnail ?? ''
-        if (dataUrl) {
-          bus.emit('ui:camera:captured', { dataUrl })
-        }
-      } catch (err: any) {
-        if (err.code === 'OS-PLUG-CAMR-0003' || err.message?.includes?.('denied')) {
-          console.warn('[Camera] permission denied')
-        } else if (err.code === 'OS-PLUG-CAMR-0006' || err.message?.includes?.('cancel')) {
-          console.warn('[Camera] cancelled')
-        } else {
-          console.warn('[Camera] failed:', err)
+    const settingsPanel = new SettingsPanel(bus, state)
+    safeMount('#settingsOverlay', settingsPanel)
+
+    const noteView = new NoteView(bus, state)
+    safeMount('#noteView', noteView)
+
+    const cardView = new CardView(bus, state)
+    safeMount('.content', cardView)
+
+    const gridView = new GridView(bus, state)
+    safeMount('#gridView', gridView)
+
+    // Mount permission dialog
+    const permissionDialog = new PermissionDialogView(bus, state)
+    permissionDialog.mount()
+
+    archComponents = { searchBar, sidebarView, ctxMenu, dialogs, settingsPanel, noteView, cardView, gridView, permissionDialog }
+
+    // Wire sidebar footer button events to dialogs
+    bus.on('ui:folder:create-dialog', () => dialogs.openFolder())
+    bus.on('ui:bookmark:create-dialog', () => dialogs.openBookmark())
+    bus.on('ui:settings:open', () => settingsPanel.open())
+
+    // Permission reset in settings
+    bus.on('ui:settings:reset-permissions', () => {
+      permissionService.resetAll()
+    })
+
+    bus.on('ui:clipboard:paste', async () => {
+      const isNative = state.get<boolean>('platform.isNative') ?? false
+      if (isNative) {
+        try {
+          const result = await Clipboard.read()
+          if (result.value) {
+            bus.emit('ui:clipboard:paste', { data: result.value, type: result.type })
+          }
+        } catch (err) {
+          console.warn('[Clipboard] read failed:', err)
         }
       }
-    } else {
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = 'image/*'
-      input.capture = 'environment'
-      input.addEventListener('change', () => {
-        const file = input.files?.[0]
-        if (!file) return
-        const reader = new FileReader()
-        reader.onload = () => {
-          bus.emit('ui:camera:captured', { dataUrl: reader.result as string })
-        }
-        reader.readAsDataURL(file)
-      })
-      input.click()
-    }
-  })
+    })
 
-  bus.on('ui:clipboard:paste', async () => {
-    const isNative = state.get<boolean>('platform.isNative') ?? false
-    if (isNative) {
-      try {
-        const result = await Clipboard.read()
-        if (result.value) {
-          bus.emit('ui:clipboard:paste', { data: result.value, type: result.type })
-        }
-      } catch (err) {
-        console.warn('[Clipboard] read failed:', err)
+    // Global keyboard shortcut for focus
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'l') {
+        e.preventDefault()
+        archComponents['searchBar']?.focus()
       }
-    }
-  })
+    })
+  }
 
-  // Global keyboard shortcut for focus
-  document.addEventListener('keydown', (e: KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'l') {
-      e.preventDefault()
-      archComponents['searchBar']?.focus()
+  // Restore persisted permissions from storage into state
+  try {
+    const records = await permissionRepo.getAll()
+    for (const record of records) {
+      state.set(`permissions.records.${record.type}`, record)
     }
-  })
+  } catch {}
+
+  // ── Legacy bridge: expose on window.__kiroArch for gradual migration ──
+  ;(window as any).__kiroArch = {
+    bus,
+    state,
+    services,
+    router,
+    repos: {
+      videos: videoRepo,
+      notes: noteRepo,
+      folders: folderRepo,
+      bookmarks: bookmarkRepo,
+      settings: settingsRepo,
+      permissions: permissionRepo,
+    },
+    views: {
+      media: router.getRegisteredViews(),
+    },
+    components: archComponents,
+  }
 }
 
-// ── Legacy bridge: expose on window.__kiroArch for gradual migration ──
-;(window as any).__kiroArch = {
-  bus,
-  state,
-  services,
-  router,
-  repos: {
-    videos: videoRepo,
-    notes: noteRepo,
-    folders: folderRepo,
-    bookmarks: bookmarkRepo,
-    settings: settingsRepo,
-  },
-  views: {
-    media: router.getRegisteredViews(),
-  },
-  components: archComponents,
-}
+void finishBootstrap()
 
 // ── Export for module use ──
 export {
@@ -270,9 +253,13 @@ export {
   searchService,
   settingsService,
   downloadService,
+  cameraService,
+  fileService,
+  permissionService,
   videoRepo,
   noteRepo,
   folderRepo,
   bookmarkRepo,
   settingsRepo,
+  permissionRepo,
 }

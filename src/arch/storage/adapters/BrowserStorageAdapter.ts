@@ -1,40 +1,34 @@
-import type { StorageAdapter } from '../../shared/types'
+import type { StorageAdapter } from '../../../shared/types'
 
-export interface StorageAdapterFactory {
-  create(): StorageAdapter
-}
-
-const DB_NAME = 'KiroDBv2'
+const DB_NAME = 'KiroBrowserDB'
 const DB_VERSION = 1
 
 const STORES = [
-  'videos',
-  'notes',
-  'folders',
-  'folderMeta',
-  'bookmarks',
-  'directAccess',
-  'settings',
-  'metadata',
-  'linkHistory',
+  'videos', 'notes', 'folders', 'bookmarks',
+  'direct_access', 'external_files', 'settings', 'permissions',
 ] as const
 
-const INDEXES: Record<string, { name: string; key: string }[]> = {
+interface IndexConfig {
+  name: string
+  key: string
+}
+
+const INDEXES: Record<string, IndexConfig[]> = {
   videos: [
-    { name: 'folder', key: 'folder' },
+    { name: 'folder_id', key: 'folder_id' },
     { name: 'added', key: 'added' },
     { name: 'title', key: 'title' },
   ],
   notes: [
-    { name: 'folder', key: 'folder' },
+    { name: 'folder_id', key: 'folder_id' },
     { name: 'updated', key: 'updated' },
   ],
   bookmarks: [{ name: 'added', key: 'added' }],
-  directAccess: [{ name: 'added', key: 'added' }],
-  linkHistory: [{ name: 'added', key: 'added' }],
+  direct_access: [{ name: 'added', key: 'added' }],
+  external_files: [{ name: 'added', key: 'added' }],
 }
 
-export class IndexedDbAdapter implements StorageAdapter {
+export class BrowserStorageAdapter implements StorageAdapter {
   private _db: IDBDatabase | null = null
   private _connectPromise: Promise<IDBDatabase> | null = null
 
@@ -48,12 +42,16 @@ export class IndexedDbAdapter implements StorageAdapter {
     this._connectPromise = null
   }
 
+  isConnected(): boolean {
+    return this._db !== null
+  }
+
   async get<T>(store: string, id: string): Promise<T | null> {
     const db = await this._getDb()
     const tx = db.transaction(store, 'readonly')
-    const objectStore = tx.objectStore(store)
+    const os = tx.objectStore(store)
     return new Promise((resolve, reject) => {
-      const req = objectStore.get(id)
+      const req = os.get(id)
       req.onsuccess = () => resolve(req.result ?? null)
       req.onerror = () => reject(req.error)
     })
@@ -62,9 +60,9 @@ export class IndexedDbAdapter implements StorageAdapter {
   async getAll<T>(store: string): Promise<T[]> {
     const db = await this._getDb()
     const tx = db.transaction(store, 'readonly')
-    const objectStore = tx.objectStore(store)
+    const os = tx.objectStore(store)
     return new Promise((resolve, reject) => {
-      const req = objectStore.getAll()
+      const req = os.getAll()
       req.onsuccess = () => resolve(req.result as T[])
       req.onerror = () => reject(req.error)
     })
@@ -73,9 +71,9 @@ export class IndexedDbAdapter implements StorageAdapter {
   async put<T>(store: string, item: T): Promise<string> {
     const db = await this._getDb()
     const tx = db.transaction(store, 'readwrite')
-    const objectStore = tx.objectStore(store)
+    const os = tx.objectStore(store)
     return new Promise((resolve, reject) => {
-      const req = objectStore.put(item)
+      const req = os.put(item)
       req.onsuccess = () => resolve(String(req.result))
       req.onerror = () => reject(req.error)
     })
@@ -84,9 +82,9 @@ export class IndexedDbAdapter implements StorageAdapter {
   async delete(store: string, id: string): Promise<void> {
     const db = await this._getDb()
     const tx = db.transaction(store, 'readwrite')
-    const objectStore = tx.objectStore(store)
+    const os = tx.objectStore(store)
     return new Promise((resolve, reject) => {
-      const req = objectStore.delete(id)
+      const req = os.delete(id)
       req.onsuccess = () => resolve()
       req.onerror = () => reject(req.error)
     })
@@ -95,9 +93,9 @@ export class IndexedDbAdapter implements StorageAdapter {
   async clear(store: string): Promise<void> {
     const db = await this._getDb()
     const tx = db.transaction(store, 'readwrite')
-    const objectStore = tx.objectStore(store)
+    const os = tx.objectStore(store)
     return new Promise((resolve, reject) => {
-      const req = objectStore.clear()
+      const req = os.clear()
       req.onsuccess = () => resolve()
       req.onerror = () => reject(req.error)
     })
@@ -106,13 +104,25 @@ export class IndexedDbAdapter implements StorageAdapter {
   async queryByIndex<T>(store: string, index: string, value: unknown): Promise<T[]> {
     const db = await this._getDb()
     const tx = db.transaction(store, 'readonly')
-    const objectStore = tx.objectStore(store)
-    const idx = objectStore.index(index)
+    const os = tx.objectStore(store)
+    const idx = os.index(index)
     return new Promise((resolve, reject) => {
       const req = idx.getAll(value as IDBValidKey)
       req.onsuccess = () => resolve(req.result as T[])
       req.onerror = () => reject(req.error)
     })
+  }
+
+  async query<T = Record<string, unknown>>(_sql: string, _params?: unknown[]): Promise<T[]> {
+    throw new Error('[BrowserStorageAdapter] query() not supported — use SQLite adapter for SQL queries')
+  }
+
+  async transaction<T = void>(fn: () => Promise<T>): Promise<T> {
+    return fn()
+  }
+
+  async execute(_sql: string, _params?: unknown[]): Promise<number> {
+    throw new Error('[BrowserStorageAdapter] execute() not supported — use SQLite adapter for SQL writes')
   }
 
   private async _getDb(): Promise<IDBDatabase> {
@@ -126,8 +136,7 @@ export class IndexedDbAdapter implements StorageAdapter {
         const db = (event.target as IDBOpenDBRequest).result
         for (const storeName of STORES) {
           if (!db.objectStoreNames.contains(storeName)) {
-            const keyPath = storeName === 'folders' || storeName === 'folderMeta' || storeName === 'settings' || storeName === 'metadata'
-              ? 'name' : 'id'
+            const keyPath = storeName === 'settings' ? 'key' : 'id'
             const store = db.createObjectStore(storeName, { keyPath })
             const idxConfig = INDEXES[storeName]
             if (idxConfig) {

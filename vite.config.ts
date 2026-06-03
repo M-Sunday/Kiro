@@ -23,6 +23,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     include: ['**/*.test.ts', '**/*.spec.ts'],
+    setupFiles: ['./arch/storage/__tests__/setup.ts'],
     coverage: {
       provider: 'v8',
       include: ['src/arch/**/*.ts'],

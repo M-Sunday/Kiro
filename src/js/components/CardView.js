@@ -94,7 +94,8 @@ export class CardView extends Component {
     }
 
     const quality = parseInt(prefs.videoQuality)
-    const needsFfmpeg = prefs.type === 'video' && (isNaN(quality) || quality >= 1080)
+    const wantsSeparate = prefs.videoQuality === 'max' || isNaN(quality) || (!isNaN(quality) && quality >= 1080)
+    const needsFfmpeg = prefs.type === 'audio' || (prefs.type === 'video' && wantsSeparate)
     let hasFfmpeg = await new Promise(r => {
       const p = window.require('child_process').spawn('ffmpeg', ['-version'])
       let done = false
@@ -112,6 +113,11 @@ export class CardView extends Component {
         await this._ensureFfmpeg()
         hasFfmpeg = true
       } catch {
+        if (prefs.type === 'audio') {
+          toastText.textContent = 'ffmpeg required for audio download \u2014 install ffmpeg or try video mode'
+          progress.style.display = 'none'
+          return
+        }
         toastText.textContent = 'ffmpeg download failed \u2014 limited to 720p'
       }
     }
@@ -124,11 +130,11 @@ export class CardView extends Component {
       } else {
         let format
         if (prefs.videoQuality === 'max') {
-          format = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
-        } else if (hasFfmpeg) {
+          format = hasFfmpeg ? 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best' : 'best[ext=mp4]/best'
+        } else if (wantsSeparate && hasFfmpeg) {
           format = `bestvideo[height<=${prefs.videoQuality}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${prefs.videoQuality}][ext=mp4]/best[height<=${prefs.videoQuality}]`
         } else {
-          format = `best[height<=${prefs.videoQuality}][ext=mp4]/best[height<=${prefs.videoQuality}]`
+          format = `best[height<=${prefs.videoQuality}][ext=mp4]/best[height<=${prefs.videoQuality}]/best[height<=720]/best`
         }
         args.push('-f', format)
         if (prefs.videoCodec !== 'h264') args.push('--video-multistreams', '--prefer-free-formats')
@@ -144,6 +150,9 @@ export class CardView extends Component {
       const onOutput = (data) => {
         const text = data.toString()
         output += text
+        if (text.includes('[Merger]')) {
+          toastText.textContent = 'Merging\u2026'
+        }
         const m = text.match(/(\d+\.?\d*)%\s/)
         if (m) {
           const pct = parseFloat(m[1])
@@ -162,14 +171,11 @@ export class CardView extends Component {
           if (actions) actions.style.display = 'none'
           toast.classList.add('show')
           setTimeout(() => { progress.style.display = 'none'; toast.classList.remove('show'); if (actions) actions.style.display = '' }, 4000)
-          const destMatch = output.match(/\[download\]\s+Destination:\s+(.+)/i)
-          const dest = destMatch ? destMatch[1].trim() : folder
-          if (dest) {
-            window.require('child_process').exec(`explorer /select,"${dest.replace(/"/g, '""')}"`)
-          }
+          window.require('child_process').exec(`explorer "${folder.replace(/"/g, '""')}"`)
         } else {
-          toastText.textContent = `Download failed (code ${code})`
-          setTimeout(() => { toast.classList.remove('show'); if (actions) actions.style.display = '' }, 6000)
+          const errLines = output.split('\n').filter(Boolean).slice(-8).join('\n')
+          toastText.textContent = errLines ? errLines : `Download failed (code ${code})`
+          setTimeout(() => { toast.classList.remove('show'); if (actions) actions.style.display = '' }, 12000)
         }
       })
       proc.on('error', (err) => {

@@ -267,7 +267,8 @@ document.getElementById('dlBtn')?.addEventListener('click', async (e) => {
     return
   }
   const quality = parseInt(prefs.videoQuality)
-  const needsFfmpeg = prefs.type === 'video' && (isNaN(quality) || quality >= 1080)
+  const wantsSeparate = prefs.videoQuality === 'max' || isNaN(quality) || (!isNaN(quality) && quality >= 1080)
+  const needsFfmpeg = prefs.type === 'audio' || (prefs.type === 'video' && wantsSeparate)
   let hasFfmpeg = await new Promise(r => {
     const p = require('child_process').spawn('ffmpeg', ['-version'])
     let done = false
@@ -281,6 +282,11 @@ document.getElementById('dlBtn')?.addEventListener('click', async (e) => {
       await ensureFfmpeg()
       hasFfmpeg = true
     } catch {
+      if (prefs.type === 'audio') {
+        toastText.textContent = 'ffmpeg required for audio download \u2014 install ffmpeg or try video mode'
+        progress.style.display = 'none'
+        return
+      }
       toastText.textContent = 'ffmpeg download failed \u2014 limited to 720p'
     }
   }
@@ -292,11 +298,11 @@ document.getElementById('dlBtn')?.addEventListener('click', async (e) => {
     } else {
       let format
       if (prefs.videoQuality === 'max') {
-        format = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
-      } else if (hasFfmpeg) {
+        format = hasFfmpeg ? 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best' : 'best[ext=mp4]/best'
+      } else if (wantsSeparate && hasFfmpeg) {
         format = `bestvideo[height<=${prefs.videoQuality}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${prefs.videoQuality}][ext=mp4]/best[height<=${prefs.videoQuality}]`
       } else {
-        format = `best[height<=${prefs.videoQuality}][ext=mp4]/best[height<=${prefs.videoQuality}]`
+          format = `best[height<=${prefs.videoQuality}][ext=mp4]/best[height<=${prefs.videoQuality}]/best[height<=720]/best`
       }
       args.push('-f', format)
       if (prefs.videoCodec !== 'h264') args.push('--video-multistreams', '--prefer-free-formats')
@@ -310,6 +316,9 @@ document.getElementById('dlBtn')?.addEventListener('click', async (e) => {
     function onOutput(data) {
       const text = data.toString()
       output += text
+      if (text.includes('[Merger]')) {
+        toastText.textContent = 'Merging\u2026'
+      }
       const m = text.match(/(\d+\.?\d*)%\s/)
       if (m) {
         const pct = parseFloat(m[1])
@@ -328,11 +337,7 @@ document.getElementById('dlBtn')?.addEventListener('click', async (e) => {
         hideToastActions()
         toast.classList.add('show')
         setTimeout(() => { progress.style.display = 'none'; toast.classList.remove('show'); showToastActions() }, 4000)
-        const destMatch = output.match(/\[download\]\s+Destination:\s+(.+)/i)
-        const dest = destMatch ? destMatch[1].trim() : folder
-        if (dest) {
-          require('child_process').exec(`explorer /select,"${dest.replace(/"/g, '""')}"`)
-        }
+        require('child_process').exec(`explorer "${folder.replace(/"/g, '""')}"`)
       } else {
         const lines = output.split('\n').filter(Boolean).slice(-6).join('\n')
         toastText.textContent = lines || `yt-dlp exited with code ${code}`

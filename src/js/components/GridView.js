@@ -36,7 +36,6 @@ export class GridView extends Component {
 
     this.on('ui:grid:refresh', () => this.render())
     this.on('ui:camera:open', () => this._handleCameraOpen())
-    this.on('ui:file:import', () => this._handleFileImport())
 
     this._exposeGlobals()
   }
@@ -559,21 +558,23 @@ export class GridView extends Component {
     return URL.createObjectURL(new Blob([bytes], { type: mimeMap[ext] || 'application/octet-stream' }))
   }
 
-  async _persistCapacitorFile(contentUri, fileName) {
+  _capFileCounter = 0
+
+  async _persistCapacitorFile(contentUri, fileName, fileSize, mimeType) {
     if (!window.Capacitor?.Plugins?.Filesystem) return null
     try {
       const fs = window.Capacitor.Plugins.Filesystem
       const r = await fs.readFile({ path: contentUri })
       if (!r?.data) return null
       const ext = fileName && fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : ''
-      const localName = 'ext_' + Date.now() + (ext ? '.' + ext : '')
+      const localName = 'ext_' + Date.now() + '_' + (++this._capFileCounter) + (ext ? '.' + ext : '')
       await fs.writeFile({ path: localName, data: r.data, directory: 'Data' })
       const uriResult = await fs.getUri({ path: localName, directory: 'Data' })
       const displayUrl = window.Capacitor.convertFileSrc
         ? window.Capacitor.convertFileSrc(uriResult.uri)
         : uriResult.uri
       const blobUrl = this._base64ToBlobUrl(r.data, ext)
-      return { url: displayUrl, localName, blobUrl }
+      return { name: fileName, path: displayUrl, size: fileSize, mimeType, _fn: localName, _blobUrl: blobUrl }
     } catch (e) {
       console.warn('[PersistCapacitor] Failed:', e)
       return null
@@ -581,8 +582,11 @@ export class GridView extends Component {
   }
 
   async _importFile() {
-    this.bus.emit('ui:file:import')
+    await this._handleFileImport()
   }
+
+  _showImportLoader() { const el = document.getElementById('importLoader'); if (el) el.classList.add('show') }
+  _hideImportLoader() { const el = document.getElementById('importLoader'); if (el) el.classList.remove('show') }
 
   async _handleFileImport() {
     // Capacitor native (Android, iOS, macOS via Mac Catalyst)
@@ -601,35 +605,30 @@ export class GridView extends Component {
                 return
               }
             }
-          } catch (permErr) {
-            // checkPermissions/requestPermissions only work on Android; carry on
-          }
+          } catch (permErr) {}
         }
         let pickerResult
         if (window.Capacitor.Plugins.PhotoPicker) {
           try {
-            pickerResult = await window.Capacitor.Plugins.PhotoPicker.pick({ limit: 1 })
+            pickerResult = await window.Capacitor.Plugins.PhotoPicker.pick({ limit: 0 })
           } catch (e) {
             if (e.message !== 'canceled') console.warn('[Import] PhotoPicker failed, falling back:', e)
           }
         }
         if (!pickerResult?.files?.length) {
-          pickerResult = await fp.pickMedia({ limit: 1 })
+          pickerResult = await fp.pickMedia({ limit: 0 })
         }
         if (!pickerResult?.files?.length) return
-        const file = pickerResult.files[0]
-        let path = file.path || file.uri || file.name
-        let localName = null
-        let blobUrl = null
-        if (path && (path.startsWith('content://') || path.startsWith('file://'))) {
-          const persistResult = await this._persistCapacitorFile(path, file.name)
-          if (persistResult) {
-            path = persistResult.url
-            localName = persistResult.localName
-            blobUrl = persistResult.blobUrl
-          }
+        this._showImportLoader()
+        try {
+          const persistResults = await Promise.all(pickerResult.files.map(f =>
+            this._persistCapacitorFile(f.path || f.uri || f.name, f.name, f.size || 0, f.mimeType || '')
+          ))
+          const entries = persistResults.filter(Boolean)
+          if (entries.length) this._addExternalFiles(entries)
+        } finally {
+          this._hideImportLoader()
         }
-        this._addExternalFile(file.name, path, file.size || 0, file.mimeType || '', localName, blobUrl)
       } catch (e) {
         if (e.message?.includes?.('canceled')) return
         console.warn('[Import] Capacitor file-picker failed:', e)
@@ -643,10 +642,12 @@ export class GridView extends Component {
       try {
         const { dialog } = window.require('@electron/remote') || {}
         if (dialog) {
-          const result = await dialog.showOpenDialog({ properties: ['openFile'] })
+          const result = await dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] })
           if (!result.canceled && result.filePaths?.length) {
-            const path = result.filePaths[0]
-            this._addExternalFile(path.split(/[/\\]/).pop(), path)
+            const entries = result.filePaths.map(p => ({
+              name: p.split(/[/\\]/).pop(), path: p, size: 0, mimeType: '',
+            }))
+            this._addExternalFiles(entries)
           }
           return
         }
@@ -654,8 +655,10 @@ export class GridView extends Component {
       try {
         const result = await window.require('electron').ipcRenderer.invoke('open-file-dialog')
         if (result?.filePaths?.length) {
-          const path = result.filePaths[0]
-          this._addExternalFile(path.split(/[/\\]/).pop(), path)
+          const entries = result.filePaths.map(p => ({
+            name: p.split(/[/\\]/).pop(), path: p, size: 0, mimeType: '',
+          }))
+          this._addExternalFiles(entries)
         }
       } catch {}
       return
@@ -664,30 +667,45 @@ export class GridView extends Component {
     // Web / PWA fallback
     const input = document.createElement('input')
     input.type = 'file'
+    input.multiple = true
     input.onchange = (e) => {
-      const file = e.target.files?.[0]
-      if (!file) return
-      const ext = file.name.split('.').pop().toLowerCase()
+      const fileList = e.target.files
+      if (!fileList?.length) return
+      const entries = []
       const videoExts = ['mp4', 'webm', 'mkv', 'avi', 'mov', 'flv', 'wmv', 'm4v', '3gp', 'mpeg', 'mpg']
       const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico']
-      const isVideo = file.type.startsWith('video/') || videoExts.includes(ext)
-      const isImage = file.type.startsWith('image/') || imageExts.includes(ext)
-      const path = isVideo || isImage ? URL.createObjectURL(file) : file.name
-      this._addExternalFile(file.name, path, file.size, file.type)
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i]
+        if (!file) continue
+        const ext = file.name.split('.').pop().toLowerCase()
+        const isVideo = file.type.startsWith('video/') || videoExts.includes(ext)
+        const isImage = file.type.startsWith('image/') || imageExts.includes(ext)
+        const path = isVideo || isImage ? URL.createObjectURL(file) : file.name
+        entries.push({ name: file.name, path, size: file.size, mimeType: file.type })
+      }
+      if (entries.length) this._addExternalFiles(entries)
     }
     input.click()
   }
 
-  _addExternalFile(name, path, size, mimeType, localName, blobUrl) {
-    const ext = window.getExternalFiles?.() || []
-    const id = '_ext_' + Date.now()
-    const entry = { id, name, path, size: size || 0, mimeType: mimeType || '', added: Date.now(), blurred: false }
-    if (localName) entry._fn = localName
-    if (blobUrl) entry._blobUrl = blobUrl
-    ext.push(entry)
-    window.saveExternalFiles?.(ext)
-    this.state.setState('externalFiles', ext)
-    this._generateThumbnail(entry)
+  _addExternalFiles(entries) {
+    const existing = window.getExternalFiles?.() || []
+    const created = []
+    for (const e of entries) {
+      const id = '_ext_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)
+      const entry = {
+        id, name: e.name, path: e.path, size: e.size || 0,
+        mimeType: e.mimeType || '', added: Date.now(), blurred: false,
+      }
+      if (e._fn) entry._fn = e._fn
+      if (e._blobUrl) entry._blobUrl = e._blobUrl
+      existing.push(entry)
+      created.push(entry)
+    }
+    window.saveExternalFiles?.(existing)
+    this.state.setState('externalFiles', existing)
+    // Fire thumbnail generation for all new entries (parallel)
+    for (const entry of created) this._generateThumbnail(entry)
     if (window.renderSidebar) window.renderSidebar()
     if (window.renderGridView) window.renderGridView()
   }
@@ -1107,36 +1125,9 @@ export class GridView extends Component {
     }, { once: true })
     document.getElementById('extVideoTitle').textContent = f.name
     if (isElectron) {
-      try {
-        const fs = window.require('fs')
-        const buf = fs.readFileSync(f.path)
-        const ext = f.name.split('.').pop().toLowerCase()
-        const mimeMap = { mp4: 'video/mp4', webm: 'video/webm', mkv: 'video/x-matroska', avi: 'video/x-msvideo', mov: 'video/quicktime', flv: 'video/x-flv', wmv: 'video/x-ms-wmv', m4v: 'video/mp4', '3gp': 'video/3gpp', mpeg: 'video/mpeg', mpg: 'video/mpeg' }
-        const blob = new Blob([buf], { type: mimeMap[ext] || 'video/mp4' })
-        el.src = URL.createObjectURL(blob)
-      } catch (e) {
-        console.warn('[Video] Failed to read file:', e)
-        if (errEl) errEl.style.display = 'block'
-        return
-      }
-    } else if (window.Capacitor?.isNativePlatform?.() && f._fn) {
-      try { if (f._blobUrl) URL.revokeObjectURL(f._blobUrl) } catch {}
-      try {
-        const fs = window.Capacitor.Plugins.Filesystem
-        const r = await fs.readFile({ path: f._fn, directory: 'Data' })
-        if (r?.data) {
-          const ext = f.name.split('.').pop().toLowerCase()
-          el.src = this._base64ToBlobUrl(r.data, ext)
-        } else {
-          el.src = f.path
-        }
-      } catch (e) {
-        if (errEl) {
-          errEl.textContent = 'Read failed: ' + (e.message || e) + '. Using direct path.'
-          errEl.style.display = 'block'
-        }
-        el.src = f.path
-      }
+      el.src = this._toFileURL(f.path)
+    } else if (window.Capacitor?.isNativePlatform?.() && f.path) {
+      el.src = f.path
     } else {
       el.src = f.path
     }

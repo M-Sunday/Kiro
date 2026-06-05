@@ -30,18 +30,32 @@
         #splash.info-bg .onb-footer { color: #fff; }
         #splash.info-bg .splash-content img { filter: brightness(0) invert(1); }
         .splash-content { display: flex; flex-direction: column; align-items: center; gap: 24px; }
-        .splash-content svg, .splash-content img { width: 64px; height: 64px; }
-        #splash.onboarding .splash-content img { animation: none; }
-        #splash.offline .splash-content img { filter: grayscale(1); opacity: 0.5; }
+        .splash-content svg, .splash-content img { width: 64px; height: 64px; animation: splashPulse 1.6s ease-in-out infinite; transition: filter 0.4s ease; }
+        #splash.onboarding .splash-content img, #onboarding .splash-content img, #welcomeBack .splash-content img { animation: none; }
+        #splash.offline .splash-content img { filter: grayscale(1); opacity: 0.5; animation: none; }
         #splash.offline #splashText { color: #8e8e93; }
+        @keyframes splashPulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.08); opacity: 1; } }
         #splashText { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; font-weight: 500; color: #86868b; letter-spacing: 0.3px; }
 
         body.native-android { padding-top: 0 !important; }
         body.native-android.theme-black .main-area { background: #1c1c1e; }
         body.native-android .sidebar { padding-top: 40px !important; }
+        body.native-android .top-bar { margin-top: calc(10px + max(24px, env(safe-area-inset-top, 0px))); }
+        body.native-android.frosted .top-bar { margin-top: 0; }
 
         body.native-android.frosted .media-view { padding-top: calc(46px + max(30px, env(safe-area-inset-top, 0px))) !important; }
         body.native-android.frosted .top-bar { top: calc(10px + max(30px, env(safe-area-inset-top, 0px))); }
+
+        #importLoader { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        #importLoader.show { opacity: 1; pointer-events: auto; }
+        #importLoader .loader-box { background: var(--card-bg, #fff); border-radius: 16px; padding: 32px 48px; display: flex; flex-direction: column; align-items: center; gap: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        #importLoader .loader-dots { display: flex; gap: 8px; }
+        #importLoader .loader-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent, #007aff); animation: loaderDot 1.4s ease-in-out infinite both; }
+        #importLoader .loader-dot:nth-child(1) { animation-delay: -0.32s; }
+        #importLoader .loader-dot:nth-child(2) { animation-delay: -0.16s; }
+        #importLoader .loader-dot:nth-child(3) { animation-delay: 0s; }
+        @keyframes loaderDot { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+        #importLoader .loader-label { font-family: 'DM Sans', -apple-system, sans-serif; font-size: 14px; color: var(--text-secondary, #8e8e93); }
     </style>
 </head>
 <body>
@@ -802,6 +816,18 @@
                     <span class="shortcut-desc">Select multiple grid items</span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Import loading overlay -->
+    <div id="importLoader">
+        <div class="loader-box">
+            <div class="loader-dots">
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+            </div>
+            <div class="loader-label">Importing files&hellip;</div>
         </div>
     </div>
 

@@ -73,7 +73,6 @@ export class Api {
       collapsed: {},
       userName: '',
       lastVersion: '',
-      swVersion: '',
       installedAt: null,
       lastOpenedAt: null,
       eulaAccepted: false,

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#1d1d1f">
     <title>Kiro</title>
-    <link rel="manifest" href="assets/manifest.json">
     <link rel="icon" href="assets/icons/app-icon-192.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/app-icon-192.svg">
     <link rel="stylesheet" href="css/base.css?v=3.1.1">
@@ -18,6 +17,25 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=Geist+Mono:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Jeju+Myeongjo&family=Rethink+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        /* Critical splash CSS — inlined so splash renders immediately */
+        #splash { position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; background: var(--splash-bg, #f5f5f7); opacity: 1; transition: opacity 0.4s ease, background 0.5s ease; }
+        #splash.fade { opacity: 0; pointer-events: none; }
+        #splash.info-bg { background: #D97757; }
+        #splash.info-bg .onb-title,
+        #splash.info-bg .haiku-line,
+        #splash.info-bg .onb-choice,
+        #splash.info-bg .onb-choice-divider,
+        #splash.info-bg .onb-info-content,
+        #splash.info-bg .onb-back,
+        #splash.info-bg .onb-footer { color: #fff; }
+        #splash.info-bg .splash-content img { filter: brightness(0) invert(1); }
+        .splash-content { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+        .splash-content svg, .splash-content img { width: 64px; height: 64px; }
+        #splash.onboarding .splash-content img { animation: none; }
+        #splash.offline .splash-content img { filter: grayscale(1); opacity: 0.5; }
+        #splash.offline #splashText { color: #8e8e93; }
+        #splashText { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; font-weight: 500; color: #86868b; letter-spacing: 0.3px; }
+
         body.native-android { padding-top: 0 !important; }
         body.native-android.theme-black .main-area { background: #1c1c1e; }
         body.native-android .sidebar { padding-top: 40px !important; }
@@ -27,6 +45,84 @@
     </style>
 </head>
 <body>
+
+    <!-- Splash — first child so it renders before anything else -->
+    <div id="splash">
+        <div class="splash-content">
+            <img id="splashIcon" src="assets/icons/app-icon-splash.svg" width="94" height="94" alt="Kiro">
+            <p id="splashText">Checking for updates...</p>
+            <!-- Step 0 (welcome screen for first-time users) -->
+            <div id="onbStep0" class="onb-step onb-hidden">
+                <div class="onb-stage" id="onbStage">
+                    <div class="onb-page onb-page-main">
+                        <p class="onb-title">welcome to Kiro</p>
+                        <div class="haiku">
+                            <p class="haiku-line">a blank page</p>
+                            <p class="haiku-line">for the chaos</p>
+                            <p class="haiku-line">you carry</p>
+                        </div>
+                        <div class="onb-choices" id="onbChoices">
+                            <span class="onb-choice" data-action="setup">set up</span>
+                            <span class="onb-choice-divider">·</span>
+                            <span class="onb-choice" data-action="appinfo">app info</span>
+                            <span class="onb-choice-divider">·</span>
+                            <span class="onb-choice" data-action="privacy">privacy</span>
+                        </div>
+                    </div>
+                    <div class="onb-page onb-page-info">
+                        <div class="onb-info-content" id="onbInfoContent"></div>
+                        <div class="onb-back" id="onbBack">←</div>
+                    </div>
+                </div>
+                <div class="onb-footer">© 2026 Kiro · <span id="onbFooterVersion"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding step 1 (username entry) -->
+    <div id="onboarding" class="onb-hidden">
+        <div class="splash-content">
+            <div id="onbStep1" class="onb-step onb-hidden">
+                <p class="onb-prompt">what should I call you?</p>
+                <input type="text" id="onbNameInput" class="onb-input" placeholder="" maxlength="30" autocomplete="off">
+                <div class="onb-actions" id="onbActions" style="display:none">
+                    <span class="onb-choice" id="onbYes">yes</span>
+                    <span class="onb-choice-divider">·</span>
+                    <span class="onb-choice" id="onbNo">no</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EULA overlay -->
+    <div class="update-overlay" id="eulaOverlay">
+        <div class="update-modal" style="max-width:520px">
+            <div class="update-modal-header">
+                <h2>User Agreement</h2>
+            </div>
+            <div class="update-modal-body">
+                <div class="eula-content">
+                    <h3>Terms of Service</h3>
+                    <p>By using Kiro, you agree to the following terms:</p>
+                    <ul>
+                        <li><strong>Use at your own risk.</strong> The app is provided "as is" without warranty of any kind.</li>
+                        <li><strong>Your data stays local.</strong> All videos, notes, bookmarks, and settings are stored only on your device. Nothing is sent to external servers except when you paste a YouTube link (metadata fetch) or download a video.</li>
+                        <li><strong>You are responsible</strong> for the content you save, download, or share through this app. Respect copyright and applicable laws.</li>
+                        <li><strong>No analytics, no tracking.</strong> This app does not collect usage data, crash reports, or personal information.</li>
+                        <li><strong>Permissions.</strong> On Android, Kiro may request storage permissions to save downloaded files and manage your data. These permissions are used only for local file access.</li>
+                        <li><strong>Third-party services.</strong> Video metadata is fetched via YouTube's oEmbed API and public proxy services. Downloads use yt-dlp (Electron only). These services have their own terms.</li>
+                        <li><strong>Changes.</strong> These terms may be updated. Continued use after changes constitutes acceptance.</li>
+                    </ul>
+                    <p style="margin-top:12px;font-size:11px;color:#8e8e93">Last updated: May 2026</p>
+                </div>
+                <div class="eula-actions">
+                    <button class="dialog-btn cancel" id="eulaDecline">Decline</button>
+                    <button class="dialog-btn confirm" id="eulaAccept">I Agree</button>
+                </div>
+                <p class="settings-warning" id="eulaAcceptMsg" style="display:none;margin-top:8px">You must accept the terms to use this app.</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
@@ -67,7 +163,7 @@
                 <i data-lucide="panel-left" class="menu-btn-icon"></i>
             </button>
             <button class="menu-btn mr-6" id="gridBtn">
-                <i data-lucide="layout-grid" class="icon-lg"></i>
+                <i data-lucide="layout-dashboard" class="icon-lg"></i>
             </button>
             <button class="menu-btn mr-6" id="deckBtn">
                 <i data-lucide="layers" class="icon-lg"></i>
@@ -311,6 +407,7 @@
         <div class="ctx-item" data-action="open-link"><i data-lucide="external-link" class="ctx-icon"></i> Open link</div>
         <div class="ctx-item" data-action="archive"><i data-lucide="archive" class="ctx-icon"></i> Archive</div>
         <div class="ctx-item" data-action="blur"><i data-lucide="eye" class="ctx-icon"></i> Blur</div>
+        <div class="ctx-item" data-action="mark-stale"><i data-lucide="alert-circle" class="ctx-icon"></i> Mark not found</div>
         <div class="ctx-item" data-action="pin"><i data-lucide="pin-off" class="ctx-icon"></i> Pin</div>
         <div class="ctx-divider" id="ctxDiv2"></div>
         <div class="ctx-item" data-action="move-up"><i data-lucide="chevron-up" class="ctx-icon"></i> Move up</div>
@@ -351,7 +448,6 @@
                     <div class="settings-cat" data-cat="download"><i data-lucide="download" class="icon-md flex-shrink-0"></i> Download</div>
                     <div class="settings-cat" data-cat="nsfw"><i data-lucide="eye-off" class="icon-md flex-shrink-0"></i> NSFW</div>
                     <div class="settings-cat" data-cat="storage"><i data-lucide="hard-drive" class="icon-md flex-shrink-0"></i> Data & Storage</div>
-                    <div class="settings-cat" data-cat="patchnotes"><i data-lucide="file-text-fill" class="icon-md flex-shrink-0"></i> Patch notes</div>
                 </div>
                 <div class="settings-sidebar-footer" id="settingsClose">
                     <i data-lucide="x" class="settings-close-icon"></i> Close
@@ -601,27 +697,7 @@
                         <button class="settings-danger-btn" id="settingsClearStorageBtn" style="font-size:11px;padding:4px 12px">Clear All Data</button>
                     </div>
                 </div>
-                <div class="settings-pane" id="pane-patchnotes" style="display:none">
-                    <div class="settings-pane-header">
-                        <h2>Patch notes</h2>
-                        <p class="settings-pane-desc">Changelog history for this app.</p>
-                    </div>
-                    <div id="patchNotesList" class="mt-20"></div>
-                </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Update dialog -->
-    <div class="update-overlay" id="updateOverlay">
-        <div class="update-modal">
-            <div class="update-modal-header">
-                <h2>What's New</h2>
-                <button class="update-close-btn" id="updateCloseBtn">
-                    <i data-lucide="x" class="icon-lg"></i>
-                </button>
-            </div>
-            <div class="update-modal-body" id="updateBody"></div>
         </div>
     </div>
 
@@ -644,100 +720,18 @@
         </div>
     </div>
 
-    <!-- Splash screen -->
-    <div id="splash">
-        <div class="splash-content">
-            <img id="splashIcon" src="assets/icons/app-icon-splash.svg" width="94" height="94" alt="Kiro">
-            <p id="splashText">Checking for updates...</p>
-
-            <!-- Step 0 (first-time user) inside splash -->
-            <div id="onbStep0" class="onb-step onb-hidden">
-                <div class="onb-stage" id="onbStage">
-                    <!-- Main page -->
-                    <div class="onb-page onb-page-main">
-                        <p class="onb-title">welcome to Kiro</p>
-                        <div class="haiku">
-                            <p class="haiku-line">a blank page</p>
-                            <p class="haiku-line">for the chaos</p>
-                            <p class="haiku-line">you carry</p>
-                        </div>
-                        <div class="onb-choices" id="onbChoices">
-                            <span class="onb-choice" data-action="setup">set up</span>
-                            <span class="onb-choice-divider">·</span>
-                            <span class="onb-choice" data-action="appinfo">app info</span>
-                            <span class="onb-choice-divider">·</span>
-                            <span class="onb-choice" data-action="privacy">privacy</span>
-                        </div>
-                    </div>
-                    <!-- Info page -->
-                    <div class="onb-page onb-page-info">
-                        <div class="onb-info-content" id="onbInfoContent"></div>
-                        <div class="onb-back" id="onbBack">←</div>
-                    </div>
-                </div>
-                <div class="onb-footer">© 2026 Kiro · <span id="onbFooterVersion"></span></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Onboarding steps 1+2 (appears after splash zoom transition) -->
-    <div id="onboarding" class="onb-hidden">
-        <div class="splash-content">
-            <div id="onbStep1" class="onb-step onb-hidden">
-                <p class="onb-prompt">what should I call you?</p>
-                <input type="text" id="onbNameInput" class="onb-input" placeholder="" maxlength="30" autocomplete="off">
-                <div class="onb-actions" id="onbActions" style="display:none">
-                    <span class="onb-choice" id="onbYes">yes</span>
-                    <span class="onb-choice-divider">·</span>
-                    <span class="onb-choice" id="onbNo">no</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- EULA overlay -->
-    <div class="update-overlay" id="eulaOverlay">
-        <div class="update-modal" style="max-width:520px">
-            <div class="update-modal-header">
-                <h2>User Agreement</h2>
-            </div>
-            <div class="update-modal-body">
-                <div class="eula-content">
-                    <h3>Terms of Service</h3>
-                    <p>By using Kiro, you agree to the following terms:</p>
-                    <ul>
-                        <li><strong>Use at your own risk.</strong> The app is provided "as is" without warranty of any kind.</li>
-                        <li><strong>Your data stays local.</strong> All videos, notes, bookmarks, and settings are stored only on your device. Nothing is sent to external servers except when you paste a YouTube link (metadata fetch) or download a video.</li>
-                        <li><strong>You are responsible</strong> for the content you save, download, or share through this app. Respect copyright and applicable laws.</li>
-                        <li><strong>No analytics, no tracking.</strong> This app does not collect usage data, crash reports, or personal information.</li>
-                        <li><strong>Permissions.</strong> On Android, Kiro may request storage permissions to save downloaded files and manage your data. These permissions are used only for local file access.</li>
-                        <li><strong>Third-party services.</strong> Video metadata is fetched via YouTube's oEmbed API and public proxy services. Downloads use yt-dlp (Electron only). These services have their own terms.</li>
-                        <li><strong>Changes.</strong> These terms may be updated. Continued use after changes constitutes acceptance.</li>
-                    </ul>
-                    <p style="margin-top:12px;font-size:11px;color:#8e8e93">Last updated: May 2026</p>
-                </div>
-                <div class="eula-actions">
-                    <button class="dialog-btn cancel" id="eulaDecline">Decline</button>
-                    <button class="dialog-btn confirm" id="eulaAccept">I Agree</button>
-                </div>
-                <p class="settings-warning" id="eulaAcceptMsg" style="display:none;margin-top:8px">You must accept the terms to use this app.</p>
-            </div>
-        </div>
-    </div>
-
     <script>
+        // Safety net: if Electron loads page from file://, redirect to HTTP server
+        if (location.protocol === 'file:' && navigator.userAgent.includes('Electron')) {
+            location.replace('http://localhost:3001/index.html')
+        }
         (function () {
             var splash = document.getElementById('splash');
             var splashText = document.getElementById('splashText');
             if (!splash) return;
             var faded = false;
-            window.__splashTimers = [];
             var icon = splash.querySelector('.splash-content svg, .splash-content img');
             if (icon) {
-                if (!navigator.onLine) {
-                    icon.style.filter = 'grayscale(1)';
-                    icon.style.opacity = '0.5';
-                }
                 icon.style.transition = 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
                 function randomSpin() {
                     if (faded) return;
@@ -753,73 +747,13 @@
                 }
                 setTimeout(randomSpin, 2000);
             }
-            var eulaAccepted = localStorage.getItem('kiroEulaAccepted') === 'true';
-            var isFirstTime = !localStorage.getItem('kiroUserName');
-            if (!navigator.onLine) {
-                splash.classList.add('offline');
-                splashText.textContent = "You're offline";
-            }
-            function dismissSplash() {
-                if (faded) return;
-                if (window.__splashBlockDismiss) {
-                    setTimeout(dismissSplash, 300);
-                    return;
-                }
+            window.__splashFade = function (cb) {
+                if (faded) return cb && cb();
                 faded = true;
                 splash.classList.add('fade');
                 setTimeout(function () {
                     splash.style.display = 'none';
-                    if (window.startGridAnim) window.startGridAnim();
-                    if (!localStorage.getItem('kiroEulaAccepted')) {
-                        setTimeout(function () { document.getElementById('eulaOverlay').classList.add('open') }, 600);
-                    }
-                }, 500);
-            }
-            if (isFirstTime) {
-                if (eulaAccepted) {
-                    splash.classList.add('onboarding');
-                    splashText.style.display = 'none';
-                    document.getElementById('onbStep0').classList.remove('onb-hidden');
-                } else {
-                    setTimeout(function () { document.getElementById('eulaOverlay').classList.add('open') }, 800);
-                    window.__proceedFirstTime = function () {
-                        splash.classList.add('onboarding');
-                        splashText.style.display = 'none';
-                        document.getElementById('onbStep0').classList.remove('onb-hidden');
-                    };
-                }
-            } else {
-                if (navigator.onLine) {
-                    window.__splashTimers.push(setTimeout(function () { splashText.textContent = 'Up to date'; }, 2000));
-                    window.__splashTimers.push(setTimeout(function () { splashText.textContent = 'Welcome, ' + localStorage.getItem('kiroUserName'); }, 3400));
-                }
-                window.__splashTimers.push(setTimeout(dismissSplash, navigator.onLine ? 4600 : 2000));
-            }
-
-            document.getElementById('eulaDecline').addEventListener('click', function () {
-                var msg = document.getElementById('eulaAcceptMsg')
-                msg.style.display = 'block'
-                msg.textContent = 'You must accept the terms to use this app.'
-            });
-            document.getElementById('eulaAccept').addEventListener('click', function () {
-                localStorage.setItem('kiroEulaAccepted', 'true')
-                document.getElementById('eulaOverlay').classList.remove('open')
-                if (window.__proceedFirstTime) window.__proceedFirstTime()
-            });
-            document.getElementById('eulaOverlay').addEventListener('click', function (e) {
-                if (e.target === this) {
-                    var msg = document.getElementById('eulaAcceptMsg')
-                    msg.style.display = 'block'
-                    msg.textContent = 'Please accept the terms above to continue.'
-                }
-            });
-            window.__splashFade = function () {
-                if (faded) return;
-                faded = true;
-                splash.classList.add('fade');
-                setTimeout(function () {
-                    splash.style.display = 'none';
-                    if (window.startGridAnim) window.startGridAnim();
+                    if (cb) cb();
                 }, 500);
             };
         })();

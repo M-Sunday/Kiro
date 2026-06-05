@@ -46,12 +46,11 @@ export class SettingsPanel extends Component {
         const paneMap = {
           about: 'pane-about', theme: 'pane-theme', toolbar: 'pane-toolbar',
           files: 'pane-files', history: 'pane-history', download: 'pane-download',
-          nsfw: 'pane-nsfw', storage: 'pane-storage', patchnotes: 'pane-patchnotes'
+          nsfw: 'pane-nsfw', storage: 'pane-storage'
         }
         const paneId = paneMap[this.dataset.cat]
         const pane = document.getElementById(paneId)
         if (pane) pane.style.display = 'block'
-        if (this.dataset.cat === 'patchnotes') self._loadPatchNotes()
         if (this.dataset.cat === 'history') self._renderSettingsHistory()
         if (this.dataset.cat === 'storage') self._renderStorageInfo()
       })
@@ -523,24 +522,6 @@ export class SettingsPanel extends Component {
     if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
     return (bytes / 1048576).toFixed(1) + ' MB'
   }
-
-  _loadPatchNotes() {
-    fetch('assets/changelog.json').then(r => r.json()).then(log => {
-      const el = document.getElementById('patchNotesList')
-      if (!el) return
-      el.innerHTML = log.map(u => `
-        <div class="patch-entry">
-          <div class="patch-version">${u.version} <span class="patch-date">${u.date}</span></div>
-          <div class="patch-title">${u.title}</div>
-          <ul class="patch-changes">${u.changes.map(c => `<li class="patch-change">${c}</li>`).join('')}</ul>
-        </div>
-      `).join('')
-    }).catch(() => {
-      const el = document.getElementById('patchNotesList')
-      if (el) el.innerHTML = '<p>Could not load patch notes.</p>'
-    })
-  }
-
   _showRenameSplash(name) {
     const splash = document.getElementById('splash')
     const splashText = document.getElementById('splashText')

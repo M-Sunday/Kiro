@@ -1,15 +1,9 @@
-const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain, dialog, session } = require('electron')
 const path = require('path')
 const http = require('http')
 const fs = require('fs')
 
 const PORT = process.env.KIRO_PORT || 3001
-
-try {
-  require('electron-reload')(__dirname, {
-    electron: path.join(__dirname, '..', 'node_modules', '.bin', 'electron.cmd')
-  })
-} catch (_) {}
 
 // Local HTTP server so ES modules work (file:// blocks type="module")
 const MIME = {
@@ -19,8 +13,7 @@ const MIME = {
   '.json': 'application/json',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
-  '.ico': 'image/x-icon',
-  '.webmanifest': 'application/manifest+json'
+  '.ico': 'image/x-icon'
 }
 function serveFile(req, res) {
   let file = req.url === '/' ? '/index.html' : req.url.split('?')[0]
@@ -37,6 +30,7 @@ const server = http.createServer(serveFile).listen(PORT, () => {
 })
 
 function createWindow() {
+  try { session.defaultSession.clearServiceWorkers() } catch (_) {}
   const win = new BrowserWindow({
     width: 800,
     height: 600,
@@ -48,6 +42,11 @@ function createWindow() {
   })
   win.loadURL('http://localhost:' + PORT + '/index.html')
 
+  // Clear stale SW registrations on every navigation/reload
+  win.webContents.on('did-finish-load', () => {
+    try { win.webContents.session.clearServiceWorkers() } catch (_) {}
+  })
+
   const template = [
     { role: 'fileMenu' },
     { role: 'editMenu' },
@@ -56,9 +55,9 @@ function createWindow() {
     {
       label: 'Debug',
       submenu: [
-        {
-          label: 'Toggle Colors',
-          accelerator: 'CmdOrCtrl+D',
+    {
+      label: 'Toggle Colors',
+      accelerator: 'CmdOrCtrl+D',
           click: () => win.webContents.executeJavaScript('toggleDebug()')
         },
         {

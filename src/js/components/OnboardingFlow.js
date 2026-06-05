@@ -14,20 +14,27 @@ export class OnboardingFlow extends Component {
   }
 
   _init() {
-    if (window.getUserName?.()) return
-
     const splash = document.getElementById('splash')
+    const splashText = document.getElementById('splashText')
+    const onbStep0 = document.getElementById('onbStep0')
     const onboarding = document.getElementById('onboarding')
-    const step1 = document.getElementById('onbStep1')
+    const onbStep1 = document.getElementById('onbStep1')
     const nameInput = document.getElementById('onbNameInput')
     const stage = document.getElementById('onbStage')
     const infoContent = document.getElementById('onbInfoContent')
     const backBtn = document.getElementById('onbBack')
+    const eulaOverlay = document.getElementById('eulaOverlay')
+    const eulaAccept = document.getElementById('eulaAccept')
+    const eulaDecline = document.getElementById('eulaDecline')
+    const eulaAcceptMsg = document.getElementById('eulaAcceptMsg')
 
-    if (!splash || !onboarding || !nameInput) return
+    if (!splash || !onbStep0) return
 
     const footerVersion = document.getElementById('onbFooterVersion')
     if (footerVersion) footerVersion.textContent = 'v' + APP_VERSION
+
+    const userName = window.getUserName?.() || localStorage.getItem('kiroUserName')
+    const eulaAccepted = localStorage.getItem('kiroEulaAccepted') === 'true'
 
     const infoData = {
       appinfo: 'a local-first space<br>for your videos<br>bookmarks notes<br>and ideas<br>no algorithms<br>no noise',
@@ -73,12 +80,12 @@ export class OnboardingFlow extends Component {
         splash.style.display = 'none'
         onboarding.style.display = 'flex'
         onboarding.classList.remove('onb-hidden')
-        if (step1) {
-          step1.style.display = 'block'
-          step1.classList.remove('onb-hidden')
+        if (onbStep1) {
+          onbStep1.style.display = 'block'
+          onbStep1.classList.remove('onb-hidden')
         }
         requestAnimationFrame(() => {
-          const prompt = step1?.querySelector('.onb-prompt')
+          const prompt = onbStep1?.querySelector('.onb-prompt')
           if (prompt) prompt.classList.add('onb-visible')
           if (nameInput) {
             nameInput.style.opacity = '1'
@@ -125,12 +132,11 @@ export class OnboardingFlow extends Component {
       noBtn.addEventListener('click', function () {
         hideActions()
         if (nameInput) { nameInput.value = ''; nameInput.style.opacity = '0'; nameInput.style.transform = 'translateY(20px)' }
-        if (step1) { step1.style.display = 'none'; step1.classList.add('onb-hidden') }
+        if (onbStep1) { onbStep1.style.display = 'none'; onbStep1.classList.add('onb-hidden') }
         onboarding.style.display = 'none'
         onboarding.classList.add('onb-hidden')
         splash.style.display = 'flex'
-        const step0 = document.getElementById('onbStep0')
-        if (step0) step0.classList.remove('onb-hidden')
+        onbStep0.classList.remove('onb-hidden')
       })
     }
 
@@ -143,14 +149,81 @@ export class OnboardingFlow extends Component {
       if (window.startApp) window.startApp()
 
       setTimeout(() => {
-        const wb = document.querySelector('.grid-workbench')
-        if (wb) {
-          wb.classList.remove('grid-section-anim')
-          wb.style.opacity = '1'
-          wb.style.transform = 'translateY(0)'
+        const db = document.querySelector('.grid-dashboard')
+        if (db) {
+          db.classList.remove('grid-section-anim')
+          db.style.opacity = '1'
+          db.style.transform = 'translateY(0)'
         }
         if (window.startGridAnim) window.startGridAnim()
       }, 250)
+    }
+
+    // ── EULA wiring ──
+    function showEula() {
+      if (!eulaOverlay) return
+      eulaOverlay.style.display = 'flex'
+      requestAnimationFrame(() => eulaOverlay.classList.add('open'))
+    }
+
+    function hideEula() {
+      if (!eulaOverlay) return
+      eulaOverlay.classList.remove('open')
+      eulaOverlay.style.display = 'none'
+    }
+
+    if (eulaAccept) {
+      eulaAccept.addEventListener('click', function () {
+        localStorage.setItem('kiroEulaAccepted', 'true')
+        hideEula()
+        showWelcome()
+      })
+    }
+
+    if (eulaDecline) {
+      eulaDecline.addEventListener('click', function () {
+        if (eulaAcceptMsg) {
+          eulaAcceptMsg.style.display = 'block'
+          eulaAcceptMsg.textContent = 'You must accept the terms to use this app.'
+        }
+      })
+    }
+
+    if (eulaOverlay) {
+      eulaOverlay.addEventListener('click', function (e) {
+        if (e.target === this && eulaAcceptMsg) {
+          eulaAcceptMsg.style.display = 'block'
+          eulaAcceptMsg.textContent = 'Please accept the terms above to continue.'
+        }
+      })
+    }
+
+    // ── Welcome screen ──
+    function showWelcome() {
+      splash.classList.add('onboarding')
+      if (splashText) splashText.style.display = 'none'
+      onbStep0.classList.remove('onb-hidden')
+    }
+
+    // ── Decide flow ──
+    if (userName) {
+      // Returning user: animate splash text then fade
+      if (navigator.onLine && splashText) {
+        setTimeout(() => { splashText.textContent = 'Up to date' }, 2000)
+        setTimeout(() => { splashText.textContent = 'Welcome, ' + userName }, 3400)
+      }
+      setTimeout(() => {
+        window.__splashFade(() => {
+          if (window.startApp) window.startApp()
+        })
+      }, navigator.onLine ? 4600 : 2000)
+    } else {
+      // First-time user
+      if (eulaAccepted) {
+        showWelcome()
+      } else {
+        setTimeout(showEula, 800)
+      }
     }
   }
 }

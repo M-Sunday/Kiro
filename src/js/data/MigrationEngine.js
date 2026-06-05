@@ -16,7 +16,7 @@ const SETTINGS_KEYS = [
 ]
 
 const METADATA_KEYS = [
-  'kiroUserName', 'kiroLastVersion', 'kiroSwVersion',
+  'kiroUserName', 'kiroLastVersion',
   'kiroInstalledAt', 'kiroLastOpenedAt', 'kiroEulaAccepted',
   'theme', 'dlType', 'dlVideoQuality', 'dlVideoCodec',
   'dlAudioFormat', 'dlAudioBitrate',

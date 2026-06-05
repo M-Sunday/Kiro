@@ -90,6 +90,14 @@ function patchLegacySavers(state, bus) {
 }
 
 async function bootstrap() {
+  // Nuke any stale service worker that might serve cached old HTML
+  try {
+    if (navigator.serviceWorker) {
+      const regs = await navigator.serviceWorker.getRegistrations()
+      for (const reg of regs) await reg.unregister()
+    }
+  } catch (_) {}
+
   const api = Api.getInstance()
   const bus = api.bus
   const state = api.state
@@ -215,7 +223,7 @@ async function bootstrap() {
     },
   }
 
-  // View management (replaces views.js)
+  // View management
   const viewManager = new ViewManager()
   services.register('viewManager', viewManager)
 
@@ -229,10 +237,11 @@ async function bootstrap() {
 
   // Set window.startApp for backward compat (OnboardingFlow calls it)
   window.startApp = () => {
-    renderSidebar()
-    renderGridView()
+    window.renderSidebar()
+    window.renderGridView()
     viewManager.setView('grid')
     loadIcons()
+    window.startGridAnim?.()
   }
 
   // Wire bus events to legacy handlers (bridge migration gap)
@@ -249,9 +258,6 @@ async function bootstrap() {
 
   // Patch legacy save functions to keep state in sync
   patchLegacySavers(state, bus)
-
-  // Set initial view to grid
-  viewManager.setView('grid')
 
   // Close sidebar on mobile
   if (window.innerWidth <= 640) {

@@ -33,7 +33,6 @@ function migrateStorage() {
     ['ytCollapsed', 'kiroCollapsed'],
     ['ytUserName', 'kiroUserName'],
     ['ytSettings', 'kiroSettings'],
-    ['ytSwVersion', 'kiroSwVersion'],
     ['ytLastVersion', 'kiroLastVersion'],
   ]
   for (var i = 0; i < map.length; i++) {

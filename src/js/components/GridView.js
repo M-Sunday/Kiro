@@ -107,7 +107,10 @@ export class GridView extends Component {
     this.listenTo(document.getElementById('extVideoElement'), 'play', () => this._updateVideoPlayIcon(true))
     this.listenTo(document.getElementById('extVideoElement'), 'pause', () => this._updateVideoPlayIcon(false))
     this.listenTo(document.getElementById('extVideoElement'), 'volumechange', () => this._updateVideoVolumeUI())
-    this.listenTo(document.getElementById('extVideoElement'), 'loadedmetadata', () => this._updateVideoControls())
+    this.listenTo(document.getElementById('extVideoElement'), 'loadedmetadata', () => {
+      this._updateVideoControls()
+      this._adaptVideoPlayerSize()
+    })
     this.listenTo(document.getElementById('extVideoElement'), 'enterpictureinpicture', () => this._updatePipIcon(true))
     this.listenTo(document.getElementById('extVideoElement'), 'leavepictureinpicture', () => this._updatePipIcon(false))
     this.listenTo(document.getElementById('extVideoElement'), 'click', (e) => {
@@ -213,12 +216,12 @@ export class GridView extends Component {
       html += '</div></div>'
     }
 
-    el.innerHTML = this._workbenchHTML(userName) + html
+    el.innerHTML = this._dashboardHTML(userName) + html
 
     if (!this._animDone) {
       el.querySelectorAll('.grid-section').forEach(s => s.classList.add('grid-section-anim'))
       el.querySelectorAll('.grid-item').forEach(s => s.classList.add('grid-item-anim'))
-      const wb = el.querySelector('.grid-workbench')
+      const wb = el.querySelector('.grid-dashboard')
       if (wb) wb.classList.add('grid-section-anim')
     }
 
@@ -234,15 +237,15 @@ export class GridView extends Component {
     this.bus.emit('ui:icons:load-needed')
   }
 
-  _workbenchHTML(userName) {
+  _dashboardHTML(userName) {
     const now = new Date()
     const dayName = DAYS[now.getDay()].toUpperCase()
     const monthName = MONTHS[now.getMonth()].toUpperCase()
     const clock = `${dayName} • ${monthName} ${now.getDate()} • ${now.getFullYear()}`
-    return `<div class="grid-workbench">
-      <div class="grid-workbench-text">${userName ? userName + "'s Workbench" : ''}</div>
+    return `<div class="grid-dashboard">
+      <div class="grid-dashboard-text">${userName ? userName + "'s Dashboard" : ''}</div>
       <div class="grid-clock">${clock}</div>
-      <div class="grid-workbench-actions">
+      <div class="grid-dashboard-actions">
         <button class="wb-btn" data-action="note" title="New Note"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg> New Note</button>
         <button class="wb-btn" data-action="import-file" title="Import File"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg> Import File</button>
         <button class="wb-btn" data-action="camera" title="Take Picture"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg> Take Picture</button>
@@ -251,11 +254,12 @@ export class GridView extends Component {
   }
 
   _videoCard(id, v, thumb, pinned) {
-    return `<div class="grid-item" data-video-id="${id}">
+    const stale = v._stale
+    return `<div class="grid-item${stale ? ' stale' : ''}" data-video-id="${id}">
       <button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button>
       ${pinned ? '<div class="pin-badge"><i data-lucide="pin-off" style="width:14px;height:14px"></i></div>' : ''}
-      <div style="position:relative"><img class="grid-item-img" src="${thumb}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${id}/hqdefault.jpg'" /></div>
-      <div class="grid-item-info"><div class="grid-item-title">${v.title}</div><div class="grid-item-sublabel">${v.channel}</div></div>
+      <div style="position:relative">${stale ? '<div class="stale-overlay"><i data-lucide="play-off" style="width:22px;height:22px"></i></div>' : ''}<img class="grid-item-img${stale ? ' stale-img' : ''}" src="${thumb}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${id}/hqdefault.jpg'" /></div>
+      <div class="grid-item-info${stale ? ' stale-info' : ''}"><div class="grid-item-title">${v.title}</div><div class="grid-item-sublabel">${v.channel}</div></div>
     </div>`
   }
 
@@ -326,6 +330,9 @@ export class GridView extends Component {
       this._addDragEvents(item, 'video', el)
       item.addEventListener('click', () => {
         const id = item.dataset.videoId
+        if (!id) return
+        const v = videos[id]
+        if (v && v._stale) { this._showNotFoundToast(id, el); return }
         if (id) this.bus.emit('ui:card:load-video', { id })
       })
     })
@@ -887,6 +894,15 @@ export class GridView extends Component {
         entry._stale = true
         dirty = true
       }
+      if (isElectron && entry.path && !entry._stale) {
+        try {
+          const fs = window.require('fs')
+          fs.accessSync(entry.path)
+        } catch {
+          entry._stale = true
+          dirty = true
+        }
+      }
       if (entry.thumbnail) continue
       const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(entry.name)
       const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv|m4v|3gp|mpeg|mpg)$/i.test(entry.name)
@@ -1076,7 +1092,7 @@ export class GridView extends Component {
     const isElectron = typeof process !== 'undefined' && process.versions?.electron
     const el = document.getElementById('extVideoElement')
     const errEl = document.getElementById('extVideoError')
-    if (!isElectron && f._stale) {
+    if (f._stale) {
       f._stale = false
       const ok = await this._reimportStaleFile(f)
       if (!ok) return
@@ -1138,6 +1154,8 @@ export class GridView extends Component {
     const el = document.getElementById('extVideoElement')
     el.pause()
     el.src = ''
+    const body = document.querySelector('.ext-video-body')
+    if (body) body.style.aspectRatio = ''
     this._hideAllViews()
     document.getElementById('gridView').classList.add('open')
   }
@@ -1286,6 +1304,14 @@ export class GridView extends Component {
     return m + ':' + (sec < 10 ? '0' : '') + sec
   }
 
+  _adaptVideoPlayerSize() {
+    const el = document.getElementById('extVideoElement')
+    const body = document.querySelector('.ext-video-body')
+    if (!el || !body || !el.videoWidth || !el.videoHeight) return
+    const ar = el.videoWidth / el.videoHeight
+    body.style.aspectRatio = ar
+  }
+
   _renderProgressBar(current, target, label) {
     const pct = Math.min(100, (current / Math.max(target, 1)) * 100)
     const displayLabel = label || (current + '/' + target)
@@ -1376,5 +1402,31 @@ export class GridView extends Component {
 
   _stripHtml(str) {
     return str.replace(/<[^>]*>/g, '')
+  }
+
+  _showNotFoundToast(videoId) {
+    const toast = document.getElementById('updateToast')
+    const toastText = document.getElementById('updateToastText') || toast
+    const actions = document.querySelector('.update-toast-actions')
+    const saved = actions.innerHTML
+
+    toastText.textContent = 'Video not found'
+    actions.innerHTML = `
+      <button class="toast-btn-secondary" id="nfCancel">Cancel</button>
+      <button class="toast-btn-primary" id="nfLocate">Locate</button>
+    `
+    actions.style.display = ''
+    toast.classList.add('show')
+
+    document.getElementById('nfCancel').onclick = () => {
+      toast.classList.remove('show')
+      actions.innerHTML = saved
+    }
+    document.getElementById('nfLocate').onclick = () => {
+      toast.classList.remove('show')
+      actions.innerHTML = saved
+      const v = (window.getVideos?.() || {})[videoId]
+      if (v && v.url) window.open(v.url)
+    }
   }
 }

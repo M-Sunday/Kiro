@@ -312,14 +312,15 @@ export class CardView extends Component {
     if (channel) channel.textContent = v.channel
 
     if (!v.pubDate) {
-      try {
-        const piped = await (await fetch(`https://pipedapi.kavin.rocks/streams/${id}`)).json()
-        if (piped.uploadDate) {
-          const d = new Date(piped.uploadDate)
-          const vs = window.getVideos?.() || {}
-          if (vs[id]) { vs[id].pubDate = d.toISOString(); window.saveVideos?.(vs) }
-        }
-      } catch {}
+      fetch(`https://pipedapi.kavin.rocks/streams/${id}`)
+        .then(res => res.json())
+        .then(piped => {
+          if (piped.uploadDate) {
+            const d = new Date(piped.uploadDate)
+            const vs = window.getVideos?.() || {}
+            if (vs[id]) { vs[id].pubDate = d.toISOString(); window.saveVideos?.(vs) }
+          }
+        }).catch(() => {})
     }
     if (window.currentNoteId && window.closeNoteView) window.closeNoteView()
     this.updatePinBadge(id)

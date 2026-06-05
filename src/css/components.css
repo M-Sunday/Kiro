@@ -214,6 +214,17 @@
 .nsfw-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2; pointer-events: none; background: rgba(0,0,0,0.15); }
 .nsfw-overlay svg { color: #fff; opacity: 0.7; }
 
+/* ─── STALE / NOT FOUND ─────────────────────────────────── */
+.stale-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2; pointer-events: none; background: rgba(0,0,0,0.35); border-radius: 12px; }
+.stale-overlay svg { color: #ff3b30; opacity: 0.85; }
+.grid-item.stale { opacity: 0.75; box-shadow: 0 0 0 1px #ff3b30 inset; }
+.grid-item-img.stale-img { filter: grayscale(1) blur(4px) opacity(0.3); }
+.grid-item-info.stale-info { opacity: 0.5; }
+.toast-btn-primary { background: #0a84ff; color: #fff; border: none; border-radius: 999px; padding: 4px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+.toast-btn-primary:hover { opacity: 0.8; }
+.toast-btn-secondary { background: transparent; color: #a1a1a6; border: 1px solid #a1a1a6; border-radius: 999px; padding: 4px 14px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+.toast-btn-secondary:hover { opacity: 0.7; }
+
 /* ─── NOTES ────────────────────────────────────────────── */
 .folder-dialog.note-dialog { width: 320px; }
 .folder-dialog textarea { width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #e8e8ed; border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.15s; min-height: 120px; resize: vertical; margin-top: 8px; background: #f5f5f7; color: #1d1d1f; }
@@ -271,14 +282,7 @@
 .update-modal { background: #fff; border-radius: 20px; width: 420px; max-width: 90vw; max-height: 80vh; box-shadow: 0 20px 60px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
 .update-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid #e8e8ed; }
 .update-modal-header h2 { font-size: 18px; font-weight: 700; margin: 0; }
-.update-close-btn { background: none; border: 1px solid #e8e8ed; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; color: #86868b; }
-.update-close-btn:hover { background: #f5f5f7; }
 .update-modal-body { padding: 20px 24px; overflow-y: auto; font-size: 14px; line-height: 1.6; }
-.update-version { font-size: 12px; color: #86868b; margin-bottom: 4px; }
-.update-title { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
-.update-changes { list-style: none; padding: 0; margin: 0; }
-.update-changes li { padding: 6px 0 6px 20px; position: relative; color: #3a3a3c; }
-.update-changes li::before { content: ''; position: absolute; left: 0; top: 13px; width: 6px; height: 6px; border-radius: 50%; background: #8e8e93; }
 
 /* ─── FOLDER DIALOG ───────────────────────────────────── */
 .folder-dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 150; display: none; align-items: center; justify-content: center; }
@@ -306,16 +310,6 @@
 .dialog-btn.danger { border: none; background: #ff453a; color: #fff; }
 .dialog-btn.danger:hover { opacity: 0.85; }
 
-
-/* ─── PATCH NOTES ────────────────────────────────────── */
-.patch-entry { margin-bottom: 20px; }
-.patch-version { font-size: 14px; font-weight: 700; color: #1d1d1f; letter-spacing: -0.2px; }
-.patch-date { font-size: 11px; font-weight: 400; color: #8e8e93; margin-left: 6px; }
-.patch-title { font-size: 12px; font-weight: 300; color: #8e8e93; margin: 1px 0 10px; }
-.patch-changes { list-style: none; margin: 0; padding: 0; }
-.patch-change { position: relative; padding-left: 14px; margin-bottom: 4px; font-size: 12px; color: #3a3a3c; line-height: 1.5; }
-.patch-change::before { content: ''; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: #8e8e93; }
-.patch-entry:not(:last-child)::after { content: ''; display: block; width: 60%; height: 1px; margin: 20px auto; background: #d2d2d7; }
 
 /* ─── KEYBOARD SHORTCUTS OVERLAY ─────────────────────── */
 .shortcuts-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }

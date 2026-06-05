@@ -1,9 +1,9 @@
 const ICON_DIR_MAP = {
   'panel-left': 'nav/', 'arrow-right': 'nav/', 'x': 'nav/', 'plus': 'nav/', 'chevron-down': 'nav/', 'chevron-up': 'nav/', 'ellipsis': 'nav/', 'ellipsis-vertical': 'nav/', 'hard-drive': 'nav/', 'download': 'action/',
-  'archive': 'action/', 'bookmark': 'action/', 'bookmark-fill': 'action/', 'check': 'action/', 'edit-3': 'action/', 'eye': 'action/', 'eye-off': 'action/', 'external-link': 'action/', 'folder': 'action/', 'folder-fill': 'action/', 'folder-plus': 'action/', 'link': 'action/', 'pin': 'action/', 'pin-off': 'action/', 'redo-2': 'action/', 'search': 'action/', 'settings': 'action/', 'trash-2': 'action/', 'undo-2': 'action/', 'circle-check': 'action/', 'circle-x': 'action/',
-  'file-video-2': 'media/',
+  'archive': 'action/', 'bookmark': 'action/', 'bookmark-fill': 'action/', 'check': 'action/', 'edit-3': 'action/', 'eye': 'action/', 'eye-off': 'action/', 'external-link': 'action/', 'folder': 'action/', 'folder-fill': 'action/', 'folder-plus': 'action/', 'link': 'action/', 'pin': 'action/', 'pin-off': 'action/', 'redo-2': 'action/', 'search': 'action/', 'settings': 'action/', 'trash-2': 'action/', 'undo-2': 'action/', 'circle-check': 'action/', 'circle-x': 'action/', 'alert-circle': 'action/', 'refresh-cw': 'action/',
+  'file-video-2': 'media/', 'play-off': 'media/',
   'file-text': 'content/', 'file-text-fill': 'content/', 'list-checks': 'content/', 'list-todo': 'content/', 'sparkles': 'content/',
-  'layout-grid': 'view/', 'history': 'view/', 'moon-star': 'view/', 'star': 'view/', 'star-off': 'view/', 'layers': 'view/',
+  'layout-grid': 'view/', 'layout-dashboard': 'view/', 'history': 'view/', 'moon-star': 'view/', 'star': 'view/', 'star-off': 'view/', 'layers': 'view/',
   'rocket': 'space/',
 }
 const ICON_SUBDIRS = ['nav/', 'action/', 'media/', 'content/', 'view/', 'space/', '']
@@ -14,7 +14,8 @@ const ICON_CACHE = {
   'skip-forward': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4v16"/><path d="M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z"/></svg>',
   'picture-in-picture-2': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 9V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h4"/><rect width="10" height="7" x="12" y="13" rx="2"/></svg>',
   folder: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
-  maximize: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/></svg>'
+  maximize: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/></svg>',
+  'play-off': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.215 4.56 9.79 5.71a2 2 0 0 1 .003 3.458l-.393.23"/><path d="m16.042 16.042-8.034 4.686A2 2 0 0 1 5 19V5"/><path d="m2 2 20 20"/></svg>'
 }
 
 function getCached(name) {

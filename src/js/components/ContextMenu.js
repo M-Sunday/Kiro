@@ -110,6 +110,16 @@ export class ContextMenu extends Component {
     }
 
     menu.querySelector('[data-action="pin"]').style.display = showVideo ? '' : 'none'
+    menu.querySelector('[data-action="mark-stale"]').style.display = showVideo ? '' : 'none'
+    if (showVideo) {
+      const v = window.getVideos?.()?.[videoId]
+      const staleEl = menu.querySelector('[data-action="mark-stale"]')
+      if (v && v._stale) {
+        staleEl.innerHTML = '<i data-lucide="refresh-cw" class="ctx-icon"></i> Mark as found'
+      } else {
+        staleEl.innerHTML = '<i data-lucide="alert-circle" class="ctx-icon"></i> Mark not found'
+      }
+    }
     menu.querySelector('[data-action="move-up"]').style.display = showVideo ? '' : 'none'
     menu.querySelector('[data-action="move-down"]').style.display = showVideo ? '' : 'none'
     menu.querySelector('[data-action="delete"]').style.display = (showVideo || isBm || isNote || isDA || isExt) ? '' : 'none'
@@ -243,6 +253,11 @@ export class ContextMenu extends Component {
         const f = files.filter(x => x.id === this._ctxExt)[0]
         if (f) { f.blurred = !f.blurred; window.saveExternalFiles?.(files); this.state.setState('externalFiles', files); window.renderSidebar?.(); window.renderGridView?.() }
       }
+    }
+    if (a === 'mark-stale' && this._ctxTarget) {
+      const vs = window.getVideos?.() || {}
+      const v = vs[this._ctxTarget]
+      if (v) { v._stale = !v._stale; window.saveVideos?.(vs); window.renderGridView?.(); window.renderSidebar?.() }
     }
     if (a === 'rename-folder') {
       this._handleRename()

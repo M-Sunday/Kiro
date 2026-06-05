@@ -106,7 +106,7 @@ body.theme-black #splash.info-bg { background: #4a2c22; }
 body.theme-black .onb-name-display { color: #f5f5f7; }
 body.theme-black .onb-confirm-btn { color: #636366; }
 body.theme-black .onb-confirm-btn:hover { color: #f5f5f7; }
-body.theme-black .grid-workbench-text { color: #636366; }
+body.theme-black .grid-dashboard-text { color: #636366; }
 body.theme-black #onboarding { background: var(--splash-bg, #1c1c1e); }
 body.theme-black .note-view-footer { border-color: #3a3a3c; color: #a1a1a6; }
 body.theme-black .todo-row .todo-text { color: #a1a1a6; }
@@ -125,12 +125,6 @@ body.theme-black .settings-history-item:hover { background: rgba(255,255,255,0.0
 body.theme-black .update-modal { background: #2c2c2e; border-color: #3a3a3c; }
 body.theme-black .update-modal-header { border-color: #3a3a3c; }
 body.theme-black .update-modal-header h2 { color: #f5f5f7; }
-body.theme-black .update-close-btn { border-color: #3a3a3c; color: #a1a1a6; }
-body.theme-black .update-close-btn:hover { background: #3a3a3c; }
-body.theme-black .update-version { color: #a1a1a6; }
-body.theme-black .update-changes li { color: #a1a1a6; }
-body.theme-black .update-changes li::before { background: #a1a1a6; }
-body.theme-black .update-title { color: #f5f5f7; }
 body.theme-black .settings-sidebar-header { color: #f5f5f7; }
 body.theme-black .settings-sidebar-footer { border-color: #3a3a3c; color: #a1a1a6; }
 body.theme-black .settings-sidebar-footer:hover { color: #f5f5f7; }
@@ -152,10 +146,6 @@ body.theme-black .settings-text-input { background: #3a3a3c; border-color: #3a3a
 body.theme-black .settings-text-input:focus { border-color: #5a9eff; }
 body.theme-black .settings-footer-info { border-color: #3a3a3c; }
 body.theme-black .settings-footer-row { color: #a1a1a6; }
-body.theme-black .patch-version { color: #f5f5f7; }
-body.theme-black .patch-change { color: #a1a1a6; }
-body.theme-black .patch-change::before { background: #a1a1a6; }
-body.theme-black .patch-entry:not(:last-child)::after { background: #38383a; }
 body.theme-black .shortcuts-modal { background: #2c2c2e; border: 1px solid #3a3a3c; }
 body.theme-black .shortcuts-header { border-color: #3a3a3c; }
 body.theme-black .shortcuts-header h2 { color: #f5f5f7; }

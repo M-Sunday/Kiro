@@ -19,11 +19,13 @@ export class ExtrasService {
 
   init() {
     this._bindKeyboardShortcuts()
-    this._initServiceWorker()
     this._initOnlineStatus()
     this._initHistoryImport()
-    this._initUpdateCheck()
     this._initDebugMode()
+
+    // Expose for Electron menu Ctrl+D (main.js calls these via executeJavaScript)
+    window.toggleDebug = () => this._toggleDebug()
+    window.toggleDebugHierarchy = () => this._toggleDebugHierarchy()
   }
 
   _bindKeyboardShortcuts() {
@@ -71,34 +73,6 @@ export class ExtrasService {
         e.target.style.display = 'none'
       }
     })
-  }
-
-  _initServiceWorker() {
-    if ('serviceWorker' in navigator) {
-      let _swReg = null
-      navigator.serviceWorker.register('sw.js').then(reg => {
-        _swReg = reg
-        const applyUpdate = (sw) => {
-          if (window.showSplashForUpdate) window.showSplashForUpdate()
-          sw.postMessage({ action: 'skipWaiting' })
-        }
-        if (reg.waiting && navigator.serviceWorker.controller) applyUpdate(reg.waiting)
-        reg.addEventListener('updatefound', () => {
-          const sw = reg.installing || reg.waiting
-          if (!sw) return
-          sw.addEventListener('statechange', () => {
-            if (sw.state === 'installed' && navigator.serviceWorker.controller) applyUpdate(sw)
-          })
-        })
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible' && _swReg) _swReg.update()
-        })
-      })
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        try { localStorage.setItem('kiroSwVersion', this._appVersion) } catch {}
-        window.location.reload()
-      })
-    }
   }
 
   _initOnlineStatus() {
@@ -154,62 +128,6 @@ export class ExtrasService {
       if (window.saveFolders) window.saveFolders(fs)
       if (window.renderSidebar) window.renderSidebar()
     }
-  }
-
-  _initUpdateCheck() {
-    const lastSeen = localStorage.getItem('kiroLastVersion')
-    if (lastSeen !== this._appVersion) {
-      fetch('assets/changelog.json').then(r => r.json()).then(log => {
-        const updates = log.filter(e => {
-          if (!lastSeen) return e.version === this._appVersion
-          const v = e.version.split('.').map(Number)
-          const last = lastSeen.split('.').map(Number)
-          return v[0] > last[0] || v[1] > last[1]
-        })
-
-        // Cancel inline splash timers ("Up to date" / "Welcome" / dismiss)
-        if (window.__splashTimers) {
-          window.__splashTimers.forEach(clearTimeout)
-          window.__splashTimers = []
-        }
-
-        // Animate splash on any version change
-        const splash = document.getElementById('splash')
-        const splashText = document.getElementById('splashText')
-        if (splash && splashText && splash.style.display !== 'none') {
-          window.__splashBlockDismiss = true
-          splash.classList.add('info-bg')
-          splashText.style.display = 'block'
-          splashText.textContent = 'Updating...'
-          setTimeout(() => {
-            splashText.textContent = 'Welcome, ' + (localStorage.getItem('kiroUserName') || '')
-            setTimeout(() => {
-              window.__splashBlockDismiss = false
-              splash.classList.add('fade')
-              setTimeout(() => { splash.style.display = 'none' }, 500)
-            }, 1500)
-          }, 2000)
-        }
-
-        // Show changelog overlay after splash animation (only if actual updates)
-        if (updates.length) {
-          setTimeout(() => {
-            const el = document.getElementById('updateBody')
-            if (!el) return
-            el.innerHTML = updates.map(u => `
-              <div class="update-version">${u.version} \u2014 ${u.date}</div>
-              <div class="update-title">${u.title}</div>
-              <ul class="update-changes">${u.changes.map(c => '<li>' + c + '</li>').join('')}</ul>
-            `).join('')
-            document.getElementById('updateOverlay')?.classList.add('open')
-          }, 4500)
-        }
-      }).catch(() => {})
-      try { localStorage.setItem('kiroLastVersion', this._appVersion) } catch {}
-    }
-    document.getElementById('updateCloseBtn')?.addEventListener('click', () => {
-      document.getElementById('updateOverlay')?.classList.remove('open')
-    })
   }
 
   _initDebugMode() {

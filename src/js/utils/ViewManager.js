@@ -9,7 +9,6 @@ export class ViewManager {
     window.clearCard = () => this.clearCard()
     window.closeNoteView = () => this.closeNoteView()
     window.renderSearchLanding = () => this.renderSearchLanding()
-    window.showSplashForUpdate = () => this.showSplashForUpdate()
   }
 
   setView(view) {
@@ -119,20 +118,6 @@ export class ViewManager {
         if (id && window.loadVideoById) window.loadVideoById(id)
       })
     })
-  }
-
-  showSplashForUpdate() {
-    const s = document.getElementById('splash')
-    if (!s) return
-    s.style.display = ''
-    s.classList.remove('fade', 'onboarding')
-    s.classList.add('info-bg')
-    const img = s.querySelector('.splash-content img')
-    if (img) { img.style.transition = 'none'; img.style.transform = 'rotate(0deg)' }
-    const t = document.getElementById('splashText')
-    if (t) { t.style.display = 'block'; t.textContent = navigator.onLine ? 'Updating\u2026' : "You're offline" }
-    const step0 = document.getElementById('onbStep0')
-    if (step0) step0.style.display = 'none'
   }
 
   _loadSetting(key, def) {

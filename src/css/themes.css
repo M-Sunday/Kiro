@@ -217,6 +217,7 @@ body.frosted .top-bar {
 }
 body.frosted .media-view { padding-top: 50px; }
 body:not([class*="theme-"]).frosted .top-bar { border-color: rgba(0,0,0,0.12); }
+body.theme-black.frosted .top-bar { background: var(--frost-bg, rgba(0,0,0,0.4)); backdrop-filter: blur(var(--frost-blur, 12px)); -webkit-backdrop-filter: blur(var(--frost-blur, 12px)); border-color: var(--frost-border, rgba(255,255,255,0.08)); }
 
 /* ─── FROSTED INTENSITY: MORE ────────────────────────── */
 body.frosted-more { --frost-bg: rgba(255,255,255,0.10); --frost-blur: 20px; --frost-border: rgba(255,255,255,0.25); }

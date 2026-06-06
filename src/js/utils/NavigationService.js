@@ -1,0 +1,217 @@
+import { Api } from '../core/Api.js'
+
+const VIEW_NAMES = {
+  GRID: 'grid',
+  GALLERY: 'gallery',
+  CARD: 'card',
+  LANDING: 'landing',
+  NOTE: 'note',
+  EXT_VIDEO: 'extVideo',
+  EXT_IMAGE: 'extImage',
+  EXT_TEXT: 'extText',
+  SETTINGS: 'settings',
+}
+
+export class NavigationService {
+  constructor() {
+    this.api = Api.getInstance()
+    this._history = []
+    this._initialView = this._detectCurrentView()
+    this._pushState(this._initialView, { replace: true })
+
+    this._bindBackButton()
+    this._bindEscapeKey()
+    this._exposeGlobals()
+  }
+
+  _detectCurrentView() {
+    if (document.getElementById('extImageView')?.style.display === 'flex') return 'extImage'
+    if (document.getElementById('extVideoView')?.style.display === 'flex') return 'extVideo'
+    if (document.getElementById('extTextView')?.style.display === 'flex') return 'extText'
+    if (document.getElementById('noteView')?.style.display === 'flex') return 'note'
+    if (document.querySelector('.content')?.style.display !== 'none' &&
+        document.querySelector('.content')?.style.display !== '') return 'card'
+    if (document.getElementById('canvasGallery')?.classList.contains('open')) return 'gallery'
+    if (document.getElementById('searchLanding')?.style.display === 'flex') return 'landing'
+    return 'grid'
+  }
+
+  _getViewName() {
+    if (document.getElementById('extImageView')?.style.display === 'flex') return 'extImage'
+    if (document.getElementById('extVideoView')?.style.display === 'flex') return 'extVideo'
+    if (document.getElementById('extTextView')?.style.display === 'flex') return 'extText'
+    if (document.getElementById('noteView')?.style.display === 'flex') return 'note'
+    if (document.querySelector('.content')?.style.display !== 'none' &&
+        document.querySelector('.content')?.style.display !== '') return 'card'
+    if (document.getElementById('canvasGallery')?.classList.contains('open')) return 'gallery'
+    if (document.getElementById('searchLanding')?.style.display === 'flex') return 'landing'
+    return 'grid'
+  }
+
+  _pushState(view, opts = {}) {
+    if (opts.replace) {
+      if (this._history.length > 0) this._history[this._history.length - 1] = view
+      else this._history.push(view)
+    } else {
+      if (this._history[this._history.length - 1] !== view) {
+        this._history.push(view)
+      }
+    }
+  }
+
+  get current() {
+    return this._history.length > 0 ? this._history[this._history.length - 1] : 'grid'
+  }
+
+  get canGoBack() {
+    return this._history.length > 1
+  }
+
+  navigate(view, opts = {}) {
+    const prev = this.current
+    this._pushState(view, opts)
+    this.api.bus.emit('navigation:changed', { from: prev, to: view, replace: !!opts.replace })
+  }
+
+  replace(view) {
+    this.navigate(view, { replace: true })
+  }
+
+  back() {
+    if (!this.canGoBack) return
+    const current = this._history.pop()
+    const target = this._history[this._history.length - 1] || 'grid'
+    this.api.bus.emit('navigation:back', { from: current, to: target })
+    this._restoreView(target)
+  }
+
+  _restoreView(target) {
+    const gv = document.getElementById('gridView')
+    const sl = document.getElementById('searchLanding')
+    const ct = document.querySelector('.content')
+    const nv = document.getElementById('noteView')
+    const dv = document.getElementById('canvasGallery')
+    const extTV = document.getElementById('extTextView')
+    const extVV = document.getElementById('extVideoView')
+    const extIV = document.getElementById('extImageView')
+    const ve = document.getElementById('extVideoElement')
+
+    if (extIV) extIV.style.display = 'none'
+    if (extVV) { extVV.style.display = 'none'; if (ve) ve.pause() }
+    if (extTV) extTV.style.display = 'none'
+    if (nv) nv.style.display = 'none'
+    if (ct) ct.style.display = 'none'
+    if (sl) sl.style.display = 'none'
+    if (gv) gv.classList.remove('open')
+    if (dv) dv.classList.remove('open')
+    document.body.classList.remove('gallery-open')
+
+    if (target === 'grid') {
+      if (gv) gv.classList.add('open')
+      const gb = document.getElementById('gridBtn')
+      if (gb) gb.classList.add('active')
+      const db = document.getElementById('deckBtn')
+      if (db) db.classList.remove('active')
+      if (window.renderGridView) window.renderGridView()
+    } else if (target === 'gallery') {
+      if (dv) dv.classList.add('open')
+      document.body.classList.add('gallery-open')
+      if (db) db.classList.add('active')
+      if (gb) gb.classList.remove('active')
+    } else if (target === 'card') {
+      if (ct) ct.style.display = ''
+      if (window.renderSidebar) window.renderSidebar()
+      if (window.loadIcons) window.loadIcons()
+    } else if (target === 'note') {
+      if (nv) nv.style.display = 'flex'
+    } else if (target === 'landing') {
+      if (sl) sl.style.display = 'flex'
+    }
+
+    if (window.renderSidebar) window.renderSidebar()
+  }
+
+  _bindBackButton() {
+    if (window.Capacitor?.Plugins?.App) {
+      try {
+        window.Capacitor.Plugins.App.addListener('backButton', () => {
+          this._handleBack()
+        })
+      } catch (e) {
+        console.warn('[Nav] Capacitor back button not available:', e)
+      }
+    }
+
+    window.addEventListener('popstate', (e) => {
+      if (e.state?.view) {
+        this._restoreView(e.state.view)
+      }
+    })
+  }
+
+  _bindEscapeKey() {
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) &&
+          !e.target.closest('.note-view-content')) return
+
+      const current = this._getViewName()
+      if (current === 'extImage' || current === 'extVideo' || current === 'extText') {
+        e.preventDefault()
+        if (current === 'extImage' && window.closeExternalImage) window.closeExternalImage()
+        else if (current === 'extVideo' && window.closeExternalVideo) window.closeExternalVideo()
+        else if (current === 'extText' && window.closeExternalText) window.closeExternalText()
+      } else if (current === 'note' && window.closeNoteView) {
+        e.preventDefault()
+        window.closeNoteView()
+      }
+    })
+  }
+
+  _handleBack() {
+    const current = this._getViewName()
+
+    if (current === 'extImage' && window.closeExternalImage) {
+      window.closeExternalImage()
+      return
+    }
+    if (current === 'extVideo' && window.closeExternalVideo) {
+      window.closeExternalVideo()
+      return
+    }
+    if (current === 'extText' && window.closeExternalText) {
+      window.closeExternalText()
+      return
+    }
+    if (current === 'note' && window.closeNoteView) {
+      window.closeNoteView()
+      return
+    }
+    if (document.getElementById('settingsOverlay')?.classList.contains('open')) {
+      document.getElementById('settingsOverlay')?.classList.remove('open')
+      return
+    }
+    if (document.getElementById('shortcutsOverlay')?.style.display === 'flex') {
+      document.getElementById('shortcutsOverlay').style.display = 'none'
+      return
+    }
+
+    if (this.canGoBack) {
+      this.back()
+    } else {
+      if (window.Capacitor?.Plugins?.App) {
+        window.Capacitor.Plugins.App.exitApp()
+      }
+    }
+  }
+
+  _exposeGlobals() {
+    window.__navigation = {
+      push: (view, opts) => this.navigate(view, opts),
+      replace: (view) => this.replace(view),
+      back: () => this.back(),
+      current: () => this.current,
+      canGoBack: () => this.canGoBack,
+    }
+  }
+}

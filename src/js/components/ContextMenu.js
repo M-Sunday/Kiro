@@ -21,25 +21,36 @@ export class ContextMenu extends Component {
 
   mount(rootEl) {
     super.mount(rootEl)
+    this._createBackdrop()
     this._bindEvents()
   }
 
-  _bindEvents() {
-    const close = () => {
-      const menu = document.getElementById('ctxMenu')
-      if (menu) menu.classList.remove('open')
-    }
-    this.listenTo(document, 'click', close)
-    this.listenTo(document, 'touchstart', close)
+  _createBackdrop() {
+    if (document.getElementById('ctxBackdrop')) return
+    const bd = document.createElement('div')
+    bd.id = 'ctxBackdrop'
+    bd.style.cssText = 'position:fixed;inset:0;z-index:199;display:none;background:rgba(0,0,0,0.001)'
+    bd.addEventListener('click', () => this._close())
+    bd.addEventListener('touchstart', (e) => { e.preventDefault(); this._close() }, { passive: false })
+    document.body.appendChild(bd)
+    this._backdrop = bd
+  }
 
+  _close() {
+    const menu = document.getElementById('ctxMenu')
+    if (menu) menu.classList.remove('open')
+    if (this._backdrop) this._backdrop.style.display = 'none'
+  }
+
+  _bindEvents() {
     this._ctxMoveToFolder = ''
     this.listenTo(document.getElementById('ctxMenu'), 'click', (e) => {
       const item = e.target.closest('.ctx-item')
       if (!item) return
       if (item.dataset.action === 'move-to') this._ctxMoveToFolder = item.dataset.folder || ''
+      e.stopPropagation()
       this._handleAction(item.dataset.action)
-      const menu = document.getElementById('ctxMenu')
-      if (menu) menu.classList.remove('open')
+      this._close()
     })
 
     this.bus.on('ui:context-menu:show', (e) => {
@@ -53,7 +64,6 @@ export class ContextMenu extends Component {
 
     document.querySelectorAll('.grid-item.dragging').forEach(el => el.classList.remove('dragging'))
     document.querySelectorAll('.grid-item.drag-before, .grid-item.drag-after').forEach(el => el.classList.remove('drag-before', 'drag-after'))
-
     this._ctxTarget = videoId
     this._ctxFolder = folderName
     this._ctxBookmark = bookmarkId
@@ -65,6 +75,7 @@ export class ContextMenu extends Component {
     menu.style.left = (isTouch ? x - 40 : x) + 'px'
     menu.style.top = (isTouch ? y - 40 : y) + 'px'
     menu.classList.add('open')
+    if (this._backdrop) this._backdrop.style.display = 'block'
 
     const mw = menu.offsetWidth, mh = menu.offsetHeight
     const pad = 8
@@ -95,17 +106,16 @@ export class ContextMenu extends Component {
     menu.querySelector('[data-action="archive"]').style.display = showVideo ? '' : 'none'
     menu.querySelector('[data-action="open-file-location"]').style.display = isExt ? '' : 'none'
 
-    const hasUrl = showVideo ? !!window.getVideos?.()?.[videoId]?.url : isBm ? !!window.getBookmarks?.()?.filter(b => b.id === bookmarkId)[0]?.url : isDA
-    menu.querySelector('[data-action="blur"]').style.display = (showVideo && hasUrl) || isBm || isDA || isExt ? '' : 'none'
-    if ((showVideo && hasUrl) || isBm || isDA) {
-      let blurred = false
+    menu.querySelector('[data-action="blur"]').style.display = showVideo || isBm || isDA || isExt ? '' : 'none'
+    {
+      let manualBlurred = false
       let isAutoBlurred = false
-      if (showVideo) { const v = window.getVideos?.()?.[videoId]; blurred = v?.blurred || window.isNSFW?.(v); isAutoBlurred = window.getBlurAllNSFW?.() && v && window.isNSFW?.(v) }
-      else if (isBm) { const b = window.getBookmarks?.()?.filter(x => x.id === bookmarkId)[0]; blurred = b?.blurred || window.isNSFW?.(b); isAutoBlurred = window.getBlurAllNSFW?.() && b && window.isNSFW?.(b) }
-      else if (isDA) { const d = window.getDirectAccess?.()?.filter(x => x.id === daId)[0]; blurred = d?.blurred || window.isNSFW?.(d); isAutoBlurred = window.getBlurAllNSFW?.() && d && window.isNSFW?.(d) }
-      else if (isExt) { const f = window.getExternalFiles?.()?.filter(x => x.id === extId)[0]; blurred = !!f?.blurred; isAutoBlurred = false }
+      if (showVideo) { const v = window.getVideos?.()?.[videoId]; manualBlurred = !!v?.blurred; isAutoBlurred = window.getBlurAllNSFW?.() && !manualBlurred && v && window.isNSFW?.(v) }
+      else if (isBm) { const b = window.getBookmarks?.()?.filter(x => x.id === bookmarkId)[0]; manualBlurred = !!b?.blurred; isAutoBlurred = window.getBlurAllNSFW?.() && !manualBlurred && b && window.isNSFW?.(b) }
+      else if (isDA) { const d = window.getDirectAccess?.()?.filter(x => x.id === daId)[0]; manualBlurred = !!d?.blurred; isAutoBlurred = window.getBlurAllNSFW?.() && !manualBlurred && d && window.isNSFW?.(d) }
+      else if (isExt) { const f = window.getExternalFiles?.()?.filter(x => x.id === extId)[0]; manualBlurred = !!f?.blurred; isAutoBlurred = false }
       const blurEl = menu.querySelector('[data-action="blur"]')
-      blurEl.innerHTML = `<i data-lucide="${blurred ? 'eye-off' : 'eye'}" class="ctx-icon"></i> ${blurred ? 'Unblur' : 'Blur'}`
+      blurEl.innerHTML = `<i data-lucide="${manualBlurred ? 'eye-off' : 'eye'}" class="ctx-icon"></i> ${manualBlurred ? 'Unblur' : 'Blur'}`
       if (isAutoBlurred) blurEl.classList.add('disabled'); else blurEl.classList.remove('disabled')
     }
 
@@ -120,8 +130,8 @@ export class ContextMenu extends Component {
         staleEl.innerHTML = '<i data-lucide="alert-circle" class="ctx-icon"></i> Mark not found'
       }
     }
-    menu.querySelector('[data-action="move-up"]').style.display = showVideo ? '' : 'none'
-    menu.querySelector('[data-action="move-down"]').style.display = showVideo ? '' : 'none'
+    menu.querySelector('[data-action="move-up"]').style.display = (showVideo || isBm || isNote || isDA || isExt) ? '' : 'none'
+    menu.querySelector('[data-action="move-down"]').style.display = (showVideo || isBm || isNote || isDA || isExt) ? '' : 'none'
     menu.querySelector('[data-action="delete"]').style.display = (showVideo || isBm || isNote || isDA || isExt) ? '' : 'none'
 
     const delItem = menu.querySelector('[data-action="delete"]')
@@ -295,18 +305,55 @@ export class ContextMenu extends Component {
         }
       }
     }
-    if ((a === 'move-up' || a === 'move-down') && this._ctxTarget) {
-      const fs = window.getFolders?.() || {}
-      for (const [name, ids] of Object.entries(fs)) {
-        const idx = ids.indexOf(this._ctxTarget)
-        if (idx > -1) {
-          const swap = a === 'move-up' ? idx - 1 : idx + 1
-          if (swap >= 0 && swap < ids.length) {
-            [ids[idx], ids[swap]] = [ids[swap], ids[idx]]
-            window.saveFolders?.(fs)
-            window.renderSidebar?.()
+    if (a === 'move-up' || a === 'move-down') {
+      const dir = a === 'move-up' ? -1 : 1
+      if (this._ctxTarget) {
+        const fs = window.getFolders?.() || {}
+        for (const ids of Object.values(fs)) {
+          const idx = ids.indexOf(this._ctxTarget)
+          if (idx > -1) {
+            const swap = idx + dir
+            if (swap >= 0 && swap < ids.length) {
+              [ids[idx], ids[swap]] = [ids[swap], ids[idx]]
+              window.saveFolders?.(fs); window.renderSidebar?.()
+            }
+            break
           }
-          break
+        }
+      } else if (this._ctxBookmark) {
+        const bms = window.getBookmarks?.() || []
+        const idx = bms.findIndex(x => x.id === this._ctxBookmark)
+        const swap = idx + dir
+        if (swap >= 0 && swap < bms.length) {
+          [bms[idx], bms[swap]] = [bms[swap], bms[idx]]
+          window.saveBookmarks?.(bms); window.renderSidebar?.()
+        }
+      } else if (this._ctxNote) {
+        const notes = window.getNotes?.() || []
+        const idx = notes.findIndex(x => x.id === this._ctxNote)
+        const swap = idx + dir
+        if (swap >= 0 && swap < notes.length) {
+          [notes[idx], notes[swap]] = [notes[swap], notes[idx]]
+          window.saveNotes?.(notes); window.renderSidebar?.()
+        }
+      } else if (this._ctxDA) {
+        const das = window.getDirectAccess?.() || []
+        const idx = das.findIndex(x => x.id === this._ctxDA)
+        const swap = idx + dir
+        if (swap >= 0 && swap < das.length) {
+          [das[idx], das[swap]] = [das[swap], das[idx]]
+          window.saveDirectAccess?.(das); window.renderSidebar?.()
+        }
+      } else if (this._ctxExt) {
+        const files = window.getExternalFiles?.() || []
+        const idx = files.findIndex(x => x.id === this._ctxExt)
+        const swap = idx + dir
+        if (swap >= 0 && swap < files.length) {
+          [files[idx], files[swap]] = [files[swap], files[idx]]
+          window.saveExternalFiles?.(files)
+          this.state.setState('externalFiles', files)
+          window.renderSidebar?.()
+          window.renderGridView?.()
         }
       }
     }

@@ -147,6 +147,26 @@ export class NoteView extends Component {
     return changed
   }
 
+  _insertAtCursor(el, html) {
+    el.focus()
+    const sel = window.getSelection()
+    if (!sel || !sel.rangeCount) {
+      el.insertAdjacentHTML('beforeend', html)
+      return
+    }
+    const range = sel.getRangeAt(0)
+    if (!el.contains(range.commonAncestorContainer)) {
+      el.insertAdjacentHTML('beforeend', html)
+      return
+    }
+    const frag = range.createContextualFragment(html)
+    range.deleteContents()
+    range.insertNode(frag)
+    range.collapse(false)
+    sel.removeAllRanges()
+    sel.addRange(range)
+  }
+
   _handleNotePaste(e) {
     const el = document.getElementById('noteViewContent')
     if (!el) return
@@ -161,7 +181,6 @@ export class NoteView extends Component {
             this._noteInsertImage(blob, el)
             return
           }
-          // getAsFile returned null (Android WebView) — let browser paste natively
           return
         }
       }
@@ -172,17 +191,18 @@ export class NoteView extends Component {
     try {
       const html = e.clipboardData.getData('text/html')
       if (html && /<img[^>]+src\s*=\s*['"]data:image\//i.test(html)) {
-        document.execCommand('insertHTML', false, html)
+        e.preventDefault()
+        this._insertAtCursor(el, html)
         this._noteSaveContent()
         return
       }
     } catch {}
 
     try {
-      const text = e.clipboardData.getData('text/plain') || e.clipboardData.getData('text/html')
+      const text = e.clipboardData.getData('text/plain')
       if (text) {
         e.preventDefault()
-        document.execCommand('insertText', false, text)
+        this._insertAtCursor(el, this._escapeHtml(text).replace(/\n/g, '<br>'))
         this._noteSaveContent()
       }
     } catch {}

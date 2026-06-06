@@ -24,6 +24,8 @@ export class GridView extends Component {
     this.selectedItems = new Set()
     this._animDone = false
     this._clockInterval = null
+    this._currentImageBlobUrl = null
+    this._imageViewState = null
 
     this.state.subscribe('videos', () => this.render())
     this.state.subscribe('folders', () => this.render())
@@ -359,11 +361,14 @@ export class GridView extends Component {
         if (!f) return
         const isVideo = /\.(mp4|webm|mkv|avi|mov|flv|wmv|m4v|3gp|mpeg|mpg)$/i.test(f.name)
         const isText = /\.(txt|md|json|xml|html|css|js|py|java|c|cpp|h|ts)$/i.test(f.name)
+        const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(f.name)
         const isElectron = typeof process !== 'undefined' && process.versions?.electron
         if (isText && isElectron && f.path) {
           this._openExternalText(f)
         } else if (isVideo && f.path) {
           this._openExternalVideo(f)
+        } else if (isImage && f.path) {
+          this._openExternalImage(f)
         } else if (f._stale) {
           this._reimportStaleFile(f)
         } else if (f.path) {
@@ -432,7 +437,7 @@ export class GridView extends Component {
         folder: (item.closest('.grid-section')?.querySelector('.grid-section-header')?.textContent?.trim()) || '',
         startX: t.clientX, startY: t.clientY, lastX: t.clientX, lastY: t.clientY,
         active: false,
-        timer: setTimeout(() => { tdState.active = true; item.classList.add('dragging'); if (navigator.vibrate) navigator.vibrate(8) }, 500)
+        timer: setTimeout(() => { if (document.getElementById('ctxMenu')?.classList.contains('open')) return; tdState.active = true; item.classList.add('dragging'); if (navigator.vibrate) navigator.vibrate(8) }, 500)
       }
     }, { passive: true })
 
@@ -450,10 +455,27 @@ export class GridView extends Component {
       targetItem.classList.toggle('drag-after', t.clientY >= rect.top + rect.height / 2)
     }, { passive: false })
 
-    item.addEventListener('touchend', () => {
+    item.addEventListener('touchend', (e) => {
       if (!tdState) return
       clearTimeout(tdState.timer)
-      if (tdState.active && !document.getElementById('ctxMenu')?.classList.contains('open')) this._handleDropReorder(tdState.dragId, tdState.dragType, tdState.folder, tdState.lastX, tdState.lastY, container)
+      if (tdState.active && !document.getElementById('ctxMenu')?.classList.contains('open')) {
+        const moved = Math.abs(tdState.lastX - tdState.startX) > 12 || Math.abs(tdState.lastY - tdState.startY) > 12
+        if (moved) {
+          this._handleDropReorder(tdState.dragId, tdState.dragType, tdState.folder, tdState.lastX, tdState.lastY, container)
+        } else {
+          e.preventDefault()
+          container.querySelectorAll('.grid-item.dragging').forEach(i => i.classList.remove('dragging'))
+          const itemRect = item.getBoundingClientRect()
+          this.bus.emit('ui:context-menu:show', {
+            x: itemRect.right, y: itemRect.bottom,
+            videoId: item.dataset.videoId || null,
+            bookmarkId: item.dataset.bookmarkId || null,
+            noteId: item.dataset.noteId || null,
+            daId: item.dataset.daId || null,
+            extId: item.dataset.extId || null,
+          })
+        }
+      }
       tdState = null
     })
 
@@ -949,6 +971,7 @@ export class GridView extends Component {
     if (sl) sl.style.display = 'none'
     const ve = document.getElementById('extVideoElement')
     if (ve) ve.pause()
+    this._resetImageZoom()
   }
 
   _openExternalText(f) {
@@ -962,6 +985,7 @@ export class GridView extends Component {
       document.getElementById('extTextContent').textContent = content
       this._hideAllViews()
       document.getElementById('extTextView').style.display = 'flex'
+      window.__navigation?.push('extText')
     } catch (e) {
       console.warn('[ExtText] Failed to read:', e)
     }
@@ -971,6 +995,7 @@ export class GridView extends Component {
     document.getElementById('extTextContent').textContent = ''
     this._hideAllViews()
     document.getElementById('gridView').classList.add('open')
+    window.__navigation?.replace('grid')
   }
 
   async _takePicture() {
@@ -1133,6 +1158,7 @@ export class GridView extends Component {
     }
     this._hideAllViews()
     document.getElementById('extVideoView').style.display = 'flex'
+    window.__navigation?.push('extVideo')
     if (window.loadIcons) window.loadIcons()
     this._updateVideoPlayIcon(false)
     this._updateVideoVolumeUI()
@@ -1149,37 +1175,208 @@ export class GridView extends Component {
     if (body) body.style.aspectRatio = ''
     this._hideAllViews()
     document.getElementById('gridView').classList.add('open')
+    window.__navigation?.replace('grid')
+  }
+
+  _getImageMime(name) {
+    const ext = name.split('.').pop().toLowerCase()
+    const map = { png: 'image/png', jpeg: 'image/jpeg', jpg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp', ico: 'image/x-icon' }
+    return map[ext] || 'image/jpeg'
+  }
+
+  _resetImageZoom() {
+    const el = document.getElementById('extImageElement')
+    if (!el) return
+    this._imageViewState = null
+    el.style.transform = ''
+    el.classList.remove('zoomed')
+  }
+
+  _applyImageTransform() {
+    const el = document.getElementById('extImageElement')
+    if (!el || !this._imageViewState) return
+    const { scale, translateX, translateY } = this._imageViewState
+    el.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`
+    el.classList.toggle('zoomed', scale > 1)
+  }
+
+  _initImageViewEvents() {
+    const body = document.getElementById('extImageBody')
+    if (!body || body.dataset.viewInit) return
+    body.dataset.viewInit = '1'
+    const el = document.getElementById('extImageElement')
+    if (!el) return
+
+    // Click background to close
+    body.addEventListener('click', (e) => {
+      if (e.target === body || e.target === document.getElementById('extImageError')) {
+        this._closeExternalImage()
+      }
+    })
+
+    // Mouse wheel zoom
+    body.addEventListener('wheel', (e) => {
+      if (!this._imageViewState) return
+      e.preventDefault()
+      const rect = el.getBoundingClientRect()
+      const cursorX = e.clientX - rect.left
+      const cursorY = e.clientY - rect.top
+      const delta = e.deltaY > 0 ? 0.9 : 1 / 0.9
+      const newScale = Math.max(0.25, Math.min(10, this._imageViewState.scale * delta))
+      const ratio = newScale / this._imageViewState.scale
+      this._imageViewState.translateX = cursorX - ratio * (cursorX - this._imageViewState.translateX)
+      this._imageViewState.translateY = cursorY - ratio * (cursorY - this._imageViewState.translateY)
+      this._imageViewState.scale = newScale
+      this._applyImageTransform()
+    }, { passive: false })
+
+    // Mouse drag pan
+    body.addEventListener('mousedown', (e) => {
+      if (!this._imageViewState || this._imageViewState.scale <= 1 || e.button !== 0) return
+      if (!e.target.closest('#extImageElement')) return
+      this._imageViewState.isDragging = true
+      this._imageViewState.dragStartX = e.clientX
+      this._imageViewState.dragStartY = e.clientY
+      this._imageViewState.dragStartTranslateX = this._imageViewState.translateX
+      this._imageViewState.dragStartTranslateY = this._imageViewState.translateY
+    })
+
+    document.addEventListener('mousemove', (e) => {
+      if (!this._imageViewState?.isDragging) return
+      this._imageViewState.translateX = this._imageViewState.dragStartTranslateX + (e.clientX - this._imageViewState.dragStartX)
+      this._imageViewState.translateY = this._imageViewState.dragStartTranslateY + (e.clientY - this._imageViewState.dragStartY)
+      this._applyImageTransform()
+    })
+
+    document.addEventListener('mouseup', () => {
+      if (this._imageViewState) this._imageViewState.isDragging = false
+    })
+
+    // Touch pinch-zoom and pan
+    let touchStart = null
+    body.addEventListener('touchstart', (e) => {
+      if (!this._imageViewState) return
+      if (e.touches.length === 1) {
+        touchStart = {
+          x: e.touches[0].clientX, y: e.touches[0].clientY,
+          tx: this._imageViewState.translateX, ty: this._imageViewState.translateY,
+          dist: 0, cx: 0, cy: 0
+        }
+      } else if (e.touches.length === 2) {
+        const t1 = e.touches[0], t2 = e.touches[1]
+        touchStart = {
+          x: 0, y: 0, tx: this._imageViewState.translateX, ty: this._imageViewState.translateY,
+          dist: Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY),
+          cx: (t1.clientX + t2.clientX) / 2, cy: (t1.clientY + t2.clientY) / 2,
+          scale: this._imageViewState.scale
+        }
+      }
+    }, { passive: true })
+
+    body.addEventListener('touchmove', (e) => {
+      if (!this._imageViewState || !touchStart) return
+      e.preventDefault()
+      if (e.touches.length === 1 && !touchStart.dist) {
+        this._imageViewState.translateX = touchStart.tx + (e.touches[0].clientX - touchStart.x)
+        this._imageViewState.translateY = touchStart.ty + (e.touches[0].clientY - touchStart.y)
+        this._applyImageTransform()
+      } else if (e.touches.length === 2 && touchStart.dist) {
+        const t1 = e.touches[0], t2 = e.touches[1]
+        const curDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY)
+        const curCx = (t1.clientX + t2.clientX) / 2, curCy = (t1.clientY + t2.clientY) / 2
+        const newScale = Math.max(0.25, Math.min(10, touchStart.scale * (curDist / touchStart.dist)))
+        const ratio = newScale / touchStart.scale
+        this._imageViewState.translateX = touchStart.cx - ratio * (touchStart.cx - touchStart.tx) + (curCx - touchStart.cx)
+        this._imageViewState.translateY = touchStart.cy - ratio * (touchStart.cy - touchStart.ty) + (curCy - touchStart.cy)
+        this._imageViewState.scale = newScale
+        this._applyImageTransform()
+      }
+    }, { passive: false })
+
+    body.addEventListener('touchend', () => { touchStart = null })
+    body.addEventListener('touchcancel', () => { touchStart = null })
+
+    // Double-tap to zoom
+    let lastTap = 0
+    el.addEventListener('click', (e) => {
+      const now = Date.now()
+      if (now - lastTap < 300) {
+        e.stopPropagation()
+        if (!this._imageViewState) return
+        if (this._imageViewState.scale > 1.5) {
+          this._imageViewState.scale = 1
+          this._imageViewState.translateX = 0
+          this._imageViewState.translateY = 0
+        } else {
+          this._imageViewState.scale = 2.5
+        }
+        this._applyImageTransform()
+      }
+      lastTap = now
+    })
   }
 
   async _openExternalImage(f) {
     if (!f.path) return
     const el = document.getElementById('extImageElement')
+    const errEl = document.getElementById('extImageError')
+    if (!el) return
     document.getElementById('extImageTitle').textContent = f.name
-    this._hideAllViews()
-    document.getElementById('extImageView').style.display = 'flex'
-    if (window.loadIcons) window.loadIcons()
+    if (errEl) errEl.style.display = 'none'
+    if (this._currentImageBlobUrl) {
+      URL.revokeObjectURL(this._currentImageBlobUrl)
+      this._currentImageBlobUrl = null
+    }
+    this._resetImageZoom()
     const isElectron = typeof process !== 'undefined' && process.versions?.electron
-    if (isElectron) {
-      try {
+    try {
+      if (isElectron) {
         const fs = window.require('fs')
         const buf = fs.readFileSync(f.path)
-        const blob = new Blob([buf], { type: 'image/' + (f.name.split('.').pop().toLowerCase() === 'png' ? 'png' : 'jpeg') })
-        el.src = URL.createObjectURL(blob)
-      } catch (e) {
-        console.warn('[Image] Failed to read:', e)
+        const mime = this._getImageMime(f.name)
+        const blob = new Blob([buf], { type: mime })
+        this._currentImageBlobUrl = URL.createObjectURL(blob)
+        el.src = this._currentImageBlobUrl
+      } else if (window.Capacitor?.isNativePlatform?.() && f._blobUrl) {
+        el.src = f._blobUrl
+      } else {
+        el.src = f.path
       }
-    } else if (window.Capacitor?.isNativePlatform?.() && f._blobUrl) {
-      el.src = f._blobUrl
-    } else {
-      el.src = f.path
+    } catch (e) {
+      console.warn('[Image] Failed to read:', e)
+      if (errEl) errEl.style.display = 'block'
     }
+    el.onerror = () => {
+      if (errEl) errEl.style.display = 'block'
+      el.style.display = 'none'
+    }
+    el.onload = () => {
+      el.style.display = ''
+      this._imageViewState = { scale: 1, translateX: 0, translateY: 0, isDragging: false, dragStartX: 0, dragStartY: 0, dragStartTranslateX: 0, dragStartTranslateY: 0 }
+    }
+    this._hideAllViews()
+    document.getElementById('extImageView').style.display = 'flex'
+    this._resetImageZoom()
+    this._initImageViewEvents()
+    window.__navigation?.push('extImage')
+    if (window.loadIcons) window.loadIcons()
   }
 
   _closeExternalImage() {
     const el = document.getElementById('extImageElement')
+    const errEl = document.getElementById('extImageError')
+    if (this._currentImageBlobUrl) {
+      URL.revokeObjectURL(this._currentImageBlobUrl)
+      this._currentImageBlobUrl = null
+    }
     el.src = ''
+    el.onerror = null
+    el.onload = null
+    if (errEl) errEl.style.display = 'none'
+    this._resetImageZoom()
     this._hideAllViews()
     document.getElementById('gridView').classList.add('open')
+    window.__navigation?.replace('grid')
   }
 
   _toggleVideoPlay() {

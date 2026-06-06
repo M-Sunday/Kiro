@@ -13,7 +13,7 @@
   "plugins": {
     "StatusBar": {
       "style": "LIGHT",
-      "backgroundColor": "#1d1d1f"
+      "overlaysWebView": true
     },
     "FilePicker": {
       "android": {

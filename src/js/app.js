@@ -9,6 +9,7 @@ import { NotificationService } from './platform/NotificationService.js'
 import { PlatformDetector } from './platform/PlatformDetector.js'
 import { ViewManager } from './utils/ViewManager.js'
 import { ExtrasService } from './utils/ExtrasService.js'
+import { NavigationService } from './utils/NavigationService.js'
 import { loadIcons } from './utils/IconService.js'
 import './data.js'
 
@@ -227,6 +228,10 @@ async function bootstrap() {
   const viewManager = new ViewManager()
   services.register('viewManager', viewManager)
 
+  // Navigation history (back button, Escape key, view stack)
+  const navigationService = new NavigationService()
+  services.register('navigationService', navigationService)
+
   // Extras (keyboard shortcuts, SW, debug, etc.)
   const extraService = new ExtrasService(APP_VERSION)
   extraService.init()
@@ -240,17 +245,22 @@ async function bootstrap() {
     window.renderSidebar()
     window.renderGridView()
     viewManager.setView('grid')
+    navigationService.replace('grid')
     loadIcons()
     window.startGridAnim?.()
   }
 
   // Wire bus events to legacy handlers (bridge migration gap)
   bus.on('ui:card:load-video', (e) => { if (window.loadVideoById) window.loadVideoById(e.data?.id || e.id) })
-  bus.on('ui:note:open', (e) => { if (window.openNote) window.openNote(e.data?.id || e.id) })
+  bus.on('ui:note:open', (e) => {
+    if (window.openNote) window.openNote(e.data?.id || e.id)
+    navigationService.navigate('note')
+  })
   bus.on('ui:icons:load-needed', () => loadIcons())
   bus.on('ui:grid:refresh', () => { if (window.renderGridView) window.renderGridView() })
   bus.on('ui:view:set', (e) => {
     viewManager.setView(e.view)
+    navigationService.navigate(e.view)
   })
 
   // Load existing localStorage data into state

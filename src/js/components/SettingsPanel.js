@@ -11,6 +11,8 @@ export class SettingsPanel extends Component {
   constructor() {
     super()
     this.api = Api.getInstance()
+    this._systemThemeMQ = null
+    this._systemThemeMQHandler = null
   }
 
   mount(rootEl) {
@@ -71,20 +73,26 @@ export class SettingsPanel extends Component {
         if (t !== 'white') document.body.classList.add('theme-' + t)
         try { localStorage.setItem('theme', t) } catch {}
         document.getElementById('systemTheme').checked = false
+        self._unlistenSystemTheme()
       })
     })
 
     this.listenTo(document.getElementById('systemTheme'), 'change', function () {
       document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'))
       if (this.checked) {
+        const prevTheme = localStorage.getItem('theme') || 'white'
+        if (prevTheme !== 'system') try { localStorage.setItem('kiroPrevTheme', prevTheme) } catch {}
         document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim()
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('theme-black')
         try { localStorage.setItem('theme', 'system') } catch {}
+        self._listenSystemTheme()
       } else {
-        const s = localStorage.getItem('theme') || 'white'
+        self._unlistenSystemTheme()
+        const prev = localStorage.getItem('kiroPrevTheme') || 'white'
         document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim()
-        if (s !== 'white') document.body.classList.add('theme-' + s)
-        const opt = document.querySelector(`.theme-option[data-theme="${s}"]`)
+        if (prev !== 'white') document.body.classList.add('theme-' + prev)
+        try { localStorage.setItem('theme', prev) } catch {}
+        const opt = document.querySelector(`.theme-option[data-theme="${prev}"]`)
         if (opt) opt.classList.add('active')
       }
     })
@@ -282,11 +290,32 @@ export class SettingsPanel extends Component {
       const cb = document.getElementById('systemTheme')
       if (cb) cb.checked = true
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('theme-black')
+      this._listenSystemTheme()
     } else {
+      this._unlistenSystemTheme()
       if (savedTheme !== 'white') document.body.classList.add('theme-' + savedTheme)
       const opt = document.querySelector(`.theme-option[data-theme="${savedTheme}"]`)
       if (opt) opt.classList.add('active')
     }
+  }
+
+  _listenSystemTheme() {
+    this._unlistenSystemTheme()
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    this._systemThemeMQ = mq
+    this._systemThemeMQHandler = (e) => {
+      document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim()
+      if (e.matches) document.body.classList.add('theme-black')
+    }
+    mq.addEventListener('change', this._systemThemeMQHandler)
+  }
+
+  _unlistenSystemTheme() {
+    if (this._systemThemeMQ && this._systemThemeMQHandler) {
+      this._systemThemeMQ.removeEventListener('change', this._systemThemeMQHandler)
+    }
+    this._systemThemeMQ = null
+    this._systemThemeMQHandler = null
   }
 
   _initUserName() {

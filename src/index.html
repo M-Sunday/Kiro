@@ -38,6 +38,7 @@
         #splashText { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; font-weight: 500; color: #86868b; letter-spacing: 0.3px; }
 
         body.native-android { padding-top: 0 !important; }
+        body.native-android.theme-black { background: #2c2c2e; }
         body.native-android.theme-black .main-area { background: #1c1c1e; }
         body.native-android .sidebar { padding-top: 40px !important; }
         body.native-android .top-bar { margin-top: calc(10px + max(24px, env(safe-area-inset-top, 0px))); }
@@ -305,8 +306,9 @@
                     <span class="ext-image-title" id="extImageTitle"></span>
                     <button class="ext-image-close" id="extImageClose"><i data-lucide="x" class="icon-md"></i></button>
                 </div>
-                <div class="ext-image-body">
+                <div class="ext-image-body" id="extImageBody">
                     <img class="ext-image-element" id="extImageElement" alt="">
+                    <div class="ext-image-error" id="extImageError">Failed to load image</div>
                 </div>
             </div>
         </div>

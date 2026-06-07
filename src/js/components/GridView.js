@@ -39,6 +39,7 @@ export class GridView extends Component {
     this._currentImageBlobUrl = null
     this._imageViewState = null
     this._heroGradient = HERO_GRADIENTS[Math.floor(Math.random() * HERO_GRADIENTS.length)]
+    this._heroData = null
 
     this.state.subscribe('videos', () => this.render())
     this.state.subscribe('folders', () => this.render())
@@ -78,6 +79,8 @@ export class GridView extends Component {
     this._createBottomPill()
     this.render()
     this._backfillThumbnails()
+    this._restoreBlobUrls()
+    this._loadHeroImage()
   }
 
   _bindDOMEvents() {
@@ -145,15 +148,6 @@ export class GridView extends Component {
       }, 220)
     })
 
-    this.listenTo(document, 'click', (e) => {
-      const btn = e.target.closest('.wb-btn')
-      if (!btn) return
-      const action = btn.dataset.action
-      if (action === 'note') this._handleNewNote()
-      else if (action === 'import-file') this._importFile()
-      else if (action === 'camera') this._takePicture()
-    })
-
     this.listenTo(document.getElementById('cameraClose'), 'click', () => this._closeCamera())
     this.listenTo(document.getElementById('cameraCaptureBtn'), 'click', () => this._capturePhoto())
     this.listenTo(document.getElementById('cameraFlipBtn'), 'click', () => this._flipCamera())
@@ -163,51 +157,80 @@ export class GridView extends Component {
   }
 
   _createBottomPill() {
-    if (document.querySelector('.bottom-nav-pill')) return
+    if (document.querySelector('.mobile-nav-bar')) return
 
-    const pill = document.createElement('div')
-    pill.className = 'bottom-nav-pill'
-    pill.innerHTML = `
-      <button class="pill-icon-btn" id="mobileSearchFocusBtn" title="Search">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      </button>
-      <div class="pill-input-wrap">
-        <input type="text" id="mobileKiroInput" placeholder="Search..." spellcheck="false">
+    const bar = document.createElement('div')
+    bar.className = 'mobile-nav-bar'
+
+    bar.innerHTML = `
+      <div class="sidebar-fab">
+        <button class="fab-btn" id="mobileMenuBtn" title="Sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
       </div>
-      <button class="pill-icon-btn" id="mobileAddBtn" title="Add">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-      </button>
-      <div class="add-menu-popup" id="addMenuPopup">
-        <div class="add-menu-item" data-action="note">
-          <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg></span>
-          New note
+      <div class="bottom-nav-pill">
+        <button class="pill-icon-btn" id="mobileSearchFocusBtn" title="Search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
+        <div class="pill-input-wrap">
+          <input type="text" id="mobileKiroInput" placeholder="Search..." spellcheck="false">
         </div>
-        <div class="add-menu-item" data-action="folder">
-          <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
-          New folder
-        </div>
-        <div class="add-menu-item" data-action="import">
-          <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M15 3v4a1 1 0 0 0 1 1h4"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span>
-          Import file
+      </div>
+      <div class="add-fab">
+        <button class="fab-btn" id="mobileAddBtn" title="Add">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        </button>
+        <div class="add-menu-popup" id="addMenuPopup">
+          <div class="add-menu-item" data-action="note">
+            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg></span>
+            New note
+          </div>
+          <div class="add-menu-item" data-action="folder">
+            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+            New folder
+          </div>
+          <div class="add-menu-item" data-action="import">
+            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M15 3v4a1 1 0 0 0 1 1h4"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span>
+            Import file
+          </div>
+          <div class="add-menu-item" data-action="camera">
+            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
+            Take picture
+          </div>
+          <div class="add-menu-item" data-action="bookmark">
+            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></span>
+            New bookmark
+          </div>
         </div>
       </div>
     `
-    document.body.appendChild(pill)
+    document.body.appendChild(bar)
     this._bindMobilePillEvents()
   }
 
   _bindMobilePillEvents() {
+    const bar = document.querySelector('.mobile-nav-bar')
     const mobileInput = document.getElementById('mobileKiroInput')
+    const focusBtn = document.getElementById('mobileSearchFocusBtn')
+    const menuBtn = document.getElementById('mobileMenuBtn')
+    const addBtn = document.getElementById('mobileAddBtn')
+    const popup = document.getElementById('addMenuPopup')
+
+    function isSearchActive() { return bar && bar.classList.contains('search-active') }
+    function enterSearch() { if (bar) { bar.classList.add('search-active'); popup?.classList.remove('open') } }
+    function exitSearch() { if (bar) { bar.classList.remove('search-active') } }
+
     if (mobileInput) {
       mobileInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           const text = mobileInput.value.trim()
           if (text) this.bus.emit('ui:search:video', { url: text })
         }
-        if (e.key === 'Escape') mobileInput.blur()
+        if (e.key === 'Escape') exitSearch(); mobileInput.blur()
       })
 
       mobileInput.addEventListener('focus', () => {
+        enterSearch()
         this.bus.emit('ui:view:set', { view: 'landing' })
       })
 
@@ -218,19 +241,23 @@ export class GridView extends Component {
       })
     }
 
-    const focusBtn = document.getElementById('mobileSearchFocusBtn')
     if (focusBtn) {
       focusBtn.addEventListener('click', () => {
-        const input = document.getElementById('mobileKiroInput')
-        if (input) input.focus()
+        if (mobileInput) mobileInput.focus()
       })
     }
 
-    const addBtn = document.getElementById('mobileAddBtn')
-    const popup = document.getElementById('addMenuPopup')
+    if (menuBtn) {
+      menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        document.getElementById('sidebar')?.classList.toggle('closed')
+      })
+    }
+
     if (addBtn && popup) {
       addBtn.addEventListener('click', (e) => {
         e.stopPropagation()
+        if (isSearchActive()) { exitSearch(); mobileInput?.blur(); return }
         popup.classList.toggle('open')
       })
 
@@ -242,13 +269,198 @@ export class GridView extends Component {
         if (action === 'note') this._handleNewNote()
         else if (action === 'folder') this._openMobileFolderDialog()
         else if (action === 'import') this._importFile()
+        else if (action === 'camera') this._takePicture()
+        else if (action === 'bookmark') window.openBookmarkDialog?.()
+      })
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.mobile-nav-bar')) {
+        popup?.classList.remove('open')
+        if (isSearchActive()) { exitSearch(); mobileInput?.blur() }
+      }
+    })
+  }
+
+  /* ─── Hero image (pick, crop, persist) ────────────── */
+  _loadHeroImage() {
+    const api = Api.getInstance()
+    const repo = api.getRepository('settings')
+    Promise.resolve(repo.get('heroImage')).then(saved => {
+      if (saved) {
+        this._heroData = saved
+        this._applyHeroImage()
+      }
+    }).catch(() => {})
+  }
+
+  _saveHeroImage() {
+    const api = Api.getInstance()
+    const repo = api.getRepository('settings')
+    Promise.resolve(repo.set('heroImage', this._heroData)).catch(() => {})
+  }
+
+  _handleHeroPick() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+      this._heroOpenCrop(file)
+    }
+    input.click()
+  }
+
+  _heroCompress(file) {
+    return new Promise(resolve => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const maxDim = 1600
+          let w = img.width, h = img.height
+          if (w > maxDim || h > maxDim) {
+            const ratio = Math.min(maxDim / w, maxDim / h)
+            w *= ratio; h *= ratio
+          }
+          const canvas = document.createElement('canvas')
+          canvas.width = w; canvas.height = h
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+          resolve(canvas.toDataURL('image/jpeg', 0.85))
+        }
+        img.src = e.target.result
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
+  _heroOpenCrop(file) {
+    const heroEl = document.querySelector('.dashboard-hero')
+    const heroAspect = heroEl ? (heroEl.offsetWidth / heroEl.offsetHeight) : 2
+
+    const overlay = document.createElement('div')
+    overlay.className = 'hero-crop-overlay'
+    overlay.innerHTML = `
+      <div class="hero-crop-stage">
+        <div class="hero-crop-img" id="heroCropImg"></div>
+        <div class="hero-crop-window" style="aspect-ratio:${heroAspect}"></div>
+      </div>
+      <div class="hero-crop-bar">
+        <button class="hero-crop-btn" id="heroCropZoomOut">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>
+        </button>
+        <input type="range" class="hero-crop-slider" id="heroCropSlider" min="50" max="300" value="100" />
+        <button class="hero-crop-btn" id="heroCropZoomIn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        </button>
+        <button class="hero-crop-done" id="heroCropDone">Done</button>
+      </div>
+    `
+    document.body.appendChild(overlay)
+
+    this._heroCompress(file).then(dataUrl => {
+      const bg = overlay.querySelector('#heroCropImg')
+      bg.style.backgroundImage = `url(${dataUrl})`
+
+      const state = {
+        scale: this._heroData?.scale || 1,
+        ox: this._heroData?.offsetX || 0,
+        oy: this._heroData?.offsetY || 0,
+        startX: 0, startY: 0,
+        startScale: 1, startDist: 0,
+        dragging: false
+      }
+
+      function update() {
+        bg.style.backgroundSize = `${state.scale * 100}%`
+        bg.style.backgroundPosition = `calc(50% + ${state.ox}px) calc(50% + ${state.oy}px)`
+        overlay.querySelector('#heroCropSlider').value = Math.round(state.scale * 100)
+      }
+
+      /* touch */
+      bg.addEventListener('touchstart', e => {
+        if (e.touches.length === 1) {
+          state.startX = e.touches[0].clientX - state.ox
+          state.startY = e.touches[0].clientY - state.oy
+        } else if (e.touches.length === 2) {
+          const t = e.touches
+          state.startDist = Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
+          state.startScale = state.scale
+        }
+      }, { passive: true })
+
+      bg.addEventListener('touchmove', e => {
+        if (e.touches.length === 1) {
+          state.ox = e.touches[0].clientX - state.startX
+          state.oy = e.touches[0].clientY - state.startY
+        } else if (e.touches.length === 2) {
+          const t = e.touches
+          const d = Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
+          state.scale = Math.min(3, Math.max(0.5, state.startScale * (d / state.startDist)))
+        }
+        update()
+      }, { passive: true })
+
+      /* mouse */
+      bg.addEventListener('mousedown', e => {
+        state.dragging = true
+        state.startX = e.clientX - state.ox
+        state.startY = e.clientY - state.oy
+        bg.style.cursor = 'grabbing'
       })
 
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.bottom-nav-pill')) {
-          popup.classList.remove('open')
-        }
+      document.addEventListener('mousemove', e => {
+        if (!state.dragging) return
+        state.ox = e.clientX - state.startX
+        state.oy = e.clientY - state.startY
+        update()
       })
+
+      document.addEventListener('mouseup', () => {
+        if (state.dragging) { state.dragging = false; bg.style.cursor = 'grab' }
+      })
+
+      /* zoom controls */
+      const slider = overlay.querySelector('#heroCropSlider')
+      slider.addEventListener('input', () => {
+        state.scale = slider.value / 100
+        update()
+      })
+      overlay.querySelector('#heroCropZoomOut').addEventListener('click', () => {
+        state.scale = Math.max(0.5, state.scale - 0.25)
+        update()
+      })
+      overlay.querySelector('#heroCropZoomIn').addEventListener('click', () => {
+        state.scale = Math.min(3, state.scale + 0.25)
+        update()
+      })
+      overlay.querySelector('#heroCropDone').addEventListener('click', () => {
+        this._heroData = { dataUrl, scale: state.scale, offsetX: state.ox, offsetY: state.oy }
+        this._saveHeroImage()
+        this._applyHeroImage()
+        overlay.remove()
+      })
+      bg.style.cursor = 'grab'
+      update()
+    })
+  }
+
+  _applyHeroImage() {
+    const hero = document.querySelector('.dashboard-hero')
+    if (!hero) return
+    if (this._heroData) {
+      hero.classList.add('has-image')
+      hero.style.backgroundImage = `url(${this._heroData.dataUrl})`
+      hero.style.backgroundSize = `${this._heroData.scale * 100}%`
+      hero.style.backgroundPosition = `calc(50% + ${this._heroData.offsetX}px) calc(50% + ${this._heroData.offsetY}px)`
+      hero.style.backgroundRepeat = 'no-repeat'
+    } else {
+      hero.classList.remove('has-image')
+      hero.style.backgroundImage = ''
+      hero.style.backgroundSize = ''
+      hero.style.backgroundPosition = ''
+      hero.style.backgroundRepeat = ''
     }
   }
 
@@ -333,6 +545,9 @@ export class GridView extends Component {
 
     el.innerHTML = this._dashboardHTML(userName) + html
 
+    const heroEl = el.querySelector('.dashboard-hero')
+    if (heroEl) heroEl.onclick = () => this._handleHeroPick()
+
     if (!this._animDone) {
       el.querySelectorAll('.grid-section').forEach(s => s.classList.add('grid-section-anim'))
       el.querySelectorAll('.grid-item').forEach(s => s.classList.add('grid-item-anim'))
@@ -363,7 +578,13 @@ export class GridView extends Component {
     const conn = navigator.connection?.effectiveType
     const statusClass = !online ? 'offline' : (conn === 'slow-2g' || conn === '2g' ? 'weak' : 'online')
     const firstLetter = (userName || 'U').charAt(0).toUpperCase()
-    return `<div class="dashboard-hero" style="background:${this._heroGradient}"></div>
+    let heroStyle
+    if (this._heroData) {
+      heroStyle = `background-image:url(${this._heroData.dataUrl});background-size:${this._heroData.scale * 100}%;background-position:calc(50% + ${this._heroData.offsetX}px) calc(50% + ${this._heroData.offsetY}px);background-repeat:no-repeat`
+    } else {
+      heroStyle = `background:${this._heroGradient}`
+    }
+    return `<div class="dashboard-hero${this._heroData ? ' has-image' : ''}" style="${heroStyle}"></div>
     <div class="grid-dashboard">
       <div class="dashboard-header">
         <div class="dashboard-meta">
@@ -375,11 +596,7 @@ export class GridView extends Component {
           <span class="dashboard-avatar-status ${statusClass}"></span>
         </div>
       </div>
-      <div class="dashboard-actions">
-        <button class="wb-btn" data-action="note" title="New Note"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg> New Note</button>
-        <button class="wb-btn" data-action="import-file" title="Import File"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg> Import File</button>
-        <button class="wb-btn" data-action="camera" title="Take Picture"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg> Take Picture</button>
-      </div>
+
     </div>`
   }
 
@@ -863,6 +1080,27 @@ export class GridView extends Component {
 
   async _reimportStaleFile(entry) {
     if (window.Capacitor?.isNativePlatform?.()) {
+      // Transparently restore from persisted Data directory — no picker needed
+      if (entry._fn && window.Capacitor?.Plugins?.Filesystem) {
+        try {
+          const fs = window.Capacitor.Plugins.Filesystem
+          const r = await fs.readFile({ path: entry._fn, directory: 'Data' })
+          if (r?.data) {
+            const ext = entry._fn.split('.').pop().toLowerCase()
+            entry._blobUrl = this._base64ToBlobUrl(r.data, ext)
+            delete entry._stale
+            delete entry.thumbnail
+            const files = window.getExternalFiles?.() || []
+            window.saveExternalFiles?.(files)
+            this.state.setState('externalFiles', files)
+            await this._generateThumbnail(entry)
+            if (window.renderGridView) window.renderGridView()
+            return true
+          }
+        } catch (e) {
+          console.warn('[Reimport] Transparent restore failed, falling back to picker:', e)
+        }
+      }
       try {
         const fp = window.Capacitor.Plugins.FilePicker
         if (!fp) throw new Error('FilePicker plugin not available')
@@ -1062,6 +1300,9 @@ export class GridView extends Component {
       if (!isElectron && entry.path && entry.path.startsWith('blob:')) {
         entry._stale = true
         dirty = true
+      } else if (!isElectron && entry._stale) {
+        delete entry._stale
+        dirty = true
       }
       if (isElectron && entry.path && !entry._stale) {
         try {
@@ -1083,6 +1324,30 @@ export class GridView extends Component {
       window.saveExternalFiles?.(ext)
       this.state.setState('externalFiles', ext)
       if (window.renderSidebar) window.renderSidebar()
+    }
+  }
+
+  async _restoreBlobUrls() {
+    if (!window.Capacitor?.isNativePlatform?.() || !window.Capacitor?.Plugins?.Filesystem) return
+    const files = window.getExternalFiles?.() || []
+    const fs = window.Capacitor.Plugins.Filesystem
+    let dirty = false
+    for (const entry of files) {
+      const isImage = entry.name && /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(entry.name)
+      if (!isImage || !entry._fn) continue
+      try {
+        const r = await fs.readFile({ path: entry._fn, directory: 'Data' })
+        if (!r?.data) continue
+        const ext = entry._fn.split('.').pop().toLowerCase()
+        entry._blobUrl = this._base64ToBlobUrl(r.data, ext)
+        dirty = true
+      } catch (e) {
+        console.warn('[RestoreBlob] Failed:', entry._fn, e)
+      }
+    }
+    if (dirty) {
+      window.saveExternalFiles?.(files)
+      this.state.setState('externalFiles', files)
     }
   }
 
@@ -1447,6 +1712,11 @@ export class GridView extends Component {
 
   async _openExternalImage(f) {
     if (!f.path) return
+    if (f._stale) {
+      f._stale = false
+      const ok = await this._reimportStaleFile(f)
+      if (!ok) return
+    }
     const el = document.getElementById('extImageElement')
     const errEl = document.getElementById('extImageError')
     if (!el) return

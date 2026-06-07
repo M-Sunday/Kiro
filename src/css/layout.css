@@ -2,9 +2,9 @@
 .sidebar {
     width: 240px; min-width: 240px;
     height: calc(100vh - 24px);
-    background: #fff; display: flex; flex-direction: column;
-    border-radius: 16px; border: 1px solid #e8e8ed;
-    box-shadow: 0 2px 20px rgba(0,0,0,0.03);
+    background: #f2f2f7; display: flex; flex-direction: column;
+    border-radius: 16px; border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     transition: transform 0.25s ease, opacity 0.25s ease;
     overflow: hidden; z-index: 100;
     position: fixed; top: 12px; left: 12px;
@@ -95,15 +95,13 @@
 /* Search input — always visible, inline style */
 .dock-input {
     display: flex; align-items: center; gap: 4px;
-    background: transparent;
-    padding: 2px 8px;
-    border: none;
-    border-bottom: 1px solid transparent;
-    transition: border-color 0.15s;
+    background: #f2f2f7;
+    padding: 2px 10px;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 999px;
     flex: 1; max-width: 280px;
     margin: 0 4px;
 }
-.dock-input:focus-within { border-bottom-color: #8e8e93; }
 .dock-input input {
     flex: 1; border: none; padding: 4px 0;
     font-size: 13px; font-family: inherit;
@@ -114,34 +112,25 @@
 .dock-input input:disabled + button { opacity: 0.35; pointer-events: none; }
 .dock-input input::placeholder { color: #8e8e93; }
 .dock-input button {
-    width: 22px; height: 22px;
-    border: none; border-radius: 0;
-    background: transparent; color: inherit;
+    width: 24px; height: 24px;
+    border: none; border-radius: 50%;
+    background: #1d1d1f; color: #f5f5f7;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
+    padding: 0;
     transition: opacity 0.15s;
-    opacity: 0.5;
 }
-.dock-input button:hover { opacity: 1; }
+.dock-input button:hover { opacity: 0.8; }
+.dock-input button svg { width: 14px; height: 14px; }
 
 
 .content { overflow-y: auto; display: flex; align-items: flex-start; justify-content: center; padding: 20px; flex: 1; }
 .container { width: 100%; max-width: 520px; }
 
-body:has(#settingsOverlay.open) #settingsBtn { outline: 2px solid #1d1d1f; outline-offset: -1px; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.15); }
-
 /* ─── DESKTOP: bar at top, sidebar pushes chrome ──────────── */
-/* ─── SIDEBAR FOOTER ──────────────────────────────────── */
-.sidebar-footer { padding: 6px 12px 10px; border-top: 1px solid #e8e8ed; }
-.sidebar-footer-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: none; border-radius: 6px; background: transparent; font-size: 12.5px; font-family: inherit; font-weight: 500; color: #8e8e93; cursor: pointer; transition: background 0.15s, color 0.15s; }
-.sidebar-footer-btn + .sidebar-footer-btn { margin-top: 2px; }
-.sidebar-footer-btn:hover { background: #e8e8ed; color: #1d1d1f; }
-.sidebar-footer-btn .footer-icon { flex-shrink: 0; }
-.footer-icon { width: 14px; height: 14px; }
-.sidebar-footer-row { display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-.sidebar-footer-row .sidebar-footer-btn { flex: 1; }
-.sidebar-footer-row .sidebar-icon-btn { flex-shrink: 0; }
+/* ─── SIDEBAR SETTINGS ────────────────────────────────── */
+.sidebar-settings-bar { padding: 8px 12px 10px; display: flex; justify-content: flex-end; }
 body:has(#settingsOverlay.open) #settingsBtn { outline: 2px solid #1d1d1f; outline-offset: -1px; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
 
 /* ─── DESKTOP: open sidebar pushes UI chrome ──────────── */

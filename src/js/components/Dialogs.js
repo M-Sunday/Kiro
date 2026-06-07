@@ -9,6 +9,7 @@ export class Dialogs extends Component {
 
   mount(rootEl) {
     super.mount(rootEl)
+    window.openBookmarkDialog = () => this._openBookmarkDialog()
     this._bindEvents()
   }
 

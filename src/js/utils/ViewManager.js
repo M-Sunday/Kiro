@@ -40,7 +40,7 @@ export class ViewManager {
       if (dv) dv.classList.add('open')
       if (db) db.classList.add('active')
     } else if (view === 'card') {
-      if (ct) ct.style.display = ''
+      if (ct) ct.style.display = 'flex'
     } else if (view === 'landing') {
       if (sl) sl.style.display = 'flex'
     } else if (view === 'note') {

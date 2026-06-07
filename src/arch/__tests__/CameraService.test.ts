@@ -131,17 +131,4 @@ describe('CameraService', () => {
     })
   })
 
-  describe('_captureBrowser', () => {
-    afterEach(() => {
-      vi.restoreAllMocks()
-    })
-
-    it('should return null if getUserMedia fails', async () => {
-      const service = new CameraService(bus, state, mockPermissions)
-      ;(navigator.mediaDevices as any)?.getUserMedia?.mockRejectedValue(new Error('permission denied'))
-
-      const result = await (service as any)._captureBrowser()
-      expect(result).toBeNull()
-    })
-  })
 })

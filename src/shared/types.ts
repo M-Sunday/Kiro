@@ -122,7 +122,7 @@ export interface UIState {
   currentNoteId: string | null
 }
 
-export type ViewName = 'grid' | 'card' | 'note' | 'landing' | 'gallery' | 'settings' | 'none'
+export type ViewName = 'grid' | 'card' | 'note' | 'landing' | 'settings' | 'none'
 
 export interface PlatformState {
   isOnline: boolean

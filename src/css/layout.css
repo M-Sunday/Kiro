@@ -166,33 +166,4 @@ body:has(#settingsOverlay.open) #settingsBtn { outline: 2px solid #1d1d1f; outli
   }
 }
 
-/* ─── GALLERY VIEW OVERRIDES ─────────────────────────── */
-body.gallery-open { padding: 0; gap: 0; background: #111111; min-height: 100dvh; }
-body.gallery-open .sidebar {
-    position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: 12px;
-    height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-    z-index: 100; margin: 0;
-}
-body.gallery-open .sidebar.closed {
-    transform: translateX(-110%);
-    margin: 0;
-}
-body.gallery-open .main-area {
-    height: 100vh; border-radius: 0; border: none;
-}
-body.gallery-open .media-view {
-    border-radius: 0;
-}
 
-@media (min-width: 641px) {
-body.gallery-open .sidebar:not(.closed) ~ .main-area .gallery-bottom-nav {
-    left: 252px;
-    width: auto;
-}
-body.gallery-open .sidebar:not(.closed) ~ .main-area .gallery-coords {
-    left: calc(50% + 120px);
-}
-body.gallery-open .sidebar:not(.closed) ~ .main-area .gallery-search-bar {
-    width: 240px;
-}
-}

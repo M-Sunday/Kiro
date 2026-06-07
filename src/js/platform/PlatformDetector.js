@@ -7,19 +7,14 @@ export class PlatformDetector {
     return !!(typeof process !== 'undefined' && process.versions?.electron)
   }
 
-  static isPWA() {
-    return !!(navigator.standalone)
-  }
-
-  static isBrowser() {
-    return !PlatformDetector.isNativeAndroid() && !PlatformDetector.isElectron() && !PlatformDetector.isPWA()
+  static isDesktop() {
+    return PlatformDetector.isElectron()
   }
 
   static platformName() {
     if (PlatformDetector.isNativeAndroid()) return 'android'
     if (PlatformDetector.isElectron()) return 'electron'
-    if (PlatformDetector.isPWA()) return 'pwa'
-    return 'browser'
+    return 'unknown'
   }
 
   static isOnline() {

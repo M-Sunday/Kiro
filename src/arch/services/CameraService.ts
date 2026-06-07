@@ -37,7 +37,7 @@ export class CameraService {
     if (isElectron) {
       return this._captureElectron()
     }
-    return this._captureBrowser()
+    return null
   }
 
   private async _captureCapacitor(): Promise<{ dataUrl: string; name: string } | null> {
@@ -72,28 +72,7 @@ export class CameraService {
         return { dataUrl, name }
       }
     } catch {}
-    return this._captureBrowser()
-  }
-
-  private async _captureBrowser(): Promise<{ dataUrl: string; name: string } | null> {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
-      const video = document.createElement('video')
-      video.srcObject = stream
-      video.playsInline = true
-      await video.play()
-      const canvas = document.createElement('canvas')
-      canvas.width = video.videoWidth || 1280
-      canvas.height = video.videoHeight || 720
-      canvas.getContext('2d')!.drawImage(video, 0, 0)
-      stream.getTracks().forEach(t => t.stop())
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.9)
-      const name = `Photo_${new Date().toISOString().slice(0, 10)}_${Date.now()}.jpg`
-      return { dataUrl, name }
-    } catch (err) {
-      console.warn('[CameraService] Browser capture failed:', err)
-      return null
-    }
+    return null
   }
 
   private _store(photo: { dataUrl: string; name: string }): void {

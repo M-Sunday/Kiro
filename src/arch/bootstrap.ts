@@ -34,7 +34,6 @@ import { FilePicker } from '@capawesome/capacitor-file-picker'
 import { Clipboard } from '@capacitor/clipboard'
 
 import { MediaView } from './views/MediaView'
-import { GalleryViewMode } from './views/GalleryView'
 import { CardViewMode } from './views/CardView'
 import { SearchLandingView } from './views/SearchLandingView'
 
@@ -119,7 +118,6 @@ async function finishBootstrap(): Promise<void> {
 
   // ── Views ──
   router.register(new MediaView(bus, state))
-  router.register(new GalleryViewMode(bus, state))
   router.register(new CardViewMode(bus, state))
   router.register(new SearchLandingView(bus, state))
 

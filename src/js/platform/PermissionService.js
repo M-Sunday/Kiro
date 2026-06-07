@@ -26,7 +26,7 @@ export class PermissionService {
       return this._checkElectron(permission)
     }
 
-    return this._checkWeb(permission)
+    return 'denied'
   }
 
   async request(permission) {
@@ -40,7 +40,7 @@ export class PermissionService {
       return this._requestElectron(permission)
     }
 
-    return this._requestWeb(permission)
+    return 'denied'
   }
 
   async ensure(permission) {
@@ -69,16 +69,6 @@ export class PermissionService {
       } catch {}
       return
     }
-
-    try {
-      const perms = navigator.permissions
-      if (perms && perms.revoke) {
-        const result = await navigator.permissions.query({ name: 'notifications' })
-        if (result.state === 'denied') {
-          alert('Notifications are blocked in your browser settings. Please enable them in site permissions.')
-        }
-      }
-    } catch {}
   }
 
   getCached(permission) {
@@ -193,71 +183,6 @@ export class PermissionService {
       }
       return result
     }
-    return 'granted'
-  }
-
-  // ── Web / PWA ────────────────────────────────────────
-
-  async _checkWeb(permission) {
-    if (permission === 'notifications') {
-      if (typeof Notification === 'undefined') return 'denied'
-      const state = Notification.permission
-      this._cache[permission] = state
-      this._updateState(permission, state)
-      return state
-    }
-    if (permission === 'camera' || permission === 'microphone') {
-      try {
-        const perms = navigator.permissions
-        if (perms) {
-          const name = permission === 'camera' ? 'camera' : 'microphone'
-          const result = await navigator.permissions.query({ name })
-          this._cache[permission] = result.state
-          this._updateState(permission, result.state)
-          return result.state
-        }
-      } catch {}
-      return 'prompt'
-    }
-    // Storage, clipboard, etc — web grants by default
-    return 'granted'
-  }
-
-  async _requestWeb(permission) {
-    if (permission === 'notifications') {
-      if (typeof Notification === 'undefined') return 'denied'
-      const result = await Notification.requestPermission()
-      this._cache[permission] = result
-      this._updateState(permission, result)
-
-      if (result === 'granted') {
-        this.bus.emit('platform:permission:granted', { permission })
-      } else {
-        this.bus.emit('platform:permission:denied', { permission, canRequestAgain: true })
-      }
-      return result
-    }
-
-    if (permission === 'camera' || permission === 'microphone') {
-      try {
-        const constraints = {}
-        if (permission === 'camera') constraints.video = true
-        if (permission === 'microphone') constraints.audio = true
-        const stream = await navigator.mediaDevices.getUserMedia(constraints)
-        stream.getTracks().forEach(t => t.stop())
-        this._cache[permission] = 'granted'
-        this._updateState(permission, 'granted')
-        this.bus.emit('platform:permission:granted', { permission })
-        return 'granted'
-      } catch (err) {
-        const state = err.name === 'NotAllowedError' ? 'denied' : 'prompt'
-        this._cache[permission] = state
-        this._updateState(permission, state)
-        this.bus.emit('platform:permission:denied', { permission, canRequestAgain: state === 'prompt' })
-        return state
-      }
-    }
-
     return 'granted'
   }
 

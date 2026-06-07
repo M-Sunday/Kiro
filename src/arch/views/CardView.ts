@@ -36,9 +36,6 @@ export class CardViewMode implements View {
     if (el) el.style.display = 'none'
     const gv = document.getElementById('gridView')
     if (gv) gv.classList.remove('open')
-    const cg = document.getElementById('canvasGallery')
-    if (cg) cg.classList.remove('open')
-    document.body.classList.remove('gallery-open')
     const sl = document.getElementById('searchLanding')
     if (sl) sl.style.display = 'none'
     const ve = document.getElementById('extVideoElement') as HTMLVideoElement | null

@@ -33,7 +33,6 @@ import { GridView } from './components/GridView.js'
 import { SidebarView } from './components/SidebarView.js'
 import { CardStackView } from './components/CardStackView.js'
 import { CardView } from './components/CardView.js'
-import { GalleryView } from './components/GalleryView.js'
 import { NoteView } from './components/NoteView.js'
 import { ContextMenu } from './components/ContextMenu.js'
 import { Dialogs } from './components/Dialogs.js'
@@ -91,14 +90,6 @@ function patchLegacySavers(state, bus) {
 }
 
 async function bootstrap() {
-  // Nuke any stale service worker that might serve cached old HTML
-  try {
-    if (navigator.serviceWorker) {
-      const regs = await navigator.serviceWorker.getRegistrations()
-      for (const reg of regs) await reg.unregister()
-    }
-  } catch (_) {}
-
   const api = Api.getInstance()
   const bus = api.bus
   const state = api.state
@@ -146,7 +137,6 @@ async function bootstrap() {
   const cardStackView = new CardStackView()
   const cardView = new CardView()
   const noteView = new NoteView()
-  const galleryView = new GalleryView(bus, state)
   const contextMenu = new ContextMenu()
   const dialogs = new Dialogs()
   const settingsPanel = new SettingsPanel()
@@ -158,7 +148,6 @@ async function bootstrap() {
   services.register('cardStackView', cardStackView)
   services.register('cardView', cardView)
   services.register('noteView', noteView)
-  services.register('galleryView', galleryView)
   services.register('contextMenu', contextMenu)
   services.register('dialogs', dialogs)
   services.register('settingsPanel', settingsPanel)
@@ -186,8 +175,6 @@ async function bootstrap() {
   cardView.mount(document.querySelector('.card'))
   contextMenu.mount(document.getElementById('ctxMenu'))
   noteView.mount(document.getElementById('noteView'))
-  const galleryEl = document.getElementById('canvasGallery')
-  if (galleryEl) galleryView.mount(galleryEl)
   dialogs.mount(document.getElementById('folderDialog'))
   settingsPanel.mount(document.getElementById('settingsOverlay'))
   onboardingFlow.mount(document.getElementById('splash'))
@@ -211,7 +198,6 @@ async function bootstrap() {
       sidebarView,
       cardView,
       noteView,
-      galleryView,
       contextMenu,
       dialogs,
       settingsPanel,

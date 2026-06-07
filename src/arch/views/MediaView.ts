@@ -21,8 +21,6 @@ export class MediaView implements View {
     if (el) el.classList.add('open')
     const btn = document.getElementById('gridBtn')
     if (btn) btn.classList.add('active')
-    const deckBtn = document.getElementById('deckBtn')
-    if (deckBtn) deckBtn.classList.remove('active')
     this._hideAllOtherViews('grid')
     this._bus.emit('ui:icons:load-needed')
   }
@@ -43,7 +41,6 @@ export class MediaView implements View {
   private _hideAllOtherViews(except: string): void {
     const views: Record<string, string[]> = {
       noteView: ['noteView'],
-      gallery: ['canvasGallery', 'gallery-open'],
       textView: ['extTextView'],
       videoView: ['extVideoView'],
       imageView: ['extImageView'],

@@ -16,16 +16,12 @@ export class ViewManager {
     const sl = document.getElementById('searchLanding')
     const ct = document.querySelector('.content')
     const nv = document.getElementById('noteView')
-    const dv = document.getElementById('canvasGallery')
     const hv = document.getElementById('homeView')
     const gb = document.getElementById('gridBtn')
-    const db = document.getElementById('deckBtn')
 
     if (gv) gv.classList.remove('open')
-    if (dv) dv.classList.remove('open')
     if (hv) hv.style.display = 'none'
     if (gb) gb.classList.remove('active')
-    if (db) db.classList.remove('active')
     if (sl) sl.style.display = 'none'
     if (ct) ct.style.display = 'none'
     if (nv) nv.style.display = 'none'
@@ -38,10 +34,7 @@ export class ViewManager {
       document.body.classList.remove('view-grid')
     }
 
-    if (view === 'gallery') {
-      if (dv) dv.classList.add('open')
-      if (db) db.classList.add('active')
-    } else if (view === 'home') {
+    if (view === 'home') {
       if (gv) gv.classList.add('open')
       if (window.renderGridView) window.renderGridView()
     } else if (view === 'card') {
@@ -52,7 +45,7 @@ export class ViewManager {
       if (nv) nv.style.display = 'flex'
     }
 
-    if (window.syncViewTabs && ['grid', 'home', 'gallery'].includes(view)) {
+    if (window.syncViewTabs && ['grid', 'home'].includes(view)) {
       window.syncViewTabs(view)
     }
   }

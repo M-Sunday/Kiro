@@ -103,16 +103,6 @@ export class GridView extends Component {
       this._switchView('grid')
     })
 
-    this.listenTo(document.getElementById('deckBtn'), 'click', () => {
-      if (this._activeView === 'gallery') return
-      const anyExtOpen = this._anyExternalViewOpen()
-      if (anyExtOpen) {
-        this._hideAllViews()
-        this.rootEl.classList.add('open')
-      }
-      this._switchView('gallery')
-    })
-
     this.listenTo(document.getElementById('extTextClose'), 'click', () => this._closeExternalText())
     this.listenTo(document.getElementById('extVideoClose'), 'click', () => this._closeExternalVideo())
     this.listenTo(document.getElementById('extImageClose'), 'click', () => this._closeExternalImage())
@@ -160,11 +150,7 @@ export class GridView extends Component {
       }, 220)
     })
 
-    this.listenTo(document.getElementById('cameraClose'), 'click', () => this._closeCamera())
-    this.listenTo(document.getElementById('cameraCaptureBtn'), 'click', () => this._capturePhoto())
-    this.listenTo(document.getElementById('cameraFlipBtn'), 'click', () => this._flipCamera())
-    this.listenTo(document.getElementById('cameraRetakeBtn'), 'click', () => this._retakePhoto())
-    this.listenTo(document.getElementById('cameraUseBtn'), 'click', () => this._usePhoto())
+
 
   }
 
@@ -712,10 +698,7 @@ export class GridView extends Component {
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           Home
         </button>
-        <button class="view-tab" data-view="gallery">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          Gallery
-        </button>
+
       </div>
       <div id="homeView" class="home-view" style="display:none">
         <div class="home-view-content">
@@ -1157,31 +1140,6 @@ export class GridView extends Component {
           this._addExternalFiles(entries)
         }
       } catch {}
-      return
-    }
-
-    // Web / PWA fallback
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.multiple = true
-    input.onchange = (e) => {
-      const fileList = e.target.files
-      if (!fileList?.length) return
-      const entries = []
-      const videoExts = ['mp4', 'webm', 'mkv', 'avi', 'mov', 'flv', 'wmv', 'm4v', '3gp', 'mpeg', 'mpg']
-      const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico']
-      for (let i = 0; i < fileList.length; i++) {
-        const file = fileList[i]
-        if (!file) continue
-        const ext = file.name.split('.').pop().toLowerCase()
-        const isVideo = file.type.startsWith('video/') || videoExts.includes(ext)
-        const isImage = file.type.startsWith('image/') || imageExts.includes(ext)
-        const path = isVideo || isImage ? URL.createObjectURL(file) : file.name
-        entries.push({ name: file.name, path, size: file.size, mimeType: file.type })
-      }
-      if (entries.length) this._addExternalFiles(entries)
-    }
-    input.click()
   }
 
   _addExternalFiles(entries) {
@@ -1288,34 +1246,6 @@ export class GridView extends Component {
         return false
       }
     }
-    return new Promise((resolve) => {
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = '*/*'
-      input.onchange = (e) => {
-        const file = e.target.files?.[0]
-        if (!file) { resolve(false); return }
-        const ext = file.name.split('.').pop().toLowerCase()
-        const videoExts = ['mp4', 'webm', 'mkv', 'avi', 'mov', 'flv', 'wmv', 'm4v', '3gp', 'mpeg', 'mpg']
-        const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico']
-        const isVideo = file.type.startsWith('video/') || videoExts.includes(ext)
-        const isImage = file.type.startsWith('image/') || imageExts.includes(ext)
-        const path = isVideo || isImage ? URL.createObjectURL(file) : file.name
-        entry.name = file.name
-        entry.path = path
-        entry.size = file.size
-        entry.mimeType = file.type || ''
-        delete entry.thumbnail
-        delete entry._stale
-        const files = window.getExternalFiles?.() || []
-        window.saveExternalFiles?.(files)
-        this.state.setState('externalFiles', files)
-        this._generateThumbnail(entry)
-        if (window.renderGridView) window.renderGridView()
-        resolve(true)
-      }
-      input.click()
-    })
   }
 
   async _generateThumbnail(entry) {
@@ -1482,8 +1412,6 @@ export class GridView extends Component {
   _hideAllViews() {
     document.getElementById('noteView').style.display = 'none'
     document.getElementById('gridView').classList.remove('open')
-    document.getElementById('canvasGallery')?.classList.remove('open')
-    document.body.classList.remove('gallery-open')
     document.getElementById('extTextView').style.display = 'none'
     document.getElementById('extVideoView').style.display = 'none'
     document.getElementById('extImageView').style.display = 'none'
@@ -1499,24 +1427,12 @@ export class GridView extends Component {
   _switchView(view) {
     this._activeView = view
     const gv = this.rootEl
-    const cg = document.getElementById('canvasGallery')
     if (!gv.classList.contains('open')) gv.classList.add('open')
     this._applyViewState(view)
     if (view === 'grid') {
       document.getElementById('gridBtn')?.classList.add('active')
-      document.getElementById('deckBtn')?.classList.remove('active')
-      if (cg) cg.classList.remove('open')
-      document.body.classList.remove('gallery-open')
     } else if (view === 'home') {
       document.getElementById('gridBtn')?.classList.remove('active')
-      document.getElementById('deckBtn')?.classList.remove('active')
-      if (cg) cg.classList.remove('open')
-      document.body.classList.remove('gallery-open')
-    } else if (view === 'gallery') {
-      document.getElementById('deckBtn')?.classList.add('active')
-      document.getElementById('gridBtn')?.classList.remove('active')
-      if (cg) cg.classList.add('open')
-      document.body.classList.add('gallery-open')
     }
     this._syncTabs(view)
     const input = document.getElementById('kiroInput')
@@ -1611,90 +1527,6 @@ export class GridView extends Component {
         if (e.message?.includes?.('cancel')) return
         console.warn('[Camera] failed:', e)
       }
-      return
-    }
-    // Web fallback: browser camera
-    try {
-      const permService = this.api.services.get('permissionService')
-      if (permService) {
-        const granted = await permService.ensure('camera')
-        if (!granted) return
-      }
-      if (this._cameraStream) {
-        this._cameraStream.getTracks().forEach(t => t.stop())
-        this._cameraStream = null
-      }
-      const constraints = { video: { facingMode: 'environment' }, audio: false }
-      this._cameraStream = await navigator.mediaDevices.getUserMedia(constraints)
-      const video = document.getElementById('cameraPreview')
-      video.srcObject = this._cameraStream
-      this._cameraFacing = 'environment'
-      document.getElementById('cameraOverlay').style.display = 'flex'
-      document.getElementById('cameraPreviewShot').style.display = 'none'
-      if (window.loadIcons) window.loadIcons()
-    } catch (e) {
-      console.warn('[Camera] Failed to open:', e)
-    }
-  }
-
-  _closeCamera() {
-    document.getElementById('cameraOverlay').style.display = 'none'
-    document.getElementById('cameraPreviewShot').style.display = 'none'
-    if (this._cameraStream) {
-      this._cameraStream.getTracks().forEach(t => t.stop())
-      this._cameraStream = null
-    }
-  }
-
-  _capturePhoto() {
-    const video = document.getElementById('cameraPreview')
-    const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    const ctx = canvas.getContext('2d')
-    ctx.drawImage(video, 0, 0)
-    this._capturedDataUrl = canvas.toDataURL('image/jpeg', 0.92)
-    document.getElementById('cameraShotImg').src = this._capturedDataUrl
-    document.getElementById('cameraPreviewShot').style.display = 'flex'
-  }
-
-  _retakePhoto() {
-    document.getElementById('cameraPreviewShot').style.display = 'none'
-    this._capturedDataUrl = null
-  }
-
-  _usePhoto() {
-    if (!this._capturedDataUrl) return
-    const now = Date.now()
-    const name = 'Photo_' + new Date().toISOString().slice(0, 10) + '_' + now + '.jpg'
-    const ext = window.getExternalFiles?.() || []
-    const id = '_ext_' + now
-    const mimeType = 'image/jpeg'
-    const data = this._capturedDataUrl.split(',')[1]
-    const size = Math.round(data.length * 0.75)
-    const entry = { id, name, path: this._capturedDataUrl, size, mimeType, added: now, blurred: false, thumbnail: this._capturedDataUrl }
-    ext.push(entry)
-    window.saveExternalFiles?.(ext)
-    this.state.setState('externalFiles', ext)
-    if (window.renderSidebar) window.renderSidebar()
-    if (window.renderGridView) window.renderGridView()
-    this._closeCamera()
-  }
-
-  async _flipCamera() {
-    const newFacing = this._cameraFacing === 'environment' ? 'user' : 'environment'
-    if (this._cameraStream) {
-      this._cameraStream.getTracks().forEach(t => t.stop())
-      this._cameraStream = null
-    }
-    try {
-      const constraints = { video: { facingMode: newFacing }, audio: false }
-      this._cameraStream = await navigator.mediaDevices.getUserMedia(constraints)
-      document.getElementById('cameraPreview').srcObject = this._cameraStream
-      this._cameraFacing = newFacing
-    } catch (e) {
-      console.warn('[Camera] Flip failed:', e)
-    }
   }
 
   _toFileURL(p) {

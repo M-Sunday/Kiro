@@ -223,7 +223,7 @@ export class ExtrasService {
     el.innerHTML =
       'Viewport: ' + window.innerWidth + '\u00d7' + window.innerHeight + '<br>' +
       'Safe area top: ' + (getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)').trim() || '0px') + '<br>' +
-      'Platform: ' + (isCap ? 'Capacitor' : navigator.standalone ? 'PWA' : 'Browser') + '<br>' +
+      'Platform: ' + (isCap ? 'Capacitor' : 'Desktop') + '<br>' +
       'Online: ' + (navigator.onLine ? 'Yes' : 'No') + '<br>' +
       'Theme: ' + (document.body.className.match(/theme-(\w+)/)?.[1] || 'default')
   }

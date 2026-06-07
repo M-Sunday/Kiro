@@ -1,6 +1,6 @@
 /* ─── Kiro: Dashboard ──────────────────────────────── */
 .dashboard-hero {
-  height: 160px;
+  height: 180px;
   border-radius: 0 0 24px 24px;
   margin: -20px -20px 20px;
   cursor: pointer;
@@ -88,13 +88,15 @@
   padding: 0 24px 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 20px;
 }
 .dashboard-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e8e8ed;
 }
 .dashboard-meta {
   display: flex;

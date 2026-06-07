@@ -126,6 +126,7 @@ body.theme-black .dashboard-greeting { color: #f5f5f7; }
 body.theme-black .dashboard-date { color: #a1a1a6; }
 body.theme-black .dashboard-avatar { background: linear-gradient(135deg, #3a3a3c 0%, #48484a 100%); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 body.theme-black .dashboard-avatar-status { border-color: #1c1c1e; }
+body.theme-black .dashboard-header { border-bottom-color: #3a3a3c; }
 body.theme-black .dashboard-actions { border-top-color: #3a3a3c; }
 body.theme-black #onboarding { background: var(--splash-bg, #1c1c1e); }
 body.theme-black .note-view-footer { border-color: #3a3a3c; color: #a1a1a6; }
@@ -198,10 +199,6 @@ body.theme-black .view-tab:hover { background: rgba(255,255,255,0.1); }
 body.theme-black .view-tab.active { background: #3a3a3c; color: #f5f5f7; box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 0 0 0.5px rgba(255,255,255,0.06); }
 body.theme-black .home-view-empty svg { color: #48484a; }
 body.theme-black .home-view-empty-text { color: #636366; }
-
-/* ─── COMPACT MODE ──────────────────────────────────── */
-body.compact .content { padding: 20px 12px; }
-body.compact .grid-view { padding: 12px; }
 
 /* ─── BLACK THEME SPLASH TEXT ────────────────────────── */
 body.theme-black #splashText { color: #a1a1a6; }

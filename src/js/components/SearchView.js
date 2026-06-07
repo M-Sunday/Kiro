@@ -24,7 +24,7 @@ export class SearchView extends Component {
 
   _bindDOMEvents() {
     this.listenTo(document.getElementById('kiroInput'), 'keydown', (e) => {
-      if (e.key === 'Enter') this._handleSearch()
+      if (e.key === 'Enter') { e.preventDefault(); this._handleSearch() }
       if (e.key === 'Escape') e.target.blur()
     })
 
@@ -34,7 +34,10 @@ export class SearchView extends Component {
 
     this.listenTo(document.getElementById('kiroInput'), 'blur', (e) => {
       if (!e.target.value.trim()) {
-        this.bus.emit('ui:view:set', { view: 'grid' })
+        const landing = document.getElementById('searchLanding')
+        if (landing?.style.display === 'flex') {
+          this.bus.emit('ui:view:set', { view: 'grid' })
+        }
       }
     })
 
@@ -43,14 +46,15 @@ export class SearchView extends Component {
 
   _handleSearch() {
     const input = document.getElementById('kiroInput')
-    if (!input) return
-    const text = input.value.trim()
+    const mobileInput = document.getElementById('mobileKiroInput')
+    const text = (input?.value || mobileInput?.value || '').trim()
     if (!text) return
 
     this.bus.emit('ui:search:video', { url: text })
   }
 
   _onSearchStarted(videoId) {
+    this._searchText = (document.getElementById('kiroInput')?.value || document.getElementById('mobileKiroInput')?.value || '')
     this.bus.emit('ui:view:set', { view: 'card' })
     document.getElementById('thumbnail').src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
     document.getElementById('durationBadge').textContent = ''
@@ -60,7 +64,17 @@ export class SearchView extends Component {
     document.getElementById('channelName').textContent = ''
   }
 
+  _restoreSearchText() {
+    const input = document.getElementById('kiroInput')
+    const mobileInput = document.getElementById('mobileKiroInput')
+    if (this._searchText) {
+      if (input && !input.value) input.value = this._searchText
+      if (mobileInput && !mobileInput.value) mobileInput.value = this._searchText
+    }
+  }
+
   _onSearchComplete(videoId, metadata) {
+    this._restoreSearchText()
     document.getElementById('thumbnail').src = metadata.thumbnail
     document.getElementById('durationBadge').textContent = metadata.duration || '–'
     document.getElementById('durationBadge').className = 'badge'
@@ -73,6 +87,7 @@ export class SearchView extends Component {
   }
 
   _onSearchEnriched(videoId, metadata) {
+    this._restoreSearchText()
     document.getElementById('durationBadge').textContent = metadata.duration || '–'
     document.getElementById('videoTitle').textContent = metadata.title
     document.getElementById('channelName').textContent = metadata.channel

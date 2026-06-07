@@ -2,7 +2,7 @@ import { Component } from './base/Component.js'
 import { Api } from '../core/Api.js'
 
 const SETTINGS_KEYS = {
-  toolbar: ['showSidebarBtn', 'showKiroInput', 'compactMode'],
+  toolbar: ['showSidebarBtn', 'showKiroInput'],
   files: ['autoUpdateLinks', 'confirmDeletion', 'detectAllExt'],
   history: ['saveLinkHistory', 'clearOnExit']
 }
@@ -346,7 +346,7 @@ export class SettingsPanel extends Component {
     if (menuBtn) menuBtn.style.display = this._loadSetting('showSidebarBtn', true) ? '' : 'none'
     const dockInput = document.querySelector('.dock-input')
     if (dockInput) dockInput.style.display = this._loadSetting('showKiroInput', true) ? '' : 'none'
-    document.body.classList.toggle('compact', this._loadSetting('compactMode', false))
+
   }
 
   _toggleDlSettings(type, videoSettings, audioSettings) {

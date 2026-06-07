@@ -30,7 +30,6 @@ const server = http.createServer(serveFile).listen(PORT, () => {
 })
 
 function createWindow() {
-  try { session.defaultSession.clearServiceWorkers() } catch (_) {}
   const win = new BrowserWindow({
     width: 800,
     height: 600,
@@ -41,11 +40,6 @@ function createWindow() {
     }
   })
   win.loadURL('http://localhost:' + PORT + '/index.html')
-
-  // Clear stale SW registrations on every navigation/reload
-  win.webContents.on('did-finish-load', () => {
-    try { win.webContents.session.clearServiceWorkers() } catch (_) {}
-  })
 
   const template = [
     { role: 'fileMenu' },

@@ -64,7 +64,7 @@ Built with vanilla JS/CSS + TypeScript, powered by Vite, and wrapped with Electr
 
 ## Data
 
-Data is persisted in **IndexedDB** (desktop/browser) or **SQLite** (mobile via Capacitor), with automatic migration from legacy `localStorage`. Nothing is sent to any server.
+Data is persisted in **localStorage** with migration toward IndexedDB in progress. Nothing is sent to any server.
 
 Storage keys (legacy `localStorage` — migrated on first launch):
 - `kiroVideos` — video metadata
@@ -175,8 +175,7 @@ npm run cap:run:android   # Run on connected device
 - **TypeScript** — architecture layer with full type safety
 - **Vite** — dev server, production builds, and test runner
 - **Vitest** — unit testing with jsdom environment
-- **IndexedDB** — persistence (browser/Electron)
-- **SQLite** — persistence (mobile via Capacitor)
+- **localStorage** — persistence (migrating to IndexedDB)
 - **Custom SVG icons** — 50+ local icons (no CDN)
 - **yt-dlp** — video download engine (auto-downloaded on first use)
 - **ffmpeg** — audio/video processing for high-quality downloads (auto-downloaded when needed)

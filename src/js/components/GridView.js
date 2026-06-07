@@ -221,10 +221,11 @@ export class GridView extends Component {
     if (mobileInput) {
       mobileInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
+          e.preventDefault()
           const text = mobileInput.value.trim()
           if (text) this.bus.emit('ui:search:video', { url: text })
         }
-        if (e.key === 'Escape') exitSearch(); mobileInput.blur()
+        if (e.key === 'Escape') { exitSearch(); mobileInput.blur() }
       })
 
       mobileInput.addEventListener('focus', () => {
@@ -234,7 +235,10 @@ export class GridView extends Component {
 
       mobileInput.addEventListener('blur', (e) => {
         if (!e.target.value.trim()) {
-          this.bus.emit('ui:view:set', { view: 'grid' })
+          const landing = document.getElementById('searchLanding')
+          if (landing?.style.display === 'flex') {
+            this.bus.emit('ui:view:set', { view: 'grid' })
+          }
         }
       })
     }
@@ -1140,6 +1144,7 @@ export class GridView extends Component {
           this._addExternalFiles(entries)
         }
       } catch {}
+    }
   }
 
   _addExternalFiles(entries) {
@@ -1527,6 +1532,7 @@ export class GridView extends Component {
         if (e.message?.includes?.('cancel')) return
         console.warn('[Camera] failed:', e)
       }
+    }
   }
 
   _toFileURL(p) {

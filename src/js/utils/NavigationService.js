@@ -3,6 +3,7 @@ import { Api } from '../core/Api.js'
 const VIEW_NAMES = {
   GRID: 'grid',
   GALLERY: 'gallery',
+  HOME: 'home',
   CARD: 'card',
   LANDING: 'landing',
   NOTE: 'note',
@@ -33,6 +34,7 @@ export class NavigationService {
         document.querySelector('.content')?.style.display !== '') return 'card'
     if (document.getElementById('canvasGallery')?.classList.contains('open')) return 'gallery'
     if (document.getElementById('searchLanding')?.style.display === 'flex') return 'landing'
+    if (document.getElementById('homeView')?.style.display === 'flex') return 'home'
     return 'grid'
   }
 
@@ -45,6 +47,7 @@ export class NavigationService {
         document.querySelector('.content')?.style.display !== '') return 'card'
     if (document.getElementById('canvasGallery')?.classList.contains('open')) return 'gallery'
     if (document.getElementById('searchLanding')?.style.display === 'flex') return 'landing'
+    if (document.getElementById('homeView')?.style.display === 'flex') return 'home'
     return 'grid'
   }
 
@@ -91,10 +94,13 @@ export class NavigationService {
     const ct = document.querySelector('.content')
     const nv = document.getElementById('noteView')
     const dv = document.getElementById('canvasGallery')
+    const hv = document.getElementById('homeView')
     const extTV = document.getElementById('extTextView')
     const extVV = document.getElementById('extVideoView')
     const extIV = document.getElementById('extImageView')
     const ve = document.getElementById('extVideoElement')
+    const gb = document.getElementById('gridBtn')
+    const db = document.getElementById('deckBtn')
 
     if (extIV) extIV.style.display = 'none'
     if (extVV) { extVV.style.display = 'none'; if (ve) ve.pause() }
@@ -102,22 +108,29 @@ export class NavigationService {
     if (nv) nv.style.display = 'none'
     if (ct) ct.style.display = 'none'
     if (sl) sl.style.display = 'none'
+    if (hv) hv.style.display = 'none'
     if (gv) gv.classList.remove('open')
     if (dv) dv.classList.remove('open')
     document.body.classList.remove('gallery-open')
 
     if (target === 'grid') {
       if (gv) gv.classList.add('open')
-      const gb = document.getElementById('gridBtn')
       if (gb) gb.classList.add('active')
-      const db = document.getElementById('deckBtn')
       if (db) db.classList.remove('active')
       if (window.renderGridView) window.renderGridView()
+      if (window.syncViewTabs) window.syncViewTabs('grid')
+    } else if (target === 'home') {
+      if (gv) gv.classList.add('open')
+      if (window.renderGridView) window.renderGridView()
+      if (gb) gb.classList.remove('active')
+      if (db) db.classList.remove('active')
+      if (window.syncViewTabs) window.syncViewTabs('home')
     } else if (target === 'gallery') {
       if (dv) dv.classList.add('open')
       document.body.classList.add('gallery-open')
       if (db) db.classList.add('active')
       if (gb) gb.classList.remove('active')
+      if (window.syncViewTabs) window.syncViewTabs('gallery')
     } else if (target === 'card') {
       if (ct) ct.style.display = ''
       if (window.renderSidebar) window.renderSidebar()

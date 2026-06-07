@@ -150,6 +150,13 @@
   line-height: 1;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
+.dashboard-avatar-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
 .dashboard-avatar-status {
   position: absolute;
   bottom: 0;
@@ -462,6 +469,13 @@ body.theme-black .ext-image-close:hover { background: #3a3a3c; }
 }
 .canvas-gallery {
   cursor: none;
+}
+.canvas-gallery .home-view-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  cursor: default;
 }
 .gallery-canvas {
   position: absolute;

@@ -97,6 +97,22 @@ export class SettingsPanel extends Component {
       }
     })
 
+    // Hero image settings
+    this.listenTo(document.getElementById('settingsHeroChange'), 'click', () => {
+      this.bus.emit('settings:hero:change')
+    })
+    this.listenTo(document.getElementById('settingsHeroRemove'), 'click', () => {
+      this.bus.emit('settings:hero:remove')
+    })
+
+    // Avatar settings
+    this.listenTo(document.getElementById('settingsAvatarChange'), 'click', () => {
+      this.bus.emit('settings:avatar:change')
+    })
+    this.listenTo(document.getElementById('settingsAvatarRemove'), 'click', () => {
+      this.bus.emit('settings:avatar:remove')
+    })
+
     // Toolbar settings
     document.querySelectorAll('#pane-toolbar .settings-toggle').forEach((t, i) => {
       const on = this._loadSetting(SETTINGS_KEYS.toolbar[i], true)

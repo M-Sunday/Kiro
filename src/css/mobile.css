@@ -1,8 +1,10 @@
 /* ─── MOBILE / PWA ───────────────────────────────────── */
 @media (max-width: 640px) {
+  ::-webkit-scrollbar { width: 0; height: 0; }
+  * { scrollbar-width: none; }
   body { padding: 0; gap: 0; min-height: 100dvh; }
 
-.sidebar {
+  .sidebar {
     top: calc(12px + env(safe-area-inset-top, 0px)); left: 12px;
     width: calc(100vw - 24px); max-width: 360px;
     height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
@@ -86,10 +88,18 @@
   .note-view-todos { padding: 0 12px 8px; }
   .note-view-footer { padding: 4px 12px 8px; }
 
+  .view-tab { height: 40px; font-size: 12px; gap: 6px; }
+  .view-tab svg { width: 14px; height: 14px; }
+
+  .home-view { padding: 16px 0; }
+  .home-view-empty svg { width: 40px; height: 40px; }
+  .home-view-empty-text { font-size: 14px; }
+  .grid-sections { padding: 8px 0; }
+
   .dashboard-hero { margin: 0 0 16px; height: 140px; border-radius: 0; }
-  .grid-dashboard { padding: 0 12px 16px; gap: 10px; }
+  .grid-dashboard { padding: 0 12px 16px; gap: 8px; }
   .dashboard-greeting { font-size: 17px; }
-  .dashboard-avatar { width: 52px; height: 52px; font-size: 22px; }
+  .dashboard-avatar, .dashboard-avatar-img { width: 52px; height: 52px; font-size: 22px; }
   .dashboard-avatar-wrap { margin-top: -26px; }
   .dashboard-avatar-status { width: 9px; height: 9px; border-width: 1.5px; }
   .dashboard-actions { padding-top: 12px; }

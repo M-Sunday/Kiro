@@ -40,6 +40,8 @@ export class GridView extends Component {
     this._imageViewState = null
     this._heroGradient = HERO_GRADIENTS[Math.floor(Math.random() * HERO_GRADIENTS.length)]
     this._heroData = null
+    this._avatarData = null
+    this._activeView = 'grid'
 
     this.state.subscribe('videos', () => this.render())
     this.state.subscribe('folders', () => this.render())
@@ -52,6 +54,10 @@ export class GridView extends Component {
 
     this.on('ui:grid:refresh', () => this.render())
     this.on('ui:camera:open', () => this._handleCameraOpen())
+    this.on('settings:hero:change', () => this._handleHeroPick())
+    this.on('settings:hero:remove', () => this._clearHeroImage())
+    this.on('settings:avatar:change', () => this._handleAvatarPick())
+    this.on('settings:avatar:remove', () => this._clearAvatarImage())
 
     this._exposeGlobals()
   }
@@ -71,6 +77,7 @@ export class GridView extends Component {
     window.openExternalImage = (f) => this._openExternalImage(f)
     window.closeExternalImage = () => this._closeExternalImage()
     window.backfillExtThumbnails = () => this._backfillThumbnails()
+    window.syncViewTabs = (view) => this._syncTabs(view)
   }
 
   mount(rootEl) {
@@ -81,37 +88,42 @@ export class GridView extends Component {
     this._backfillThumbnails()
     this._restoreBlobUrls()
     this._loadHeroImage()
+    this._loadAvatarImage()
   }
 
   _bindDOMEvents() {
     this.listenTo(document.getElementById('gridBtn'), 'click', () => {
-      const gv = this.rootEl
-      if (gv.classList.contains('open')) return
-      this._hideAllViews()
-      gv.classList.add('open')
-      document.getElementById('gridBtn')?.classList.add('active')
-      document.getElementById('deckBtn')?.classList.remove('active')
-      this.bus.emit('ui:view:set', { view: 'grid' })
-      const input = document.getElementById('kiroInput')
-      if (input) input.value = ''
-      this.render()
+      if (this._activeView === 'grid') return
+      const anyExtOpen = this._anyExternalViewOpen()
+      if (anyExtOpen) {
+        this._hideAllViews()
+        this.rootEl.classList.add('open')
+        this.render()
+      }
+      this._switchView('grid')
     })
 
     this.listenTo(document.getElementById('deckBtn'), 'click', () => {
-      const gv = document.getElementById('canvasGallery')
-      if (gv.classList.contains('open')) return
-      this._hideAllViews()
-      gv.classList.add('open')
-      document.body.classList.add('gallery-open')
-      document.getElementById('deckBtn')?.classList.add('active')
-      this.bus.emit('ui:view:set', { view: 'gallery' })
-      const input = document.getElementById('kiroInput')
-      if (input) input.value = ''
+      if (this._activeView === 'gallery') return
+      const anyExtOpen = this._anyExternalViewOpen()
+      if (anyExtOpen) {
+        this._hideAllViews()
+        this.rootEl.classList.add('open')
+      }
+      this._switchView('gallery')
     })
 
     this.listenTo(document.getElementById('extTextClose'), 'click', () => this._closeExternalText())
     this.listenTo(document.getElementById('extVideoClose'), 'click', () => this._closeExternalVideo())
     this.listenTo(document.getElementById('extImageClose'), 'click', () => this._closeExternalImage())
+
+    this.listenTo(this.rootEl, 'click', (e) => {
+      const tab = e.target.closest('.view-tab')
+      if (!tab) return
+      const view = tab.dataset.view
+      if (view === this._activeView) return
+      this._switchView(view)
+    })
 
     this.listenTo(document.getElementById('extVideoPlayBtn'), 'click', () => this._toggleVideoPlay())
     this.listenTo(document.getElementById('extVideoSkipBackBtn'), 'click', () => { this._videoSkip(-10); this._showSkipOverlay('skip-back') })
@@ -464,6 +476,94 @@ export class GridView extends Component {
     }
   }
 
+  _clearHeroImage() {
+    this._heroData = null
+    this._heroGradient = HERO_GRADIENTS[Math.floor(Math.random() * HERO_GRADIENTS.length)]
+    this._applyHeroImage()
+    this._saveHeroImage()
+    this.render()
+  }
+
+  _loadAvatarImage() {
+    const api = Api.getInstance()
+    const repo = api.getRepository('settings')
+    Promise.resolve(repo.get('avatarImage')).then(saved => {
+      if (saved) {
+        this._avatarData = saved
+        this.render()
+      }
+    }).catch(() => {})
+  }
+
+  _saveAvatarImage() {
+    const api = Api.getInstance()
+    const repo = api.getRepository('settings')
+    Promise.resolve(repo.set('avatarImage', this._avatarData)).catch(() => {})
+  }
+
+  _handleAvatarPick() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+      this._compressAvatar(file)
+    }
+    input.click()
+  }
+
+  _compressAvatar(file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const maxDim = 400
+        let w = img.width, h = img.height
+        if (w > maxDim || h > maxDim) {
+          const ratio = Math.min(maxDim / w, maxDim / h)
+          w *= ratio; h *= ratio
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = w; canvas.height = h
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+        this._avatarData = { dataUrl: canvas.toDataURL('image/jpeg', 0.85) }
+        this._saveAvatarImage()
+        this.render()
+      }
+      img.src = e.target.result
+    }
+    reader.readAsDataURL(file)
+  }
+
+  _applyAvatarImage() {
+    const wrap = document.querySelector('.dashboard-avatar-wrap')
+    if (!wrap) return
+    const existing = wrap.querySelector('.dashboard-avatar-img')
+    if (this._avatarData) {
+      const avatar = wrap.querySelector('.dashboard-avatar')
+      if (avatar) avatar.style.display = 'none'
+      if (!existing) {
+        const img = document.createElement('img')
+        img.className = 'dashboard-avatar-img'
+        img.alt = 'Avatar'
+        const status = wrap.querySelector('.dashboard-avatar-status')
+        wrap.insertBefore(img, status)
+      }
+      wrap.querySelector('.dashboard-avatar-img').src = this._avatarData.dataUrl
+    } else {
+      if (existing) existing.remove()
+      const avatar = wrap.querySelector('.dashboard-avatar')
+      if (avatar) avatar.style.display = ''
+    }
+  }
+
+  _clearAvatarImage() {
+    this._avatarData = null
+    this._saveAvatarImage()
+    this.render()
+  }
+
   _openMobileFolderDialog() {
     const input = document.getElementById('folderNameInput')
     if (input) input.value = ''
@@ -543,7 +643,7 @@ export class GridView extends Component {
       html += '</div></div>'
     }
 
-    el.innerHTML = this._dashboardHTML(userName) + html
+    el.innerHTML = this._dashboardHTML(userName) + `<div class="grid-sections" id="gridSections">${html}</div>`
 
     const heroEl = el.querySelector('.dashboard-hero')
     if (heroEl) heroEl.onclick = () => this._handleHeroPick()
@@ -567,6 +667,7 @@ export class GridView extends Component {
     this._updateBatchBar()
 
     this.bus.emit('ui:icons:load-needed')
+    this._applyViewState(this._activeView)
   }
 
   _dashboardHTML(userName) {
@@ -577,12 +678,18 @@ export class GridView extends Component {
     const online = navigator.onLine
     const conn = navigator.connection?.effectiveType
     const statusClass = !online ? 'offline' : (conn === 'slow-2g' || conn === '2g' ? 'weak' : 'online')
-    const firstLetter = (userName || 'U').charAt(0).toUpperCase()
     let heroStyle
     if (this._heroData) {
       heroStyle = `background-image:url(${this._heroData.dataUrl});background-size:${this._heroData.scale * 100}%;background-position:calc(50% + ${this._heroData.offsetX}px) calc(50% + ${this._heroData.offsetY}px);background-repeat:no-repeat`
     } else {
       heroStyle = `background:${this._heroGradient}`
+    }
+    let avatarHtml
+    if (this._avatarData) {
+      avatarHtml = `<img class="dashboard-avatar-img" src="${this._avatarData.dataUrl}" alt="Avatar">`
+    } else {
+      const firstLetter = (userName || 'U').charAt(0).toUpperCase()
+      avatarHtml = `<div class="dashboard-avatar">${firstLetter}</div>`
     }
     return `<div class="dashboard-hero${this._heroData ? ' has-image' : ''}" style="${heroStyle}"></div>
     <div class="grid-dashboard">
@@ -592,11 +699,32 @@ export class GridView extends Component {
           <div class="dashboard-date">${dateStr}</div>
         </div>
         <div class="dashboard-avatar-wrap">
-          <div class="dashboard-avatar">${firstLetter}</div>
+          ${avatarHtml}
           <span class="dashboard-avatar-status ${statusClass}"></span>
         </div>
       </div>
-
+      <div class="view-tabs" id="viewTabs">
+        <button class="view-tab active" data-view="grid">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Grid
+        </button>
+        <button class="view-tab" data-view="home">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Home
+        </button>
+        <button class="view-tab" data-view="gallery">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Gallery
+        </button>
+      </div>
+      <div id="homeView" class="home-view" style="display:none">
+        <div class="home-view-content">
+          <div class="home-view-empty">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <p class="home-view-empty-text">Your home view is empty</p>
+          </div>
+        </div>
+      </div>
     </div>`
   }
 
@@ -1368,6 +1496,62 @@ export class GridView extends Component {
     this._resetImageZoom()
   }
 
+  _switchView(view) {
+    this._activeView = view
+    const gv = this.rootEl
+    const cg = document.getElementById('canvasGallery')
+    if (!gv.classList.contains('open')) gv.classList.add('open')
+    this._applyViewState(view)
+    if (view === 'grid') {
+      document.getElementById('gridBtn')?.classList.add('active')
+      document.getElementById('deckBtn')?.classList.remove('active')
+      if (cg) cg.classList.remove('open')
+      document.body.classList.remove('gallery-open')
+    } else if (view === 'home') {
+      document.getElementById('gridBtn')?.classList.remove('active')
+      document.getElementById('deckBtn')?.classList.remove('active')
+      if (cg) cg.classList.remove('open')
+      document.body.classList.remove('gallery-open')
+    } else if (view === 'gallery') {
+      document.getElementById('deckBtn')?.classList.add('active')
+      document.getElementById('gridBtn')?.classList.remove('active')
+      if (cg) cg.classList.add('open')
+      document.body.classList.add('gallery-open')
+    }
+    this._syncTabs(view)
+    const input = document.getElementById('kiroInput')
+    if (input) input.value = ''
+    this.bus.emit('ui:view:set', { view })
+  }
+
+  _applyViewState(view) {
+    const gs = document.getElementById('gridSections')
+    const hv = document.getElementById('homeView')
+    if (gs) gs.style.display = view === 'grid' ? '' : 'none'
+    if (hv) hv.style.display = view === 'home' ? 'flex' : 'none'
+  }
+
+  _anyExternalViewOpen() {
+    const extText = document.getElementById('extTextView')
+    const extVideo = document.getElementById('extVideoView')
+    const extImage = document.getElementById('extImageView')
+    const note = document.getElementById('noteView')
+    const card = document.querySelector('.content')
+    const landing = document.getElementById('searchLanding')
+    if (extText?.style.display === 'flex') return true
+    if (extVideo?.style.display === 'flex') return true
+    if (extImage?.style.display === 'flex') return true
+    if (note?.style.display === 'flex') return true
+    if (card && card.style.display !== 'none' && card.style.display !== '') return true
+    if (landing?.style.display === 'flex') return true
+    return false
+  }
+
+  _syncTabs(view) {
+    const tabs = this.rootEl?.querySelectorAll('.view-tab')
+    if (tabs) tabs.forEach(t => t.classList.toggle('active', t.dataset.view === view))
+  }
+
   _openExternalText(f) {
     if (!f.path) return
     const isElectron = typeof process !== 'undefined' && process.versions?.electron
@@ -1388,7 +1572,9 @@ export class GridView extends Component {
   _closeExternalText() {
     document.getElementById('extTextContent').textContent = ''
     this._hideAllViews()
-    document.getElementById('gridView').classList.add('open')
+    this.rootEl.classList.add('open')
+    this.render()
+    this._switchView('grid')
     window.__navigation?.replace('grid')
   }
 
@@ -1568,7 +1754,8 @@ export class GridView extends Component {
     const body = document.querySelector('.ext-video-body')
     if (body) body.style.aspectRatio = ''
     this._hideAllViews()
-    document.getElementById('gridView').classList.add('open')
+    this.rootEl.classList.add('open')
+    this._switchView('grid')
     window.__navigation?.replace('grid')
   }
 
@@ -1774,7 +1961,8 @@ export class GridView extends Component {
     if (errEl) errEl.style.display = 'none'
     this._resetImageZoom()
     this._hideAllViews()
-    document.getElementById('gridView').classList.add('open')
+    this.rootEl.classList.add('open')
+    this._switchView('grid')
     window.__navigation?.replace('grid')
   }
 

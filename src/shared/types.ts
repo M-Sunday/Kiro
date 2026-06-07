@@ -92,7 +92,6 @@ export interface PermissionRecord {
 // ─── Settings ─────────────────────────────────────────────
 
 export interface AppSettings {
-  frosted: boolean
   showSidebarBtn: boolean
   showKiroInput: boolean
   compactMode: boolean

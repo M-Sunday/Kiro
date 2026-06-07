@@ -13,11 +13,6 @@
 
 .sidebar-backdrop { display: none; }
 
-.sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 0 0 6px; }
-.sidebar-header-left { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #86868b; letter-spacing: 0.5px; text-transform: uppercase; }
-
-.sidebar-header-right { display: flex; align-items: center; gap: 2px; }
-.sidebar-header-icon { width: 16px; height: 16px; color: #8e8e93; }
 .sidebar-icon-btn { background: none; border: none; cursor: pointer; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #8e8e93; transition: background 0.12s; }
 .sidebar-icon-btn:hover { background: #f5f5f7; color: #1d1d1f; }
 .sidebar-icon-btn.pinned { color: #1d1d1f; }
@@ -66,30 +61,85 @@
 /* ─── MAIN AREA ──────────────────────────────────────── */
 .main-area { flex: 1; display: flex; flex-direction: column; height: calc(100vh - 24px); overflow: hidden; }
 
-.top-bar { display: flex; align-items: center; gap: 10px; padding: 8px 14px; margin: 10px 10px 0; border-radius: 16px; background: #fff; border: 1px solid #e8e8ed; transition: margin-left 0.25s ease, margin-right 0.25s ease; }
+.bottom-dock {
+    display: flex; align-items: center;
+    gap: 0;
+    padding: 0 12px;
+    margin: 0;
+    transition: margin-left 0.25s ease, margin-right 0.25s ease;
+    flex-shrink: 0;
+    border-top: 1px solid rgba(128,128,128,0.12);
+    height: 38px;
+    justify-content: space-around;
+    position: relative; z-index: 2;
+}
 
 .media-view { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-.menu-btn { background: none; border: 1px solid #e8e8ed; border-radius: 8px; cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; color: #1d1d1f; }
-.menu-btn:hover { background: #f5f5f7; }
-.menu-btn.active { background: #e8e8ed; border-color: #d1d1d6; }
 
-.menu-btn-icon { width: 16px; height: 16px; color: #1d1d1f; }
+.dock-btn {
+    background: none; border: none; cursor: pointer;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: #8e8e93;
+    transition: color 0.12s;
+    padding: 0;
+    border-radius: 0;
+}
+.dock-btn:hover { color: #1d1d1f; }
+.dock-btn.active { color: var(--accent, #007aff); }
+.dock-icon { width: 20px; height: 20px; }
+.dock-icon-sm { width: 16px; height: 16px; }
 
-.top-bar-input { margin-left: auto; display: flex; align-items: center; gap: 6px; background: rgba(120,120,128,0.08); border-radius: 999px; padding: 4px 4px 4px 14px; border: 1px solid rgba(120,120,128,0.12); transition: border-color 0.15s, background 0.15s; min-width: 260px; position: relative; }
-.top-bar-input:focus-within { border-color: #1d1d1f; background: #fff; }
-.top-bar-input:focus-within input { width: 320px; }
-.top-bar-input input { width: 200px; border: none; padding: 6px 0; font-size: 13px; font-family: inherit; background: transparent; outline: none; color: #1d1d1f; transition: width 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.top-bar-input input:disabled { opacity: 0.35; cursor: not-allowed; }
-.top-bar-input input:disabled + button { opacity: 0.35; pointer-events: none; }
-.top-bar-input input::placeholder { color: #8e8e93; }
-.top-bar-input button { width: 26px; height: 26px; border: none; border-radius: 999px; background: #1d1d1f; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
-.top-bar-input button:hover { opacity: 0.8; }
-.top-bar-input button i { width: 14px; height: 14px; }
+.dock-grow { flex: 1; }
+
+/* Expanded link input — hidden by default */
+.dock-input {
+    display: none; align-items: center; gap: 6px;
+    background: rgba(120,120,128,0.08);
+    border-radius: 999px;
+    padding: 4px 4px 4px 14px;
+    border: 1px solid rgba(120,120,128,0.12);
+    transition: border-color 0.15s, background 0.15s;
+    flex: 1; max-width: 320px;
+    margin-left: 8px;
+}
+.dock-input.open { display: flex; }
+.dock-input:focus-within { border-color: #1d1d1f; background: #fff; }
+.dock-input input {
+    flex: 1; border: none; padding: 6px 0;
+    font-size: 13px; font-family: inherit;
+    background: transparent; outline: none;
+    color: #1d1d1f; min-width: 0;
+}
+.dock-input input:disabled { opacity: 0.35; cursor: not-allowed; }
+.dock-input input:disabled + button { opacity: 0.35; pointer-events: none; }
+.dock-input input::placeholder { color: #8e8e93; }
+.dock-input button {
+    width: 26px; height: 26px;
+    border: none; border-radius: 999px;
+    background: #1d1d1f; color: #fff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+}
+.dock-input button:hover { opacity: 0.8; }
+
+/* Transition when sidebar opens */
+.bottom-dock:not(.search-expanded) .dock-input { display: none; }
+.bottom-dock.bottom-dock:not(.search-expanded) .dock-btn { display: flex; }
+.bottom-dock.search-expanded .dock-btn { display: none; }
+.bottom-dock.search-expanded .dock-grow { display: none; }
+.bottom-dock.search-expanded .dock-input { display: flex; flex: 1; max-width: none; }
 
 
 .content { overflow-y: auto; display: flex; align-items: flex-start; justify-content: center; padding: 20px; flex: 1; }
 .container { width: 100%; max-width: 520px; }
 
+body:has(#settingsOverlay.open) #settingsBtn { outline: 2px solid #1d1d1f; outline-offset: -1px; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.15); }
+
+/* ─── DESKTOP: bar at top, sidebar pushes chrome ──────────── */
 /* ─── SIDEBAR FOOTER ──────────────────────────────────── */
 .sidebar-footer { padding: 6px 12px 10px; border-top: 1px solid #e8e8ed; }
 .sidebar-footer-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: none; border-radius: 6px; background: transparent; font-size: 12.5px; font-family: inherit; font-weight: 500; color: #8e8e93; cursor: pointer; transition: background 0.15s, color 0.15s; }
@@ -104,7 +154,7 @@ body:has(#settingsOverlay.open) #settingsBtn { outline: 2px solid #1d1d1f; outli
 
 /* ─── DESKTOP: open sidebar pushes UI chrome ──────────── */
 @media (min-width: 641px) {
-  .sidebar:not(.closed) ~ .main-area .top-bar {
+  .sidebar:not(.closed) ~ .main-area .bottom-dock {
     margin-left: 252px;
     margin-right: 12px;
   }
@@ -115,6 +165,24 @@ body:has(#settingsOverlay.open) #settingsBtn { outline: 2px solid #1d1d1f; outli
   .sidebar:not(.closed) ~ .main-area .ext-video-view,
   .sidebar:not(.closed) ~ .main-area .ext-image-view {
     margin-left: 252px;
+  }
+}
+
+@media (min-width: 641px) {
+  .bottom-dock {
+    order: -1;
+    border-top: none;
+    border-bottom: 1px solid rgba(128,128,128,0.12);
+    justify-content: flex-end;
+    height: auto;
+    padding: 4px 12px;
+  }
+  .bottom-dock .dock-grow { display: none; }
+  .bottom-dock .dock-btn { width: 26px; height: 26px; }
+  .bottom-dock .dock-icon { width: 16px; height: 16px; }
+  .sidebar:not(.closed) ~ .main-area .bottom-dock {
+    margin-left: calc(56px + 280px + 12px);
+    margin-right: 12px;
   }
 }
 
@@ -145,6 +213,6 @@ body.gallery-open .sidebar:not(.closed) ~ .main-area .gallery-coords {
     left: calc(50% + 120px);
 }
 body.gallery-open .sidebar:not(.closed) ~ .main-area .gallery-search-bar {
-    width: 280px;
+    width: 240px;
 }
 }

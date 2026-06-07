@@ -26,7 +26,7 @@ export class SettingsPanel extends Component {
   _bindEvents() {
     this.listenTo(document.getElementById('settingsBtn'), 'click', () => {
       document.getElementById('settingsOverlay')?.classList.add('open')
-      const icon = document.querySelector('#settingsBtn .sidebar-icon')
+      const icon = document.querySelector('#settingsBtn .sni')
       if (icon) { icon.classList.remove('spin'); void icon.offsetWidth; icon.classList.add('spin') }
       this._renderStorageInfo()
     })
@@ -95,31 +95,6 @@ export class SettingsPanel extends Component {
         const opt = document.querySelector(`.theme-option[data-theme="${prev}"]`)
         if (opt) opt.classList.add('active')
       }
-    })
-
-    // Frosted glass toggle
-    const frostedToggle = document.getElementById('frostedToggle')
-    const frostedIntensity = document.getElementById('frostedIntensity')
-    if (frostedToggle) {
-      const on = this._loadSetting('frosted', false)
-      if (on) frostedToggle.classList.add('on')
-      this._applyFrosted()
-      frostedToggle.addEventListener('click', () => {
-        this._saveSetting('frosted', frostedToggle.classList.contains('on'))
-        this._applyFrosted()
-      })
-    }
-
-    // Frosted intensity
-    document.querySelectorAll('.frosted-intensity-opt').forEach(opt => {
-      opt.addEventListener('click', function () {
-        document.querySelectorAll('.frosted-intensity-opt').forEach(o => o.classList.remove('active'))
-        this.classList.add('active')
-        const level = this.dataset.level
-        try { localStorage.setItem('frostedIntensity', level) } catch {}
-        document.body.className = document.body.className.replace(/\bfrosted-\w+/g, '').trim()
-        if (level !== 'normal') document.body.classList.add('frosted-' + level)
-      })
     })
 
     // Toolbar settings
@@ -279,7 +254,6 @@ export class SettingsPanel extends Component {
     this._initDeviceName()
     this._renderNSFWChips()
     this._applyToolbarSettings()
-    this._applyFrosted()
   }
 
   _applyTheme() {
@@ -354,26 +328,9 @@ export class SettingsPanel extends Component {
   _applyToolbarSettings() {
     const menuBtn = document.getElementById('menuBtn')
     if (menuBtn) menuBtn.style.display = this._loadSetting('showSidebarBtn', true) ? '' : 'none'
-    const topBarInput = document.querySelector('.top-bar-input')
-    if (topBarInput) topBarInput.style.display = this._loadSetting('showKiroInput', true) ? '' : 'none'
+    const dockInput = document.querySelector('.dock-input')
+    if (dockInput) dockInput.style.display = this._loadSetting('showKiroInput', true) ? '' : 'none'
     document.body.classList.toggle('compact', this._loadSetting('compactMode', false))
-  }
-
-  _applyFrosted() {
-    const on = this._loadSetting('frosted', false)
-    const toggle = document.getElementById('frostedToggle')
-    const intensity = document.getElementById('frostedIntensity')
-    if (toggle) {
-      if (on) toggle.classList.add('on'); else toggle.classList.remove('on')
-    }
-    document.body.classList.toggle('frosted', on)
-    if (intensity) intensity.classList.toggle('disabled', !on)
-    const savedLevel = (on ? (localStorage.getItem('frostedIntensity') || 'normal') : null)
-    document.querySelectorAll('.frosted-intensity-opt').forEach(o => {
-      o.classList.toggle('active', o.dataset.level === savedLevel)
-    })
-    document.body.className = document.body.className.replace(/\bfrosted-\w+/g, '').trim()
-    if (savedLevel && savedLevel !== 'normal') document.body.classList.add('frosted-' + savedLevel)
   }
 
   _toggleDlSettings(type, videoSettings, audioSettings) {

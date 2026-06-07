@@ -41,11 +41,10 @@
         body.native-android.theme-black { background: #2c2c2e; }
         body.native-android.theme-black .main-area { background: #1c1c1e; }
         body.native-android .sidebar { padding-top: 40px !important; }
-        body.native-android .top-bar { margin-top: calc(10px + max(24px, env(safe-area-inset-top, 0px))); }
-        body.native-android.frosted .top-bar { margin-top: 0; }
+        @media (min-width: 641px) {
+          body.native-android .bottom-dock { padding-top: max(0px, env(safe-area-inset-top, 0px)); }
+        }
 
-        body.native-android.frosted .media-view { padding-top: calc(46px + max(30px, env(safe-area-inset-top, 0px))) !important; }
-        body.native-android.frosted .top-bar { top: calc(10px + max(30px, env(safe-area-inset-top, 0px))); }
 
         #importLoader { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         #importLoader.show { opacity: 1; pointer-events: auto; }
@@ -161,7 +160,7 @@
                         <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                         <path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/>
                     </svg>
-                    New note
+                    New Note
                 </button>
                 <button class="sidebar-icon-btn" id="settingsBtn">
                     <i data-lucide="settings" class="sidebar-icon"></i>
@@ -173,24 +172,6 @@
 
     <!-- Main -->
     <div class="main-area" id="mainArea">
-        <div class="top-bar">
-            <button class="menu-btn" id="menuBtn">
-                <i data-lucide="panel-left" class="menu-btn-icon"></i>
-            </button>
-            <button class="menu-btn mr-6" id="gridBtn">
-                <i data-lucide="layout-dashboard" class="icon-lg"></i>
-            </button>
-            <button class="menu-btn mr-6" id="deckBtn">
-                <i data-lucide="layers" class="icon-lg"></i>
-            </button>
-            <div class="top-bar-input">
-                <input type="text" id="kiroInput" placeholder="Paste a link" spellcheck="false">
-                <button id="kiroBtn">
-                    <i data-lucide="arrow-right"></i>
-                </button>
-            </div>
-        </div>
-
         <div class="media-view">
             <div class="content">
                 <div class="container">
@@ -310,6 +291,30 @@
                     <img class="ext-image-element" id="extImageElement" alt="">
                     <div class="ext-image-error" id="extImageError">Failed to load image</div>
                 </div>
+            </div>
+        </div>
+        <div class="bottom-dock">
+            <button class="dock-btn" id="menuBtn" title="Menu">
+                <i data-lucide="panel-left" class="dock-icon"></i>
+            </button>
+            <button class="dock-btn" id="gridBtn" title="Dashboard">
+                <i data-lucide="layout-dashboard" class="dock-icon"></i>
+            </button>
+            <button class="dock-btn" id="deckBtn" title="Deck">
+                <i data-lucide="layers" class="dock-icon"></i>
+            </button>
+            <div class="dock-grow"></div>
+            <button class="dock-btn mobile-search-btn" id="mobileSearchBtn" title="Search">
+                <i data-lucide="search" class="dock-icon"></i>
+            </button>
+            <button class="dock-btn" id="addBtn" title="Add link">
+                <i data-lucide="square-pen" class="dock-icon"></i>
+            </button>
+            <div class="dock-input">
+                <input type="text" id="kiroInput" placeholder="Paste a link" spellcheck="false">
+                <button id="kiroBtn">
+                    <i data-lucide="arrow-right" class="dock-icon-sm"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -517,27 +522,13 @@
                             <div class="theme-preview theme-black"></div>
                             <span>Black</span>
                         </div>
-                        <div class="theme-option" data-theme="shader">
-                            <div class="theme-preview theme-shader"></div>
-                            <span>Shader</span>
-                        </div>
                     </div>
                     <label class="settings-checkbox">
                         <input type="checkbox" id="systemTheme">
                         <span class="settings-checkbox-mark"></span>
                         <span>Have system theme</span>
                     </label>
-                    <div class="settings-plugin" style="margin-top:14px">
-                        <span class="settings-plugin-name">Frosted glass</span>
-                        <div class="settings-toggle" id="frostedToggle"></div>
-                    </div>
-                    <div class="frosted-intensity" id="frostedIntensity">
-                        <div class="frosted-intensity-options">
-                            <span class="frosted-intensity-opt" data-level="normal">Normal</span>
-                            <span class="frosted-intensity-opt" data-level="more">More</span>
-                            <span class="frosted-intensity-opt" data-level="extreme">Extreme</span>
-                        </div>
-                    </div>
+
                 </div>
                 <div class="settings-pane" id="pane-toolbar" style="display:none">
                     <div class="settings-pane-header">

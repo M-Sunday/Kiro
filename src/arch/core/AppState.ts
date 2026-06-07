@@ -17,7 +17,6 @@ const INITIAL_STATE: AppState = {
   blurAllNSFW: false,
   userName: '',
   settings: {
-    frosted: false,
     showSidebarBtn: true,
     showKiroInput: true,
     compactMode: false,

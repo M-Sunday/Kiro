@@ -307,6 +307,7 @@ async function bootstrap() {
     try {
       var sb = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar
       if (sb) {
+        sb.setOverlaysWebView({ overlay: true })
         function syncStyle() {
           sb.setStyle({ style: document.body.className.indexOf('theme-black') > -1 ? 'DARK' : 'LIGHT' })
         }

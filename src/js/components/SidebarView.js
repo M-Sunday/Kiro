@@ -1,4 +1,4 @@
-import { Component } from './base/Component.js'
+﻿import { Component } from './base/Component.js'
 import { Api } from '../core/Api.js'
 
 export class SidebarView extends Component {
@@ -100,7 +100,7 @@ export class SidebarView extends Component {
         if (!showAll && query && !n.title.toLowerCase().includes(query) && !(n.content || '').toLowerCase().includes(query)) continue
         const preview = this._stripHtml(n.content || '').replace(/\n/g, ' ').substring(0, 50)
         const noteIcon = n.todos && n.todos.length ? 'list-todo' : 'file-text'
-        html += '<div class="tree-item" data-note-id="' + n.id + '" draggable="true"><div class="tree-file"><i data-lucide="' + noteIcon + '" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">' + (n.title || 'Untitled') + '</span><span class="tree-sublabel">' + preview + (this._stripHtml(n.content || '').length > 50 ? '…' : '') + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
+        html += '<div class="tree-item" data-note-id="' + n.id + '" draggable="true"><div class="tree-file"><i data-lucide="' + noteIcon + '" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">' + (n.title || 'Untitled') + '</span><span class="tree-sublabel">' + preview + (this._stripHtml(n.content || '').length > 50 ? 'ÔÇª' : '') + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
       }
 
       for (const f of externalFiles) {
@@ -136,7 +136,7 @@ export class SidebarView extends Component {
         if (query && !n.title.toLowerCase().includes(query) && !(n.content || '').toLowerCase().includes(query)) continue
         const preview = this._stripHtml(n.content || '').replace(/\n/g, ' ').substring(0, 50)
         const noteIcon = n.todos && n.todos.length ? 'list-todo' : 'file-text'
-        html += '<div class="tree-item" data-note-id="' + n.id + '" draggable="true"><div class="tree-file"><i data-lucide="' + noteIcon + '" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">' + (n.title || 'Untitled') + '</span><span class="tree-sublabel">' + preview + (this._stripHtml(n.content || '').length > 50 ? '…' : '') + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
+        html += '<div class="tree-item" data-note-id="' + n.id + '" draggable="true"><div class="tree-file"><i data-lucide="' + noteIcon + '" class="tree-file-icon"></i><div class="tree-file-meta"><span class="tree-label">' + (n.title || 'Untitled') + '</span><span class="tree-sublabel">' + preview + (this._stripHtml(n.content || '').length > 50 ? 'ÔÇª' : '') + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
       }
       html += '</div></div>'
     }
@@ -431,3 +431,4 @@ export class SidebarView extends Component {
     return str.replace(/<[^>]*>/g, '')
   }
 }
+

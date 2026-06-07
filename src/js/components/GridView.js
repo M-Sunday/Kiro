@@ -4,6 +4,18 @@ import { Api } from '../core/Api.js'
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 
+const HERO_GRADIENTS = [
+  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+  'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+  'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+  'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',
+  'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+  'linear-gradient(135deg, #f5576c 0%, #ff6a88 100%)',
+]
+
 const SVG = {
   play: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>',
   pause: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/></svg>',
@@ -23,9 +35,10 @@ export class GridView extends Component {
     this.api = Api.getInstance()
     this.selectedItems = new Set()
     this._animDone = false
-    this._clockInterval = null
+    this._dateInterval = null
     this._currentImageBlobUrl = null
     this._imageViewState = null
+    this._heroGradient = HERO_GRADIENTS[Math.floor(Math.random() * HERO_GRADIENTS.length)]
 
     this.state.subscribe('videos', () => this.render())
     this.state.subscribe('folders', () => this.render())
@@ -222,13 +235,15 @@ export class GridView extends Component {
     if (!this._animDone) {
       el.querySelectorAll('.grid-section').forEach(s => s.classList.add('grid-section-anim'))
       el.querySelectorAll('.grid-item').forEach(s => s.classList.add('grid-item-anim'))
-      const wb = el.querySelector('.grid-dashboard')
-      if (wb) wb.classList.add('grid-section-anim')
+      const hero = el.querySelector('.dashboard-hero')
+      if (hero) hero.classList.add('grid-section-anim')
+      const dash = el.querySelector('.grid-dashboard')
+      if (dash) dash.classList.add('grid-section-anim')
     }
 
-    this._updateClock()
-    if (!this._clockInterval) {
-      this._clockInterval = setInterval(() => this._updateClock(), 30000)
+    this._updateDate()
+    if (!this._dateInterval) {
+      this._dateInterval = setInterval(() => this._updateDate(), 30000)
     }
 
     this._attachItemEvents(el, videos, bookmarks, directAccess, notes, externalFiles)
@@ -240,13 +255,26 @@ export class GridView extends Component {
 
   _dashboardHTML(userName) {
     const now = new Date()
-    const dayName = DAYS[now.getDay()].toUpperCase()
-    const monthName = MONTHS[now.getMonth()].toUpperCase()
-    const clock = `${dayName} • ${monthName} ${now.getDate()} • ${now.getFullYear()}`
-    return `<div class="grid-dashboard">
-      <div class="grid-dashboard-text">${userName ? userName + "'s Dashboard" : ''}</div>
-      <div class="grid-clock">${clock}</div>
-      <div class="grid-dashboard-actions">
+    const dayName = DAYS[now.getDay()]
+    const monthName = MONTHS[now.getMonth()]
+    const dateStr = `${dayName} • ${monthName} ${now.getDate()}, ${now.getFullYear()}`
+    const online = navigator.onLine
+    const conn = navigator.connection?.effectiveType
+    const statusClass = !online ? 'offline' : (conn === 'slow-2g' || conn === '2g' ? 'weak' : 'online')
+    const firstLetter = (userName || 'U').charAt(0).toUpperCase()
+    return `<div class="dashboard-hero" style="background:${this._heroGradient}"></div>
+    <div class="grid-dashboard">
+      <div class="dashboard-header">
+        <div class="dashboard-meta">
+          <div class="dashboard-greeting">${userName || 'Dashboard'}${userName ? "'s Dashboard" : ''}</div>
+          <div class="dashboard-date">${dateStr}</div>
+        </div>
+        <div class="dashboard-avatar-wrap">
+          <div class="dashboard-avatar">${firstLetter}</div>
+          <span class="dashboard-avatar-status ${statusClass}"></span>
+        </div>
+      </div>
+      <div class="dashboard-actions">
         <button class="wb-btn" data-action="note" title="New Note"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg> New Note</button>
         <button class="wb-btn" data-action="import-file" title="Import File"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg> Import File</button>
         <button class="wb-btn" data-action="camera" title="Take Picture"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg> Take Picture</button>
@@ -319,11 +347,11 @@ export class GridView extends Component {
     </div>`
   }
 
-  _updateClock() {
-    const c = this.rootEl?.querySelector('.grid-clock')
-    if (!c) return
+  _updateDate() {
+    const el = this.rootEl?.querySelector('.dashboard-date')
+    if (!el) return
     const d = new Date()
-    c.textContent = `${DAYS[d.getDay()].toUpperCase()} • ${MONTHS[d.getMonth()].toUpperCase()} ${d.getDate()} • ${d.getFullYear()}`
+    el.textContent = `${DAYS[d.getDay()]} • ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
   }
 
   _attachItemEvents(el, videos, bookmarks, directAccess, notes, externalFiles) {
@@ -1578,7 +1606,7 @@ export class GridView extends Component {
   }
 
   destroy() {
-    if (this._clockInterval) { clearInterval(this._clockInterval); this._clockInterval = null }
+    if (this._dateInterval) { clearInterval(this._dateInterval); this._dateInterval = null }
     super.destroy()
   }
 

@@ -31,7 +31,12 @@ export class ViewManager {
     if (view === 'grid') {
       if (gv) gv.classList.add('open')
       if (gb) gb.classList.add('active')
-    } else if (view === 'gallery') {
+      document.body.classList.add('view-grid')
+    } else {
+      document.body.classList.remove('view-grid')
+    }
+
+    if (view === 'gallery') {
       if (dv) dv.classList.add('open')
       if (db) db.classList.add('active')
     } else if (view === 'card') {

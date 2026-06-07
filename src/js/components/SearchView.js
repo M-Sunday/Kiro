@@ -29,48 +29,16 @@ export class SearchView extends Component {
     })
 
     this.listenTo(document.getElementById('kiroInput'), 'focus', () => {
-      document.querySelector('.bottom-dock')?.classList.add('search-expanded')
       this.bus.emit('ui:view:set', { view: 'landing' })
     })
 
     this.listenTo(document.getElementById('kiroInput'), 'blur', (e) => {
-      document.querySelector('.bottom-dock')?.classList.remove('search-expanded')
       if (!e.target.value.trim()) {
         this.bus.emit('ui:view:set', { view: 'grid' })
       }
     })
 
     this.listenTo(document.getElementById('kiroBtn'), 'click', () => this._handleSearch())
-
-    const mobileSearchBtn = document.getElementById('mobileSearchBtn')
-    if (mobileSearchBtn) {
-      this.listenTo(mobileSearchBtn, 'click', () => {
-        const input = document.getElementById('kiroInput')
-        if (input) {
-          input.focus()
-          document.querySelector('.bottom-dock')?.classList.add('search-expanded')
-          this.bus.emit('ui:view:set', { view: 'landing' })
-        }
-      })
-    }
-
-    const addBtn = document.getElementById('addBtn')
-    if (addBtn) {
-      this.listenTo(addBtn, 'click', () => {
-        const dock = document.querySelector('.bottom-dock')
-        const input = document.getElementById('kiroInput')
-        if (!dock || !input) return
-        const isExpanded = dock.classList.contains('search-expanded')
-        if (isExpanded) {
-          dock.classList.remove('search-expanded')
-          input.blur()
-        } else {
-          dock.classList.add('search-expanded')
-          input.focus()
-          this.bus.emit('ui:view:set', { view: 'landing' })
-        }
-      })
-    }
   }
 
   _handleSearch() {

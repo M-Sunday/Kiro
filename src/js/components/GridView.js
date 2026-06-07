@@ -75,6 +75,7 @@ export class GridView extends Component {
   mount(rootEl) {
     super.mount(rootEl)
     this._bindDOMEvents()
+    this._createBottomPill()
     this.render()
     this._backfillThumbnails()
   }
@@ -159,6 +160,106 @@ export class GridView extends Component {
     this.listenTo(document.getElementById('cameraRetakeBtn'), 'click', () => this._retakePhoto())
     this.listenTo(document.getElementById('cameraUseBtn'), 'click', () => this._usePhoto())
 
+  }
+
+  _createBottomPill() {
+    if (document.querySelector('.bottom-nav-pill')) return
+
+    const pill = document.createElement('div')
+    pill.className = 'bottom-nav-pill'
+    pill.innerHTML = `
+      <button class="pill-icon-btn" id="mobileSearchFocusBtn" title="Search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </button>
+      <div class="pill-input-wrap">
+        <input type="text" id="mobileKiroInput" placeholder="Search..." spellcheck="false">
+      </div>
+      <button class="pill-icon-btn" id="mobileAddBtn" title="Add">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      </button>
+      <div class="add-menu-popup" id="addMenuPopup">
+        <div class="add-menu-item" data-action="note">
+          <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg></span>
+          New note
+        </div>
+        <div class="add-menu-item" data-action="folder">
+          <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+          New folder
+        </div>
+        <div class="add-menu-item" data-action="import">
+          <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M15 3v4a1 1 0 0 0 1 1h4"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span>
+          Import file
+        </div>
+      </div>
+    `
+    document.body.appendChild(pill)
+    this._bindMobilePillEvents()
+  }
+
+  _bindMobilePillEvents() {
+    const mobileInput = document.getElementById('mobileKiroInput')
+    if (mobileInput) {
+      mobileInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const text = mobileInput.value.trim()
+          if (text) this.bus.emit('ui:search:video', { url: text })
+        }
+        if (e.key === 'Escape') mobileInput.blur()
+      })
+
+      mobileInput.addEventListener('focus', () => {
+        this.bus.emit('ui:view:set', { view: 'landing' })
+      })
+
+      mobileInput.addEventListener('blur', (e) => {
+        if (!e.target.value.trim()) {
+          this.bus.emit('ui:view:set', { view: 'grid' })
+        }
+      })
+    }
+
+    const focusBtn = document.getElementById('mobileSearchFocusBtn')
+    if (focusBtn) {
+      focusBtn.addEventListener('click', () => {
+        const input = document.getElementById('mobileKiroInput')
+        if (input) input.focus()
+      })
+    }
+
+    const addBtn = document.getElementById('mobileAddBtn')
+    const popup = document.getElementById('addMenuPopup')
+    if (addBtn && popup) {
+      addBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        popup.classList.toggle('open')
+      })
+
+      popup.addEventListener('click', (e) => {
+        const item = e.target.closest('.add-menu-item')
+        if (!item) return
+        const action = item.dataset.action
+        popup.classList.remove('open')
+        if (action === 'note') this._handleNewNote()
+        else if (action === 'folder') this._openMobileFolderDialog()
+        else if (action === 'import') this._importFile()
+      })
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.bottom-nav-pill')) {
+          popup.classList.remove('open')
+        }
+      })
+    }
+  }
+
+  _openMobileFolderDialog() {
+    const input = document.getElementById('folderNameInput')
+    if (input) input.value = ''
+    document.querySelectorAll('.folder-color').forEach(c => c.classList.remove('active'))
+    const first = document.querySelector('.folder-color')
+    if (first) first.classList.add('active')
+    document.getElementById('folderDialog')?.classList.add('open')
+    setTimeout(() => input?.focus(), 100)
   }
 
   render() {

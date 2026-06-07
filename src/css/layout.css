@@ -63,14 +63,15 @@
 
 .bottom-dock {
     display: flex; align-items: center;
-    gap: 0;
-    padding: 0 12px;
+    gap: 6px;
+    padding: 4px 12px;
     margin: 0;
     transition: margin-left 0.25s ease, margin-right 0.25s ease;
     flex-shrink: 0;
-    border-top: 1px solid rgba(128,128,128,0.12);
+    background: transparent;
+    border: none;
     height: 38px;
-    justify-content: space-around;
+    justify-content: flex-start;
     position: relative; z-index: 2;
 }
 
@@ -78,7 +79,7 @@
 
 .dock-btn {
     background: none; border: none; cursor: pointer;
-    width: 40px; height: 40px;
+    width: 32px; height: 32px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     color: #8e8e93;
@@ -88,50 +89,41 @@
 }
 .dock-btn:hover { color: #1d1d1f; }
 .dock-btn.active { color: var(--accent, #007aff); }
-.dock-icon { width: 20px; height: 20px; }
-.dock-icon-sm { width: 16px; height: 16px; }
+.dock-icon { width: 18px; height: 18px; }
+.dock-icon-sm { width: 14px; height: 14px; }
 
-.dock-grow { flex: 1; }
-
-/* Expanded link input — hidden by default */
+/* Search input — always visible, inline style */
 .dock-input {
-    display: none; align-items: center; gap: 6px;
-    background: rgba(120,120,128,0.08);
-    border-radius: 999px;
-    padding: 4px 4px 4px 14px;
-    border: 1px solid rgba(120,120,128,0.12);
-    transition: border-color 0.15s, background 0.15s;
-    flex: 1; max-width: 320px;
-    margin-left: 8px;
+    display: flex; align-items: center; gap: 4px;
+    background: transparent;
+    padding: 2px 8px;
+    border: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+    flex: 1; max-width: 280px;
+    margin: 0 4px;
 }
-.dock-input.open { display: flex; }
-.dock-input:focus-within { border-color: #1d1d1f; background: #fff; }
+.dock-input:focus-within { border-bottom-color: #8e8e93; }
 .dock-input input {
-    flex: 1; border: none; padding: 6px 0;
+    flex: 1; border: none; padding: 4px 0;
     font-size: 13px; font-family: inherit;
     background: transparent; outline: none;
-    color: #1d1d1f; min-width: 0;
+    color: inherit; min-width: 0;
 }
 .dock-input input:disabled { opacity: 0.35; cursor: not-allowed; }
 .dock-input input:disabled + button { opacity: 0.35; pointer-events: none; }
 .dock-input input::placeholder { color: #8e8e93; }
 .dock-input button {
-    width: 26px; height: 26px;
-    border: none; border-radius: 999px;
-    background: #1d1d1f; color: #fff;
+    width: 22px; height: 22px;
+    border: none; border-radius: 0;
+    background: transparent; color: inherit;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     transition: opacity 0.15s;
+    opacity: 0.5;
 }
-.dock-input button:hover { opacity: 0.8; }
-
-/* Transition when sidebar opens */
-.bottom-dock:not(.search-expanded) .dock-input { display: none; }
-.bottom-dock.bottom-dock:not(.search-expanded) .dock-btn { display: flex; }
-.bottom-dock.search-expanded .dock-btn { display: none; }
-.bottom-dock.search-expanded .dock-grow { display: none; }
-.bottom-dock.search-expanded .dock-input { display: flex; flex: 1; max-width: none; }
+.dock-input button:hover { opacity: 1; }
 
 
 .content { overflow-y: auto; display: flex; align-items: flex-start; justify-content: center; padding: 20px; flex: 1; }
@@ -153,7 +145,7 @@ body:has(#settingsOverlay.open) #settingsBtn { outline: 2px solid #1d1d1f; outli
 body:has(#settingsOverlay.open) #settingsBtn { outline: 2px solid #1d1d1f; outline-offset: -1px; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
 
 /* ─── DESKTOP: open sidebar pushes UI chrome ──────────── */
-@media (min-width: 641px) {
+@media (min-width: 769px) {
   .sidebar:not(.closed) ~ .main-area .bottom-dock {
     margin-left: 252px;
     margin-right: 12px;
@@ -168,20 +160,19 @@ body:has(#settingsOverlay.open) #settingsBtn { outline: 2px solid #1d1d1f; outli
   }
 }
 
-@media (min-width: 641px) {
+@media (min-width: 769px) {
   .bottom-dock {
     order: -1;
-    border-top: none;
-    border-bottom: 1px solid rgba(128,128,128,0.12);
-    justify-content: flex-end;
+    border: none;
+    justify-content: flex-start;
     height: auto;
-    padding: 4px 12px;
+    padding: 2px 12px;
+    background: transparent;
   }
-  .bottom-dock .dock-grow { display: none; }
-  .bottom-dock .dock-btn { width: 26px; height: 26px; }
+  .bottom-dock .dock-btn { width: 28px; height: 28px; }
   .bottom-dock .dock-icon { width: 16px; height: 16px; }
   .sidebar:not(.closed) ~ .main-area .bottom-dock {
-    margin-left: calc(56px + 280px + 12px);
+    margin-left: 252px;
     margin-right: 12px;
   }
 }

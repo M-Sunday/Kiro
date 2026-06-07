@@ -413,5 +413,107 @@ body.theme-black .storage-actions { border-color:#3a3a3c; }
   50% { opacity: 0.8; }
 }
 
+/* ─── BOTTOM NAV PILL (mobile only, shown via media query) ─── */
+.bottom-nav-pill {
+  display: none;
+  position: fixed;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  width: 90%;
+  max-width: 400px;
+  height: 56px;
+  background: #f2f2f7;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 999px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.pill-icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #3a3a3c;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition: opacity 0.12s;
+}
+.pill-icon-btn:hover { opacity: 0.7; }
+.pill-icon-btn svg { width: 20px; height: 20px; }
+
+.pill-input-wrap {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  background: rgba(0,0,0,0.04);
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+}
+.pill-input-wrap input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1d1d1f;
+}
+.pill-input-wrap input::placeholder { color: #8e8e93; }
+
+/* ─── ADD MENU POPUP (mobile pill add button) ──────────── */
+.add-menu-popup {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #e8e8ed;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  padding: 6px;
+  min-width: 150px;
+  z-index: 60;
+}
+.add-menu-popup.open { display: block; }
+
+.add-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #1d1d1f;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+.add-menu-item:hover { background: #f5f5f7; }
+
+.add-menu-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #8e8e93;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.add-menu-icon svg { width: 18px; height: 18px; }
+
 /* ─── COMPONENT THEME VARIABLES (splash bg) ──────────── */
 /* Splash background is overridden per theme in themes.css */

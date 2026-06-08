@@ -521,11 +521,18 @@ body.theme-black .storage-actions { border-color:#3a3a3c; }
 }
 
 .mobile-nav-bar.search-active .sidebar-fab,
-.mobile-nav-bar.search-active .grid-fab,
-.mobile-nav-bar.search-active .add-fab {
+.mobile-nav-bar.search-active .grid-fab {
   width: 0;
   opacity: 0;
   pointer-events: none;
+}
+.mobile-nav-bar.search-active .add-fab .fab-btn svg {
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+}
+.mobile-nav-bar:not(.search-active) .add-fab .fab-btn svg {
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
 }
 
 .sidebar-fab .fab-btn,

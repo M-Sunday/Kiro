@@ -1,5 +1,7 @@
 import { Api } from '../core/Api.js'
 import { PlatformDetector } from '../platform/PlatformDetector.js'
+import { PipedStreamService } from './PipedStreamService.js'
+import { AndroidDownloadEngine } from './AndroidDownloadEngine.js'
 
 export class DownloadService {
   constructor() {
@@ -14,18 +16,23 @@ export class DownloadService {
   }
 
   async startDownload(videoId, options = {}) {
-    if (!PlatformDetector.isElectron()) {
-      this.bus.emit('download:not-supported', { videoId })
-      return
+    if (PlatformDetector.isElectron()) {
+      return this._electronDownload(videoId, options)
     }
+    if (PlatformDetector.isNativeAndroid()) {
+      return this._androidDownload(videoId, options)
+    }
+    this.bus.emit('download:not-supported', { videoId })
+  }
 
+  async _electronDownload(videoId, options) {
     this.bus.emit('download:started', { videoId })
 
     try {
       const video = await this.api.getRepository('videos').getById(videoId)
       if (!video) throw new Error('Video not found')
 
-      const result = await this._executeDownload(video.url, options)
+      const result = await this._executeIpcDownload(video.url, options)
       this.bus.emit('download:complete', { videoId, path: result.path })
       return result
     } catch (err) {
@@ -33,7 +40,33 @@ export class DownloadService {
     }
   }
 
-  async _executeDownload(url, options) {
+  async _androidDownload(videoId, options) {
+    this.bus.emit('download:started', { videoId })
+
+    try {
+      const streamService = new PipedStreamService()
+      const streamInfo = await streamService.getStreamURL(videoId, options)
+
+      const engine = new AndroidDownloadEngine()
+      const result = await engine.download(
+        {
+          url: streamInfo.url,
+          filename: streamInfo.filename,
+          contentLength: streamInfo.contentLength,
+        },
+        (progressData) => {
+          this.bus.emit('download:progress', { videoId, ...progressData })
+        }
+      )
+
+      this.bus.emit('download:complete', { videoId, path: result.path })
+      return result
+    } catch (err) {
+      this.bus.emit('download:failed', { videoId, error: err.message })
+    }
+  }
+
+  async _executeIpcDownload(url, options) {
     const { type = 'video', quality = '720', codec = 'h264',
             audioFormat = 'mp3', audioBitrate = 'auto' } = options
 

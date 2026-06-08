@@ -1,5 +1,8 @@
 import { Component } from './base/Component.js'
 import { Api } from '../core/Api.js'
+import { PlatformDetector } from '../platform/PlatformDetector.js'
+import { YouTubeExtractorService } from '../services/YouTubeExtractorService.js'
+import { AndroidDownloadEngine } from '../services/AndroidDownloadEngine.js'
 
 export class CardView extends Component {
   constructor() {
@@ -47,8 +50,11 @@ export class CardView extends Component {
     e.stopPropagation()
     if (!window.currentVideo?.url) return
 
-    const isElectron = typeof process !== 'undefined' && process.versions?.electron
-    if (!isElectron) {
+    if (PlatformDetector.isElectron()) {
+      this._startDownload()
+    } else if (PlatformDetector.isNativeAndroid()) {
+      this._startAndroidDownload()
+    } else {
       const toast = document.getElementById('updateToast')
       if (toast) {
         const text = document.getElementById('updateToastText') || toast
@@ -58,10 +64,7 @@ export class CardView extends Component {
         toast.classList.add('show')
         setTimeout(() => { toast.classList.remove('show'); if (actions) actions.style.display = '' }, 3000)
       }
-      return
     }
-
-    this._startDownload()
   }
 
   async _startDownload() {
@@ -189,6 +192,151 @@ export class CardView extends Component {
     })
   }
 
+  async _startAndroidDownload() {
+    const prefs = {
+      type: localStorage.getItem('dlType') || 'video',
+      videoQuality: localStorage.getItem('dlVideoQuality') || '720',
+      audioFormat: localStorage.getItem('dlAudioFormat') || 'mp3',
+      audioBitrate: localStorage.getItem('dlAudioBitrate') || 'auto',
+      videoCodec: localStorage.getItem('dlVideoCodec') || 'h264'
+    }
+
+    const Capacitor = window.Capacitor
+    const toast = document.getElementById('updateToast')
+    const toastText = document.getElementById('updateToastText') || toast
+    const progress = document.getElementById('dlProgress')
+    const fill = document.getElementById('dlProgressFill')
+    const pctText = document.getElementById('dlProgressText')
+    const actions = document.querySelector('.update-toast-actions')
+
+    let treeUri = null
+    if (Capacitor?.Plugins?.FilePicker) {
+      try {
+        const result = await Capacitor.Plugins.FilePicker.pickDirectory()
+        treeUri = result.path
+      } catch (_e) {
+        progress.style.display = 'none'
+        toastText.textContent = 'Download cancelled'
+        toast.classList.add('show')
+        setTimeout(() => { toast.classList.remove('show'); if (actions) actions.style.display = '' }, 3000)
+        return
+      }
+    }
+    if (!treeUri) {
+      toastText.textContent = 'No folder selected'
+      toast.classList.add('show')
+      setTimeout(() => toast.classList.remove('show'), 3000)
+      return
+    }
+
+    progress.style.display = 'flex'
+    fill.style.width = '0%'
+    pctText.textContent = '0%'
+    if (actions) actions.style.display = 'none'
+    toastText.textContent = 'Preparing download\u2026'
+    toast.classList.add('show')
+
+    try {
+      const videoId = window.currentVideo.id
+      console.log('[Download] Starting, videoId:', videoId, 'prefs:', prefs)
+      const streamService = new YouTubeExtractorService()
+      console.log('[Download] Calling getStreamURL...')
+      const streamInfo = await streamService.getStreamURL(videoId, {
+        type: prefs.type,
+        quality: prefs.videoQuality,
+        codec: prefs.videoCodec,
+      })
+      console.log('[Download] getStreamURL returned:', streamInfo)
+
+      toastText.textContent = 'Downloading\u2026'
+
+      const engine = new AndroidDownloadEngine()
+      await engine.download(
+        { url: streamInfo.url, filename: streamInfo.filename },
+        (progressData) => {
+          fill.style.width = progressData.percent + '%'
+          pctText.textContent = progressData.percent.toFixed(0) + '%'
+          toastText.textContent = `Downloading\u2026 ${progressData.percent.toFixed(0)}%`
+        }
+      )
+
+      let savedToFolder = false
+      if (Capacitor?.Plugins?.FilePicker) {
+        toastText.textContent = 'Copying to folder\u2026'
+        try {
+          const source = await Capacitor.Plugins.Filesystem.getUri({
+            path: `downloads/${streamInfo.filename}`,
+            directory: 'DATA',
+          })
+          const treeMatch = treeUri.match(/\/tree\/(.+)$/)
+          if (treeMatch) {
+            const childDocUri = treeUri + '/document/' + treeMatch[1] + '%2F' + encodeURIComponent(streamInfo.filename)
+            await Capacitor.Plugins.FilePicker.copyFile({
+              from: source.uri,
+              to: childDocUri,
+              overwrite: true,
+            })
+            await Capacitor.Plugins.Filesystem.deleteFile({
+              path: `downloads/${streamInfo.filename}`,
+              directory: 'DATA',
+            }).catch(() => {})
+            savedToFolder = true
+          }
+        } catch (_e) {}
+      }
+
+      fill.style.width = '100%'
+      pctText.textContent = '100%'
+      if (actions) actions.style.display = 'flex'
+      if (savedToFolder) {
+        toastText.textContent = 'Download complete'
+      } else {
+        toastText.textContent = 'Download complete \u2014 tap Share to save'
+        const shareBtn = document.createElement('button')
+        shareBtn.id = 'shareFileBtn'
+        shareBtn.textContent = 'Share'
+        shareBtn.style.cssText = 'background:#0a84ff;color:#fff;border:none;border-radius:999px;padding:4px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit'
+        shareBtn.onclick = () => this._shareDownloadedFile(streamInfo.filename)
+        actions.innerHTML = ''
+        actions.appendChild(shareBtn)
+      }
+      setTimeout(() => {
+        progress.style.display = 'none'
+        toast.classList.remove('show')
+        if (actions) actions.style.display = ''
+      }, 15000)
+    } catch (err) {
+      progress.style.display = 'none'
+      toastText.textContent = 'Download failed: ' + (err.message || '')
+      setTimeout(() => { toast.classList.remove('show'); if (actions) actions.style.display = '' }, 5000)
+    }
+  }
+
+  async _shareDownloadedFile(filename) {
+    const Capacitor = window.Capacitor
+    if (!Capacitor?.Plugins?.Filesystem) return
+    try {
+      const result = await Capacitor.Plugins.Filesystem.getUri({
+        path: `downloads/${filename}`,
+        directory: 'DATA',
+      })
+      if (Capacitor.Plugins.Share) {
+        await Capacitor.Plugins.Share.share({
+          title: 'Share video',
+          url: result.uri,
+        })
+      } else {
+        const fileUri = Capacitor.convertFileSrc(result.uri)
+        const a = document.createElement('a')
+        a.href = fileUri
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+      }
+    } catch {}
+  }
+
   _ensureYtDlp() {
     const ytDlpDir = window.require('path').join(window.require('os').homedir(), '.kiro', 'bin')
     const ytDlpPath = window.require('path').join(ytDlpDir, 'yt-dlp.exe')
@@ -311,16 +459,41 @@ export class CardView extends Component {
     const channel = document.getElementById('channelName')
     if (channel) channel.textContent = v.channel
 
+    const avatar = document.getElementById('channelAvatar')
+    if (avatar) {
+      if (v.channelAvatarUrl) {
+        avatar.innerHTML = ''
+        const img = document.createElement('img')
+        img.src = v.channelAvatarUrl
+        img.alt = (v.channel || '?').charAt(0).toUpperCase()
+        img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover'
+        img.onerror = () => { avatar.textContent = (v.channel || '?').charAt(0).toUpperCase() }
+        avatar.appendChild(img)
+      } else {
+        avatar.textContent = (v.channel || '?').charAt(0).toUpperCase()
+      }
+    }
+
+    const meta = document.getElementById('cardMeta')
+    const viewsEl = document.getElementById('metaViews')
+    const dateEl = document.getElementById('metaDate')
+    if (meta && viewsEl && dateEl) {
+      let hasMeta = false
+      if (v.pubDate) {
+        try {
+          const d = new Date(v.pubDate)
+          dateEl.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+          hasMeta = true
+        } catch {}
+      }
+      if (hasMeta) meta.style.display = 'flex'
+      else meta.style.display = 'none'
+    }
+
+    this._renderDescription(v)
+
     if (!v.pubDate) {
-      fetch(`https://pipedapi.kavin.rocks/streams/${id}`)
-        .then(res => res.json())
-        .then(piped => {
-          if (piped.uploadDate) {
-            const d = new Date(piped.uploadDate)
-            const vs = window.getVideos?.() || {}
-            if (vs[id]) { vs[id].pubDate = d.toISOString(); window.saveVideos?.(vs) }
-          }
-        }).catch(() => {})
+      this._tryFetchMetadata(id)
     }
     if (window.currentNoteId && window.closeNoteView) window.closeNoteView()
     this.updatePinBadge(id)
@@ -329,6 +502,74 @@ export class CardView extends Component {
     this.updateCardAddBtn()
 
     this.bus.emit('ui:card:loaded', { id, video: v })
+  }
+
+  _renderDescription(v) {
+    const desc = document.getElementById('cardDesc')
+    const text = document.getElementById('descText')
+    const toggle = document.getElementById('descToggle')
+    if (!desc || !text || !toggle) return
+    const content = v.description || v.desc || ''
+    if (!content) { desc.style.display = 'none'; return }
+    desc.style.display = 'block'
+    text.textContent = content
+    desc.classList.remove('expanded', 'expandable')
+    const needsClamp = content.length > 120 || content.includes('\n')
+    if (needsClamp) {
+      desc.classList.add('expandable')
+      toggle.textContent = 'Show more'
+    }
+    toggle.onclick = () => {
+      const expanded = desc.classList.toggle('expanded')
+      toggle.textContent = expanded ? 'Show less' : 'Show more'
+    }
+  }
+
+  async _fetchChannelAvatar(channelUrl) {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Linux; Android 14; Nothing Phone 2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.147 Mobile Safari/537.36',
+      'Accept-Language': 'en-US,en;q=0.9',
+    }
+    let html
+    if (window.Capacitor?.isNativePlatform?.()) {
+      const { CapacitorHttp } = await import('@capacitor/core')
+      const res = await CapacitorHttp.get({ url: channelUrl, headers, responseType: 'text' })
+      if (res.status < 200 || res.status >= 300) throw new Error(`HTTP ${res.status}`)
+      html = res.data
+    } else {
+      const res = await fetch(channelUrl, { headers })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      html = await res.text()
+    }
+    const match = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"\s*\/?>/i)
+    return match ? match[1] : null
+  }
+
+  _tryFetchMetadata(id) {
+    if (!id) return
+    fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`)
+      .then(res => res.ok ? res.json() : null)
+      .then(async (data) => {
+        if (!data) return
+        const vs = window.getVideos?.() || {}
+        if (!vs[id]) return
+        let changed = false
+        if (data.author_name && !vs[id].channel) { vs[id].channel = data.author_name; changed = true }
+        if (data.title && !vs[id].title) { vs[id].title = data.title; changed = true }
+        if (!vs[id].channelAvatarUrl && data.author_url) {
+          try {
+            const avatarUrl = await this._fetchChannelAvatar(data.author_url)
+            if (avatarUrl) {
+              vs[id].channelAvatarUrl = avatarUrl
+              changed = true
+            }
+          } catch {}
+        }
+        if (changed) {
+          window.saveVideos?.(vs)
+          this.loadVideoById(id)
+        }
+      }).catch(() => {})
   }
 
   updatePinBadge(id) {
@@ -374,9 +615,9 @@ export class CardView extends Component {
       if (copyBtn) copyBtn.style.display = 'inline-flex'
       if (dlBtn) {
         dlBtn.style.display = 'inline-flex'
-        const isElectron = typeof process !== 'undefined' && process.versions?.electron
-        dlBtn.classList.toggle('desktop-only', !isElectron)
-        dlBtn.innerHTML = '<i data-lucide="download" class="card-add-icon"></i> ' + (isElectron ? 'Download' : 'Desktop exclusive')
+        const canDownload = PlatformDetector.isElectron() || PlatformDetector.isNativeAndroid()
+        dlBtn.classList.toggle('desktop-only', !canDownload)
+        dlBtn.innerHTML = '<i data-lucide="download" class="card-add-icon"></i> ' + (canDownload ? 'Download' : 'Desktop exclusive')
       }
       if (window.loadIcons) window.loadIcons()
     } else {

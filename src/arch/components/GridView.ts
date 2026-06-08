@@ -141,7 +141,7 @@ export class GridView extends Component {
           <button class="wb-btn" data-action="new-note">+ Note</button>
           <button class="wb-btn" data-action="new-bookmark">+ Bookmark</button>
           <button class="wb-btn" data-action="new-folder">+ Folder</button>
-          <button class="wb-btn" data-action="import-file">+ File</button>
+          <button class="wb-btn" data-action="import-file"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg> File</button>
           <button class="wb-btn" data-action="camera">📷 Camera</button>
         </div>
       </div>

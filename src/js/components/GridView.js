@@ -182,7 +182,7 @@ export class GridView extends Component {
             New folder
           </div>
           <div class="add-menu-item" data-action="import">
-            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M15 3v4a1 1 0 0 0 1 1h4"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span>
+            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg></span>
             Import file
           </div>
           <div class="add-menu-item" data-action="camera">

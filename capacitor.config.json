@@ -7,7 +7,12 @@
     "androidScheme": "https",
     "allowNavigation": [
       "pdimagearchive.org",
-      "images.pdimagearchive.org"
+      "images.pdimagearchive.org",
+      "pipedapi.kavin.rocks",
+      "pipedapi.smnz.de",
+      "pipedapi.syncpundit.com",
+      "pipedapi.adminforge.de",
+      "*.pipedapi.*"
     ]
   },
   "plugins": {

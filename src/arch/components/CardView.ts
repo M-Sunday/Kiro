@@ -163,6 +163,10 @@ export class CardView extends Component {
       this._addBtnEl.textContent = isSaved ? 'Unlink' : 'Save'
       this._addBtnEl.classList.toggle('saved', isSaved)
     }
+    if (this._dlBtnEl) {
+      const canDownload = this.state.get<boolean>('platform.isElectron') || this.state.get<boolean>('platform.isNative')
+      this._dlBtnEl.style.display = canDownload ? '' : 'none'
+    }
   }
 
   private _syncState(): void {
@@ -216,4 +220,5 @@ export class CardView extends Component {
       this.emit('ui:download:start', { videoId: this._currentVideoId })
     }
   }
+
 }

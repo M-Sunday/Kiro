@@ -1,8 +1,7 @@
 /* ─── Kiro: Dashboard ──────────────────────────────── */
 .dashboard-hero {
   height: 180px;
-  border-radius: 0 0 24px 24px;
-  margin: -20px -20px 20px;
+  margin: 0 -20px 20px;
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -251,7 +250,7 @@
 
 /* ─── External text viewer ─────────────────────────── */
 .ext-text-view {
-  display: none; flex: 1; flex-direction: column; padding: 20px;
+  display: none; flex: 1; flex-direction: column; overflow: hidden;
 }
 .ext-text-header {
   display: flex; align-items: center; gap: 10px; padding: 8px 14px; margin: 0 0 8px;
@@ -263,10 +262,11 @@
 .ext-text-close { background: none; border: 1px solid #e8e8ed; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; color: #8e8e93; flex-shrink: 0; }
 .ext-text-close:hover { background: #f5f5f7; }
 .ext-text-content { flex: 1; border: none; background: transparent; outline: none; font-size: 13px; line-height: 1.5; color: #3a3a3c; font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace; padding: 16px 20px; white-space: pre-wrap; word-break: break-word; overflow-y: auto; min-height: 0; margin: 0; }
+.ext-text-footer { font-size: 11px; color: #8e8e93; padding: 6px 20px 10px; border-top: 1px solid #e8e8ed; flex-shrink: 0; }
 
 /* ─── External video player ────────────────────────── */
 .ext-video-view {
-  display: none; flex: 1; flex-direction: column; padding: 20px;
+  display: none; flex: 1; flex-direction: column; overflow: hidden; padding: 20px;
 }
 .ext-video-header {
   display: flex; align-items: center; gap: 10px; padding: 8px 14px; margin: 0 0 8px;
@@ -276,8 +276,8 @@
 .ext-video-title { flex: 1; font-size: 16px; font-weight: 600; color: #1d1d1f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ext-video-close { background: none; border: 1px solid #e8e8ed; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; color: #8e8e93; flex-shrink: 0; }
 .ext-video-close:hover { background: #f5f5f7; }
-.ext-video-body { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; max-height: 100%; background: #000; border-radius: 12px; }
-.ext-video-element { flex: 1; width: 100%; min-height: 0; object-fit: contain; background: #000; border-radius: 12px 12px 0 0; }
+.ext-video-body { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; overflow: hidden; background: #000; border-radius: 12px; }
+.ext-video-element { flex: 1; width: 100%; min-height: 0; object-fit: contain; background: #000; }
 
 .ext-video-error { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #fff; background: rgba(0,0,0,0.7); padding: 12px 20px; border-radius: 8px; font-size: 14px; pointer-events: none; z-index: 10; }
 
@@ -298,22 +298,23 @@
 .ext-video-controls {
   display: flex; align-items: center; gap: 6px; padding: 6px 10px;
   background: #1d1d1f; border-radius: 0 0 12px 12px;
+  flex-shrink: 0;
 }
 .ext-video-ctrl-btn {
-  background: none; border: none; cursor: pointer; color: #f5f5f7; padding: 4px;
-  border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.12s; flex-shrink: 0;
+  background: none; border: none; cursor: pointer; color: #f5f5f7; padding: 8px;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.12s; flex-shrink: 0;
 }
 .ext-video-ctrl-btn:hover { background: rgba(255,255,255,0.12); }
-.ext-video-progress { flex: 1; cursor: pointer; padding: 6px 0; display: flex; align-items: center; min-width: 0; }
-.ext-video-progress-track { height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; flex: 1; position: relative; overflow: hidden; }
-.ext-video-progress-fill { height: 100%; background: #fff; border-radius: 2px; width: 0%; transition: width 0.1s linear; }
-.ext-video-time { font-size: 11px; color: #a1a1a6; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; min-width: 70px; text-align: center; }
-.ext-video-volume { width: 60px; height: 4px; cursor: pointer; accent-color: #fff; flex-shrink: 0; }
-.ext-video-ctrl-btn svg { width: 14px; height: 14px; display: block; }
+.ext-video-progress { flex: 1; cursor: pointer; padding: 8px 0; display: flex; align-items: center; min-width: 0; }
+.ext-video-progress-track { height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; flex: 1; position: relative; overflow: hidden; }
+.ext-video-progress-fill { height: 100%; background: #fff; border-radius: 3px; width: 0%; transition: width 0.1s linear; }
+.ext-video-time { font-size: 13px; color: #a1a1a6; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; min-width: 75px; text-align: center; }
+.ext-video-volume { width: 72px; height: 6px; cursor: pointer; accent-color: #fff; flex-shrink: 0; }
+.ext-video-ctrl-btn svg { width: 20px; height: 20px; display: block; }
 
 /* ─── External image viewer ──────────────────────────── */
 .ext-image-view {
-  display: none; flex: 1; flex-direction: column; padding: 20px;
+  display: none; flex: 1; flex-direction: column; overflow: hidden; padding: 20px;
   background: rgba(0,0,0,0.85);
 }
 .ext-image-header {
@@ -459,7 +460,7 @@ body.theme-black .ext-image-close:hover { background: #3a3a3c; }
 
 /* ─── Mobile safe-area padding for external views ──── */
 @media (max-width: 768px) {
-  .ext-text-view { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
-  .ext-video-view { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
-  .ext-image-view { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
+  .ext-text-view { padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
+  .ext-video-view { padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
+  .ext-image-view { padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
 }

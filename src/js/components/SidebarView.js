@@ -10,9 +10,7 @@ export class SidebarView extends Component {
 
   _exposeGlobals() {
     window.renderSidebar = () => this.render()
-    window.closeSidebarMobile = () => {
-      if (window.innerWidth <= 640) document.getElementById('sidebar')?.classList.add('closed')
-    }
+    window.closeSidebar = () => document.getElementById('sidebar')?.classList.add('closed')
   }
 
   mount(rootEl) {
@@ -27,6 +25,9 @@ export class SidebarView extends Component {
       e.stopPropagation()
       _lastMenuToggle = Date.now()
       document.getElementById('sidebar')?.classList.toggle('closed')
+    })
+    this.listenTo(document.getElementById('sidebarCloseBtn'), 'click', () => {
+      document.getElementById('sidebar')?.classList.add('closed')
     })
     this.listenTo(document.getElementById('sidebarBackdrop'), 'click', () => {
       if (Date.now() - _lastMenuToggle < 400) return
@@ -251,23 +252,23 @@ export class SidebarView extends Component {
           if (v) {
             if (window.loadVideoById) window.loadVideoById(id)
             if (window.showCardView) window.showCardView()
-            if (window.innerWidth <= 640) document.getElementById('sidebar')?.classList.add('closed')
+            window.closeSidebar?.()
           }
         }
         const bm = file.closest('[data-bookmark-id]')
         if (bm) {
           const bms = (window.getBookmarks?.() || []).filter(b => b.id === bm.dataset.bookmarkId)
-          if (bms[0]?.url) { window.open(bms[0].url); if (window.innerWidth <= 640) document.getElementById('sidebar')?.classList.add('closed') }
+          if (bms[0]?.url) { window.open(bms[0].url); window.closeSidebar?.() }
         }
         const note = file.closest('[data-note-id]')
         if (note) {
           if (window.openNote) window.openNote(note.dataset.noteId)
-          if (window.innerWidth <= 640) document.getElementById('sidebar')?.classList.add('closed')
+          window.closeSidebar?.()
         }
         const da = file.closest('[data-da-id]')
         if (da) {
           const das = (window.getDirectAccess?.() || []).filter(d => d.id === da.dataset.daId)
-          if (das[0]?.url) { window.open(das[0].url); if (window.innerWidth <= 640) document.getElementById('sidebar')?.classList.add('closed') }
+          if (das[0]?.url) { window.open(das[0].url); window.closeSidebar?.() }
         }
         const ext = file.closest('[data-ext-id]')
         if (ext) {
@@ -289,7 +290,7 @@ export class SidebarView extends Component {
               }
             }
           }
-          if (window.innerWidth <= 640) document.getElementById('sidebar')?.classList.add('closed')
+          window.closeSidebar?.()
         }
       })
     })
@@ -308,7 +309,7 @@ export class SidebarView extends Component {
       })
     })
 
-    document.querySelectorAll('.tree-item[data-bookmark-id], .tree-item[data-note-id], .tree-item[data-da-id], .tree-item[data-ext-id]').forEach(el => {
+    document.querySelectorAll('.tree-item[data-bookmark-id], .tree-item[data-note-id], .tree-item[data-da-id], .tree-item[data-ext-id], .tree-item[data-video-id]').forEach(el => {
       el.addEventListener('dragover', (e) => { e.preventDefault(); el.querySelector('.tree-file')?.classList.add('drop-zone') })
       el.addEventListener('dragleave', () => el.querySelector('.tree-file')?.classList.remove('drop-zone'))
       el.addEventListener('drop', (e) => {
@@ -317,8 +318,8 @@ export class SidebarView extends Component {
         const draggedId = e.dataTransfer.getData('text/plain')
         const draggedType = e.dataTransfer.getData('type')
         if (!draggedId) return
-        const targetId = el.dataset.bookmarkId || el.dataset.noteId || el.dataset.daId || el.dataset.extId
-        const targetType = el.dataset.bookmarkId ? 'bookmark' : el.dataset.noteId ? 'note' : el.dataset.daId ? 'da' : 'ext'
+        const targetId = el.dataset.bookmarkId || el.dataset.noteId || el.dataset.daId || el.dataset.extId || el.dataset.videoId
+        const targetType = el.dataset.bookmarkId ? 'bookmark' : el.dataset.noteId ? 'note' : el.dataset.daId ? 'da' : el.dataset.extId ? 'ext' : 'video'
         if (draggedType !== targetType || draggedId === targetId) return
         if (targetType === 'bookmark') {
           let bms = window.getBookmarks?.() || []
@@ -340,6 +341,16 @@ export class SidebarView extends Component {
           const from = exts.findIndex(x => x.id === draggedId)
           const to = exts.findIndex(x => x.id === targetId)
           if (from > -1 && to > -1) { const [item] = exts.splice(from, 1); exts.splice(to, 0, item); window.saveExternalFiles?.(exts); this.render(); if (window.renderGridView) window.renderGridView() }
+        } else if (targetType === 'video') {
+          const folderEl = el.closest('[data-folder]')
+          const folderName = folderEl?.dataset.folder
+          if (!folderName) return
+          const folders = window.getFolders?.() || {}
+          const ids = folders[folderName]
+          if (!ids) return
+          const from = ids.indexOf(draggedId)
+          const to = ids.indexOf(targetId)
+          if (from > -1 && to > -1) { const [item] = ids.splice(from, 1); ids.splice(to, 0, item); window.saveFolders?.(folders); this.render(); if (window.renderGridView) window.renderGridView() }
         }
       })
     })

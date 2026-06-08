@@ -344,8 +344,8 @@ export class SettingsPanel extends Component {
   _applyToolbarSettings() {
     const menuBtn = document.getElementById('menuBtn')
     if (menuBtn) menuBtn.style.display = this._loadSetting('showSidebarBtn', true) ? '' : 'none'
-    const dockInput = document.querySelector('.dock-input')
-    if (dockInput) dockInput.style.display = this._loadSetting('showKiroInput', true) ? '' : 'none'
+    const pillInput = document.querySelector('.pill-input-wrap')
+    if (pillInput) pillInput.style.display = this._loadSetting('showKiroInput', true) ? '' : 'none'
 
   }
 

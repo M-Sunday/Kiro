@@ -5,25 +5,15 @@
   body { padding: 0; gap: 0; min-height: 100dvh; }
 
   .sidebar {
-    top: calc(12px + env(safe-area-inset-top, 0px)); left: 12px;
+    top: 12px; left: 12px;
     width: calc(100vw - 24px); max-width: 360px;
-    height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    height: calc(100dvh - 24px);
     border-radius: 16px;
-    margin: 0; z-index: 100;
+    margin: 0; z-index: 400;
   }
   .sidebar.closed {
     transform: translateX(-100%);
     opacity: 0; pointer-events: none;
-  }
-
-  .sidebar-backdrop {
-    display: block; position: fixed; inset: 0;
-    z-index: 99; background: rgba(0,0,0,0.4);
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.25s ease;
-  }
-  .sidebar:not(.closed) ~ .sidebar-backdrop {
-    opacity: 1; pointer-events: auto;
   }
 
   .sidebar-tree { flex: 1; min-height: 0; }
@@ -54,77 +44,66 @@
   }
   .settings-content { padding: 16px 20px; overflow-y: auto; flex: 1; min-height: 0; max-height: calc(90vh - 60px); }
 
-  .bottom-dock { order: 1; height: 28px; padding: 0 4px; padding-bottom: max(4px, env(safe-area-inset-bottom, 4px)); margin: 0; border: none; border-top: 1px solid rgba(128,128,128,0.12); justify-content: space-around; gap: 0; border-radius: 0; }
-  body.native-android .bottom-dock { padding-bottom: max(6px, env(safe-area-inset-bottom, 6px)); }
-  .bottom-dock .dock-btn { width: 24px; height: 24px; }
-  .bottom-dock .dock-icon { width: 15px; height: 15px; }
-  .bottom-dock .dock-btn.active { color: var(--accent, #007aff); }
-  .bottom-dock .dock-grow { flex: 1; }
-  .bottom-dock:not(.search-expanded) .dock-input { display: none; }
-  .bottom-dock.search-expanded .dock-btn { display: none; }
-  .bottom-dock.search-expanded .dock-grow { display: none; }
-  .bottom-dock.search-expanded .dock-input { display: flex; flex: 1; max-width: none; }
-  .bottom-dock.search-expanded .dock-input input { flex: 1; min-width: 0; font-size: 14px; }
-  .bottom-dock.search-expanded { justify-content: flex-start; }
 
-  .content { display: none; padding: 16px 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); }
-  .search-landing { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); }
-  .card-body { padding: 14px 16px 0; }
+
+  .content { display: none; padding: 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); }
+  .search-landing { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); }
+  .card-body { padding: 14px 20px 0; }
   .card-body h1 { font-size: 16px; }
 
-  .card-add-row { padding: 6px 16px 0; }
-  .dl-progress { padding: 4px 16px 0; }
-  .grid-view { padding: 0 0 max(90px, env(safe-area-inset-bottom, 90px)); overflow-x: hidden; overflow-y: auto; width: 100%; max-width: 100%; box-sizing: border-box; }
-  .grid-items { grid-template-columns: repeat(2, 1fr); gap: 8px; min-width: 0; padding: 0 12px; }
+  .card-add-row { padding: 6px 20px 0; }
+  .dl-progress { padding: 4px 20px 0; }
+  .grid-view { overflow-x: hidden; overflow-y: auto; width: 100%; max-width: 100%; box-sizing: border-box; }
+  .grid-items { grid-template-columns: repeat(2, 1fr); gap: 8px; min-width: 0; padding: 0; }
+  .grid-view { overflow-x: hidden; overflow-y: auto; width: 100%; max-width: 100%; box-sizing: border-box; }
+  .grid-items { grid-template-columns: repeat(2, 1fr); gap: 8px; min-width: 0; padding: 0; }
 
   .sidebar-settings-bar { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
 
-  .note-view { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); }
+  .note-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); }
   .note-view-header { margin: 0 0 8px; padding: 4px 8px; gap: 4px; flex-wrap: wrap; }
   .note-view-title { font-size: 16px; min-width: 60px; flex-basis: 60px; }
   .note-view-actions { gap: 2px; }
   .note-view-btn { width: 28px; height: 28px; }
-  .note-view-content { padding: 12px 12px; }
-  .note-view-todos { padding: 0 12px 8px; }
-  .note-view-footer { padding: 4px 12px 8px; }
+  .note-view-content { padding: 12px 0; }
+  .note-view-todos { padding: 0 0 8px; }
+  .note-view-footer { padding: 4px 0 8px; }
+  .ext-text-footer { padding: 4px 0 8px; }
 
   .view-tab { height: 40px; font-size: 12px; gap: 6px; }
   .view-tab svg { width: 14px; height: 14px; }
 
-  .home-view { padding: 16px 0; }
+  .home-view { padding: 20px; }
   .home-view-empty svg { width: 40px; height: 40px; }
   .home-view-empty-text { font-size: 14px; }
   .grid-sections { padding: 8px 0; }
 
-  .dashboard-hero { margin: 0 0 16px; height: 160px; border-radius: 0; }
-  .grid-dashboard { padding: 0 12px 16px; gap: 8px; }
+  .dashboard-hero { margin: 0 -20px 16px; height: 160px; }
+  .grid-dashboard { padding: 0 20px 16px; gap: 8px; }
   .dashboard-greeting { font-size: 17px; }
   .dashboard-avatar, .dashboard-avatar-img { width: 72px; height: 72px; font-size: 30px; }
   .dashboard-avatar-wrap { margin-top: -26px; }
   .dashboard-avatar-status { width: 9px; height: 9px; border-width: 1.5px; }
   .dashboard-actions { padding-top: 12px; }
-  .ext-text-view { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)); }
-  .ext-video-view { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)); }
-  .ext-image-view { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)); }
+  .ext-text-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)); }
+  .ext-video-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)); }
+  .ext-image-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)); }
 }
 
-/* ─── Mobile (≤768px): hide top bar, show floating bottom pill ─── */
-@media (max-width: 768px) {
-  .bottom-dock { display: none; }
+/* ─── Bottom pill visible on all screen sizes ────────── */
+.mobile-nav-bar { display: flex; }
 
-  .mobile-nav-bar { display: flex; }
+.main-area { background: #f5f5f7; }
+body.theme-black .main-area { background: #1c1c1e; }
 
-  .main-area { background: #f5f5f7; }
-  body.theme-black .main-area { background: #1c1c1e; }
+html { background: transparent; }
+body { background: transparent; }
+body.theme-black { background: transparent; }
 
-  html { background: transparent; }
-  body { background: transparent; }
-  body.theme-black { background: transparent; }
-
-  .content { padding: 16px 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
-  .search-landing { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
-  .note-view { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
-  .ext-text-view { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
-  .ext-video-view { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
-  .ext-image-view { padding: 12px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
-}
+.content { padding: 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
+.search-landing { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
+.note-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
+.ext-text-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
+.ext-video-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
+.ext-image-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
+.grid-view { padding: 0 20px max(90px, env(safe-area-inset-bottom, 90px)); }

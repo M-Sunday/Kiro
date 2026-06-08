@@ -92,17 +92,6 @@ export class GridView extends Component {
   }
 
   _bindDOMEvents() {
-    this.listenTo(document.getElementById('gridBtn'), 'click', () => {
-      if (this._activeView === 'grid') return
-      const anyExtOpen = this._anyExternalViewOpen()
-      if (anyExtOpen) {
-        this._hideAllViews()
-        this.rootEl.classList.add('open')
-        this.render()
-      }
-      this._switchView('grid')
-    })
-
     this.listenTo(document.getElementById('extTextClose'), 'click', () => this._closeExternalText())
     this.listenTo(document.getElementById('extVideoClose'), 'click', () => this._closeExternalVideo())
     this.listenTo(document.getElementById('extImageClose'), 'click', () => this._closeExternalImage())
@@ -162,8 +151,13 @@ export class GridView extends Component {
 
     bar.innerHTML = `
       <div class="sidebar-fab">
-        <button class="fab-btn" id="mobileMenuBtn" title="Sidebar">
+        <button class="fab-btn" id="menuBtn" title="Sidebar">
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="grid-fab">
+        <button class="fab-btn" id="gridBtn" title="Dashboard">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/></svg>
         </button>
       </div>
       <div class="bottom-nav-pill">
@@ -171,7 +165,7 @@ export class GridView extends Component {
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         </button>
         <div class="pill-input-wrap">
-          <input type="text" id="mobileKiroInput" placeholder="Search..." spellcheck="false">
+          <input type="text" id="kiroInput" placeholder="Search..." spellcheck="false">
         </div>
       </div>
       <div class="add-fab">
@@ -208,9 +202,9 @@ export class GridView extends Component {
 
   _bindMobilePillEvents() {
     const bar = document.querySelector('.mobile-nav-bar')
-    const mobileInput = document.getElementById('mobileKiroInput')
+    const mobileInput = document.getElementById('kiroInput')
     const focusBtn = document.getElementById('mobileSearchFocusBtn')
-    const menuBtn = document.getElementById('mobileMenuBtn')
+    const gridBtn = document.getElementById('gridBtn')
     const addBtn = document.getElementById('mobileAddBtn')
     const popup = document.getElementById('addMenuPopup')
 
@@ -219,25 +213,12 @@ export class GridView extends Component {
     function exitSearch() { if (bar) { bar.classList.remove('search-active') } }
 
     if (mobileInput) {
-      mobileInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault()
-          const text = mobileInput.value.trim()
-          if (text) this.bus.emit('ui:search:video', { url: text })
-        }
-        if (e.key === 'Escape') { exitSearch(); mobileInput.blur() }
-      })
-
-      mobileInput.addEventListener('focus', () => {
-        enterSearch()
-        this.bus.emit('ui:view:set', { view: 'landing' })
-      })
-
+      mobileInput.addEventListener('focus', () => { enterSearch() })
       mobileInput.addEventListener('blur', (e) => {
         if (!e.target.value.trim()) {
-          const landing = document.getElementById('searchLanding')
-          if (landing?.style.display === 'flex') {
-            this.bus.emit('ui:view:set', { view: 'grid' })
+          exitSearch()
+          if (document.getElementById('searchLanding')?.style.display === 'flex') {
+            this._switchView('grid')
           }
         }
       })
@@ -249,10 +230,16 @@ export class GridView extends Component {
       })
     }
 
-    if (menuBtn) {
-      menuBtn.addEventListener('click', (e) => {
+    if (gridBtn) {
+      gridBtn.addEventListener('click', (e) => {
         e.stopPropagation()
-        document.getElementById('sidebar')?.classList.toggle('closed')
+        const anyExtOpen = this._anyExternalViewOpen()
+        if (anyExtOpen) {
+          this._hideAllViews()
+          this.rootEl.classList.add('open')
+          this.render()
+        }
+        this._switchView('grid')
       })
     }
 
@@ -280,6 +267,9 @@ export class GridView extends Component {
       if (!e.target.closest('.mobile-nav-bar')) {
         popup?.classList.remove('open')
         if (isSearchActive()) { exitSearch(); mobileInput?.blur() }
+        if (document.getElementById('searchLanding')?.style.display === 'flex') {
+          this._switchView('grid')
+        }
       }
     })
   }
@@ -1485,6 +1475,16 @@ export class GridView extends Component {
       this._hideAllViews()
       document.getElementById('extTextView').style.display = 'flex'
       window.__navigation?.push('extText')
+      // Set footer info
+      const lines = content.split('\n').length
+      const words = content.split(/\s+/).filter(Boolean).length
+      const stats = fs.statSync(f.path)
+      const size = stats.size
+      const units = ['B', 'KB', 'MB']
+      let s = size, ui = 0
+      while (s >= 1024 && ui < units.length - 1) { s /= 1024; ui++ }
+      const sizeStr = s.toFixed(1) + ' ' + units[ui]
+      document.getElementById('extTextFooter').textContent = lines + ' lines · ' + words + ' words · ' + sizeStr
     } catch (e) {
       console.warn('[ExtText] Failed to read:', e)
     }
@@ -1492,6 +1492,7 @@ export class GridView extends Component {
 
   _closeExternalText() {
     document.getElementById('extTextContent').textContent = ''
+    document.getElementById('extTextFooter').textContent = ''
     this._hideAllViews()
     this.rootEl.classList.add('open')
     this.render()
@@ -1922,7 +1923,12 @@ export class GridView extends Component {
     const body = document.querySelector('.ext-video-body')
     if (!el || !body || !el.videoWidth || !el.videoHeight) return
     const ar = el.videoWidth / el.videoHeight
-    body.style.aspectRatio = ar
+    body.style.aspectRatio = ''
+    el.style.aspectRatio = ar
+    // Cap height so controls are always visible
+    const controls = document.querySelector('.ext-video-controls')
+    const controlsH = controls ? controls.offsetHeight : 36
+    el.style.maxHeight = (body.clientHeight - controlsH) + 'px'
   }
 
   _renderProgressBar(current, target, label) {

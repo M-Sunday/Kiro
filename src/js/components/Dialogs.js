@@ -208,6 +208,6 @@ export class Dialogs extends Component {
     window._pendingDaUrl = ''
     window.renderSidebar?.()
     if (window.renderGridView) window.renderGridView()
-    if (window.closeSidebarMobile) window.closeSidebarMobile()
+    if (window.closeSidebar) window.closeSidebar()
   }
 }

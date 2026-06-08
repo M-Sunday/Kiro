@@ -163,11 +163,11 @@ async function bootstrap() {
   services.register('notificationService', notificationService)
 
   // Mount UI components to their root elements
-  const searchLanding = document.getElementById('searchLanding')
-  if (searchLanding) searchView.mount(searchLanding)
-
   const gridEl = document.getElementById('gridView')
   if (gridEl) gridView.mount(gridEl)
+
+  const searchLanding = document.getElementById('searchLanding')
+  if (searchLanding) searchView.mount(searchLanding)
 
   const sidebarTree = document.getElementById('sidebarTree')
   if (sidebarTree) sidebarView.mount(sidebarTree)
@@ -255,11 +255,9 @@ async function bootstrap() {
   // Patch legacy save functions to keep state in sync
   patchLegacySavers(state, bus)
 
-  // Close sidebar on mobile
-  if (window.innerWidth <= 640) {
-    const sidebar = document.getElementById('sidebar')
-    if (sidebar) sidebar.classList.add('closed')
-  }
+  // Close sidebar (overlay on all screen sizes)
+  const sidebar = document.getElementById('sidebar')
+  if (sidebar) sidebar.classList.add('closed')
 
   // Set version label
   const verLabel = document.getElementById('appVersionLabel')

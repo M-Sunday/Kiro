@@ -418,7 +418,7 @@ export class CardView extends Component {
 
     if (window.renderSidebar) window.renderSidebar()
     this.updateCardAddBtn()
-    if (window.closeSidebarMobile) window.closeSidebarMobile()
+    if (window.closeSidebar) window.closeSidebar()
 
     const historyToggle = document.querySelector('#pane-history .settings-toggle:first-child')
     if (historyToggle?.classList.contains('on')) {

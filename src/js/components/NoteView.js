@@ -267,7 +267,7 @@ export class NoteView extends Component {
     window.saveNotes?.(notes)
     if (window.renderSidebar) window.renderSidebar()
     this.openNote(id)
-    if (window.closeSidebarMobile) window.closeSidebarMobile()
+    if (window.closeSidebar) window.closeSidebar()
     setTimeout(() => {
       const titleEl = document.getElementById('noteViewTitle')
       if (titleEl) { titleEl.focus(); titleEl.select() }
@@ -288,7 +288,7 @@ export class NoteView extends Component {
     document.getElementById('noteDialog')?.classList.remove('open')
     if (window.renderSidebar) window.renderSidebar()
     this.openNote(id)
-    if (window.closeSidebarMobile) window.closeSidebarMobile()
+    if (window.closeSidebar) window.closeSidebar()
   }
 
   renderNoteTodos() {

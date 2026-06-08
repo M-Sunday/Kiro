@@ -29,7 +29,7 @@ export class ContextMenu extends Component {
     if (document.getElementById('ctxBackdrop')) return
     const bd = document.createElement('div')
     bd.id = 'ctxBackdrop'
-    bd.style.cssText = 'position:fixed;inset:0;z-index:199;display:none;background:rgba(0,0,0,0.001)'
+    bd.style.cssText = 'position:fixed;inset:0;z-index:599;display:none;background:rgba(0,0,0,0.001)'
     bd.addEventListener('click', () => this._close())
     bd.addEventListener('touchstart', (e) => { e.preventDefault(); this._close() }, { passive: false })
     document.body.appendChild(bd)
@@ -361,6 +361,10 @@ export class ContextMenu extends Component {
       const target = this._ctxMoveToFolder
       if (!target) return
       const fs = window.getFolders?.() || {}
+      for (const ids of Object.values(fs)) {
+        const idx = ids.indexOf(this._ctxTarget)
+        if (idx > -1) ids.splice(idx, 1)
+      }
       if (!fs[target]) fs[target] = []
       if (!fs[target].includes(this._ctxTarget)) fs[target].push(this._ctxTarget)
       window.saveFolders?.(fs)

@@ -41,14 +41,9 @@
         body.native-android.theme-black { background: transparent; }
         body.native-android.theme-black .main-area { background: #1c1c1e; }
         body.native-android .sidebar { padding-top: 40px !important; }
-        @media (min-width: 641px) {
-          body.native-android .bottom-dock { padding-top: max(0px, env(safe-area-inset-top, 0px)); }
-        }
-
 
         #importLoader { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         #importLoader.show { opacity: 1; pointer-events: auto; }
-        #importLoader .loader-box { background: var(--card-bg, #fff); border-radius: 16px; padding: 32px 48px; display: flex; flex-direction: column; align-items: center; gap: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
         #importLoader .loader-dots { display: flex; gap: 8px; }
         #importLoader .loader-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent, #007aff); animation: loaderDot 1.4s ease-in-out infinite both; }
         #importLoader .loader-dot:nth-child(1) { animation-delay: -0.32s; }
@@ -139,7 +134,13 @@
     </div>
 
     <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar closed" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-header-left">Kiro</span>
+            <button class="sidebar-header-icon" id="sidebarCloseBtn" title="Close sidebar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+        </div>
         <div class="sidebar-search">
             <i data-lucide="search" class="search-icon"></i>
             <input type="text" id="searchInput" placeholder="Search files..." spellcheck="false">
@@ -235,6 +236,7 @@
                     <button class="ext-text-close" id="extTextClose"><i data-lucide="x" class="icon-md"></i></button>
                 </div>
                 <pre class="ext-text-content" id="extTextContent"></pre>
+                <div class="ext-text-footer" id="extTextFooter"></div>
             </div>
             <div class="ext-video-view" id="extVideoView" style="display:none">
                 <div class="ext-video-header">
@@ -275,20 +277,7 @@
                 </div>
             </div>
         </div>
-        <div class="bottom-dock" id="bottomDock">
-            <button class="dock-btn" id="menuBtn" title="Menu">
-                <i data-lucide="panel-left" class="dock-icon"></i>
-            </button>
-            <button class="dock-btn" id="gridBtn" title="Dashboard">
-                <i data-lucide="layout-dashboard" class="dock-icon"></i>
-            </button>
-            <div class="dock-input">
-                <input type="text" id="kiroInput" placeholder="Search your vault..." spellcheck="false">
-                <button id="kiroBtn">
-                    <i data-lucide="arrow-right" class="dock-icon-sm"></i>
-                </button>
-            </div>
-        </div>
+
     </div>
 
     <!-- Camera overlay -->
@@ -798,13 +787,10 @@
 
     <!-- Import loading overlay -->
     <div id="importLoader">
-        <div class="loader-box">
-            <div class="loader-dots">
-                <div class="loader-dot"></div>
-                <div class="loader-dot"></div>
-                <div class="loader-dot"></div>
-            </div>
-            <div class="loader-label">Importing files&hellip;</div>
+        <div class="loader-dots">
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
         </div>
     </div>
 

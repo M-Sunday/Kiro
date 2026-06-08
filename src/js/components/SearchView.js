@@ -41,7 +41,6 @@ export class SearchView extends Component {
       }
     })
 
-    this.listenTo(document.getElementById('kiroBtn'), 'click', () => this._handleSearch())
   }
 
   _handleSearch() {

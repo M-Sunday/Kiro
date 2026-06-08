@@ -65,7 +65,7 @@
   .note-view-title { font-size: 16px; min-width: 60px; flex-basis: 60px; }
   .note-view-actions { gap: 2px; }
   .note-view-btn { width: 28px; height: 28px; }
-  .note-view-content { padding: 12px 0; }
+  .note-view-content { padding: 12px 20px 12px 36px; }
   .note-view-todos { padding: 0 0 8px; }
   .note-view-footer { padding: 4px 0 8px; }
   .ext-text-footer { padding: 4px 0 8px; }

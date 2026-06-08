@@ -20,6 +20,7 @@ export class NoteView extends Component {
   mount(rootEl) {
     super.mount(rootEl)
     this._bindDOMEvents()
+    this._initCursorIcon()
   }
 
   _bindDOMEvents() {
@@ -394,7 +395,7 @@ export class NoteView extends Component {
 
   _sanitizeHtml(str) {
     if (!str) return ''
-    const allowed = /^(b|i|u|em|strong|a|br|p|ul|ol|li|span|div|h[1-6]|pre|code|blockquote|img|input)$/i
+    const allowed = /^(b|i|u|em|strong|a|br|p|ul|ol|li|span|div|h[1-6]|pre|code|blockquote|img|input|hr)$/i
     str = str.replace(/<script[\s\S]*?<\/script>/gi, '')
     str = str.replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
     str = str.replace(/\shref\s*=\s*["']javascript:[^"']*["']/gi, '')
@@ -410,4 +411,55 @@ export class NoteView extends Component {
     })
     return str
   }
+
+  _initCursorIcon() {
+    this._iconEl = document.getElementById('noteBlockTrigger')
+    const contentEl = document.getElementById('noteViewContent')
+    if (!this._iconEl || !contentEl) return
+    const wrapEl = contentEl.closest('.note-view-editor-wrap')
+    if (!wrapEl) return
+
+    const ICON_HEIGHT = 20
+
+    const update = () => {
+      requestAnimationFrame(() => {
+        const sel = window.getSelection()
+        if (!sel || !sel.rangeCount || !contentEl.contains(sel.anchorNode)) {
+          this._iconEl.classList.remove('visible')
+          return
+        }
+
+        const range = sel.getRangeAt(0)
+        const cr = range.getClientRects()
+        let y
+        if (cr && cr.length > 0) {
+          y = cr[0].top + cr[0].height / 2 - ICON_HEIGHT / 2
+        } else {
+          const r = range.getBoundingClientRect()
+          if (r && (r.height > 0 || r.top > 0)) {
+            y = r.top + r.height / 2 - ICON_HEIGHT / 2
+          } else {
+            const node = sel.anchorNode
+            const el = node.nodeType === 3 ? node.parentElement : node
+            const block = el.closest('div') || el
+            const er = block.getBoundingClientRect()
+            if (er && er.height > 0) {
+              y = er.top + er.height / 2 - ICON_HEIGHT / 2
+            } else {
+              y = contentEl.getBoundingClientRect().top + 8
+            }
+          }
+        }
+
+        const wrapRect = wrapEl.getBoundingClientRect()
+        const top = y - wrapRect.top
+        this._iconEl.style.top = Math.max(0, top) + 'px'
+        this._iconEl.classList.add('visible')
+      })
+    }
+
+    document.addEventListener('selectionchange', update)
+    update()
+  }
+
 }

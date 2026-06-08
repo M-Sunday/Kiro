@@ -227,6 +227,11 @@
 .toast-btn-secondary { background: transparent; color: #a1a1a6; border: 1px solid #a1a1a6; border-radius: 999px; padding: 4px 14px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
 .toast-btn-secondary:hover { opacity: 0.7; }
 
+/* ─── EDITOR WRAP / CURSOR ICON ────────────────────────── */
+.note-view-editor-wrap { position: relative; flex: 1; min-height: 0; overflow: visible; }
+.note-block-trigger { position: absolute; left: 4px; top: 0; display: none; align-items: center; justify-content: center; z-index: 1; pointer-events: none; padding: 0; color: #a1a1a6; }
+.note-block-trigger.visible { display: flex; }
+
 /* ─── NOTES ────────────────────────────────────────────── */
 .folder-dialog.note-dialog { width: 320px; }
 .folder-dialog textarea { width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #e8e8ed; border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.15s; min-height: 120px; resize: vertical; margin-top: 8px; background: #f5f5f7; color: #1d1d1f; }
@@ -238,7 +243,7 @@
 .note-view-actions { display: flex; gap: 4px; margin-left: auto; }
 .note-view-btn { background: none; border: 1px solid #e8e8ed; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; color: #8e8e93; flex-shrink: 0; }
 .note-view-btn:hover { background: #f5f5f7; }
-.note-view-content { flex: 1; border: none; background: transparent; outline: none; font-size: 14px; line-height: 1.6; color: #3a3a3c; font-family: inherit; padding: 16px 20px; white-space: pre-wrap; word-break: break-word; overflow-y: auto; min-height: 0; }
+.note-view-content { flex: 1; border: none; background: transparent; outline: none; font-size: 14px; line-height: 1.6; color: #3a3a3c; font-family: inherit; padding: 16px 20px 16px 40px; white-space: pre-wrap; word-break: break-word; overflow-y: auto; min-height: 0; }
 .note-view-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 8px 0; display: block; }
 .note-view-content a { color: #007aff; text-decoration: underline; font-weight: 700; }
 .note-view-footer { font-size: 11px; color: #8e8e93; padding: 6px 20px 10px; border-top: 1px solid #e8e8ed; }
@@ -466,8 +471,7 @@ body.theme-black .storage-actions { border-color:#3a3a3c; }
   padding: 0;
   transition: opacity 0.12s;
 }
-.pill-icon-btn:hover { opacity: 0.7; }
-.pill-icon-btn.active { color: var(--accent, #007aff); }
+.pill-icon-btn.active { color: inherit; }
 .pill-icon-btn svg { width: 20px; height: 20px; }
 
 .pill-input-wrap {
@@ -541,10 +545,7 @@ body.theme-black .storage-actions { border-color:#3a3a3c; }
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   transition: opacity 0.12s;
 }
-.sidebar-fab .fab-btn:hover,
-.grid-fab .fab-btn:hover,
-.add-fab .fab-btn:hover { opacity: 0.85; }
-.grid-fab .fab-btn.active { color: var(--accent, #007aff); }
+.grid-fab .fab-btn.active { color: inherit; }
 .sidebar-fab .fab-btn svg,
 .grid-fab .fab-btn svg,
 .add-fab .fab-btn svg { width: 22px; height: 22px; }

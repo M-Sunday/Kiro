@@ -263,19 +263,6 @@ async function bootstrap() {
   const verLabel = document.getElementById('appVersionLabel')
   if (verLabel) verLabel.textContent = APP_VERSION
 
-  // Status bar gradient scrim for transparent status bar readability
-  const scrim = document.createElement('div')
-  scrim.id = 'statusBarScrim'
-  scrim.style.position = 'fixed'
-  scrim.style.top = '0'
-  scrim.style.left = '0'
-  scrim.style.width = '100%'
-  scrim.style.height = '80px'
-  scrim.style.background = 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)'
-  scrim.style.zIndex = '55'
-  scrim.style.pointerEvents = 'none'
-  document.body.appendChild(scrim)
-
   // Request storage permission on native
   if (PlatformDetector.isNativeAndroid()) {
     permissionService.check('storage')

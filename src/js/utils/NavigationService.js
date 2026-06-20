@@ -33,6 +33,7 @@ export class NavigationService {
         document.querySelector('.content')?.style.display !== '') return 'card'
     if (document.getElementById('searchLanding')?.style.display === 'flex') return 'landing'
     if (document.getElementById('homeView')?.style.display === 'flex') return 'home'
+    if (document.getElementById('activityView')?.style.display === 'flex') return 'activity'
     return 'grid'
   }
 
@@ -45,6 +46,7 @@ export class NavigationService {
         document.querySelector('.content')?.style.display !== '') return 'card'
     if (document.getElementById('searchLanding')?.style.display === 'flex') return 'landing'
     if (document.getElementById('homeView')?.style.display === 'flex') return 'home'
+    if (document.getElementById('activityView')?.style.display === 'flex') return 'activity'
     return 'grid'
   }
 
@@ -111,11 +113,11 @@ export class NavigationService {
       if (gb) gb.classList.add('active')
       if (window.renderGridView) window.renderGridView()
       if (window.syncViewTabs) window.syncViewTabs('grid')
-    } else if (target === 'home') {
+    } else if (target === 'home' || target === 'activity') {
       if (gv) gv.classList.add('open')
       if (window.renderGridView) window.renderGridView()
       if (gb) gb.classList.remove('active')
-      if (window.syncViewTabs) window.syncViewTabs('home')
+      if (window.syncViewTabs) window.syncViewTabs(target)
     } else if (target === 'card') {
       if (ct) ct.style.display = ''
       if (window.renderSidebar) window.renderSidebar()

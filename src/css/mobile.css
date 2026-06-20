@@ -78,7 +78,7 @@
   .home-view-empty-text { font-size: 14px; }
   .grid-sections { padding: 8px 0; }
 
-  .dashboard-hero { margin: 0 -20px 16px; height: 160px; }
+  .dashboard-hero { margin-bottom: 16px; height: 160px; }
   .grid-dashboard { padding: 0 20px 16px; gap: 8px; }
   .dashboard-greeting { font-size: 17px; }
   .dashboard-avatar, .dashboard-avatar-img { width: 72px; height: 72px; font-size: 30px; }
@@ -106,4 +106,4 @@ body.theme-black { background: transparent; }
 .ext-text-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
 .ext-video-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
 .ext-image-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
-.grid-view { padding: 0 20px max(90px, env(safe-area-inset-bottom, 90px)); }
+.grid-view { padding: 0 0 max(90px, env(safe-area-inset-bottom, 90px)); }

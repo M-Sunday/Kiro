@@ -34,7 +34,7 @@ export class ViewManager {
       document.body.classList.remove('view-grid')
     }
 
-    if (view === 'home') {
+    if (view === 'home' || view === 'activity') {
       if (gv) gv.classList.add('open')
       if (window.renderGridView) window.renderGridView()
     } else if (view === 'card') {
@@ -45,7 +45,7 @@ export class ViewManager {
       if (nv) nv.style.display = 'flex'
     }
 
-    if (window.syncViewTabs && ['grid', 'home'].includes(view)) {
+    if (window.syncViewTabs && ['grid', 'home', 'activity'].includes(view)) {
       window.syncViewTabs(view)
     }
   }

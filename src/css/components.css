@@ -158,7 +158,8 @@
 .settings-history-item-channel { font-size: 11px; color: #8e8e93; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ─── GRID VIEW ───────────────────────────────────────── */
-.grid-view { display: none; overflow-y: auto; flex: 1; padding: 0 20px; }
+.grid-view { display: none; overflow-y: auto; flex: 1; width: 100%; scrollbar-width: none; -ms-overflow-style: none; }
+.grid-view::-webkit-scrollbar { display: none; }
 .grid-view.open { display: block; animation: gridFadeIn 0.2s ease; }
 
 .search-landing { display: flex; align-items: center; justify-content: center; flex: 1; }
@@ -673,6 +674,7 @@ body.theme-black .storage-actions { border-color:#3a3a3c; }
 /* ─── GRID SECTIONS ─────────────────────────────────────── */
 .grid-sections {
   display: block;
+  padding: 0 20px;
 }
 
 /* ─── COMPONENT THEME VARIABLES (splash bg) ──────────── */

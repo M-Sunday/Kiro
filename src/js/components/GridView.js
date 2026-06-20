@@ -280,16 +280,19 @@ export class GridView extends Component {
     const repo = api.getRepository('settings')
     Promise.resolve(repo.get('heroImage')).then(saved => {
       if (saved) {
-        this._heroData = saved
+        const { dataUrl, offsetX = 0, offsetY = 0 } = saved
+        this._heroData = { dataUrl, offsetX, offsetY }
         this._applyHeroImage()
       }
     }).catch(() => {})
   }
 
   _saveHeroImage() {
+    if (!this._heroData) return
     const api = Api.getInstance()
     const repo = api.getRepository('settings')
-    Promise.resolve(repo.set('heroImage', this._heroData)).catch(() => {})
+    const { dataUrl, offsetX, offsetY } = this._heroData
+    Promise.resolve(repo.set('heroImage', { dataUrl, offsetX, offsetY })).catch(() => {})
   }
 
   _handleHeroPick() {
@@ -339,13 +342,6 @@ export class GridView extends Component {
         <div class="hero-crop-window" style="aspect-ratio:${heroAspect}"></div>
       </div>
       <div class="hero-crop-bar">
-        <button class="hero-crop-btn" id="heroCropZoomOut">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>
-        </button>
-        <input type="range" class="hero-crop-slider" id="heroCropSlider" min="50" max="300" value="100" />
-        <button class="hero-crop-btn" id="heroCropZoomIn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-        </button>
         <button class="hero-crop-done" id="heroCropDone">Done</button>
       </div>
     `
@@ -356,45 +352,32 @@ export class GridView extends Component {
       bg.style.backgroundImage = `url(${dataUrl})`
 
       const state = {
-        scale: this._heroData?.scale || 1,
         ox: this._heroData?.offsetX || 0,
         oy: this._heroData?.offsetY || 0,
         startX: 0, startY: 0,
-        startScale: 1, startDist: 0,
         dragging: false
       }
 
       function update() {
-        bg.style.backgroundSize = `${state.scale * 100}%`
+        bg.style.backgroundSize = '150%'
         bg.style.backgroundPosition = `calc(50% + ${state.ox}px) calc(50% + ${state.oy}px)`
-        overlay.querySelector('#heroCropSlider').value = Math.round(state.scale * 100)
       }
 
-      /* touch */
+      /* touch pan */
       bg.addEventListener('touchstart', e => {
-        if (e.touches.length === 1) {
-          state.startX = e.touches[0].clientX - state.ox
-          state.startY = e.touches[0].clientY - state.oy
-        } else if (e.touches.length === 2) {
-          const t = e.touches
-          state.startDist = Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
-          state.startScale = state.scale
-        }
+        if (e.touches.length !== 1) return
+        state.startX = e.touches[0].clientX - state.ox
+        state.startY = e.touches[0].clientY - state.oy
       }, { passive: true })
 
       bg.addEventListener('touchmove', e => {
-        if (e.touches.length === 1) {
-          state.ox = e.touches[0].clientX - state.startX
-          state.oy = e.touches[0].clientY - state.startY
-        } else if (e.touches.length === 2) {
-          const t = e.touches
-          const d = Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
-          state.scale = Math.min(3, Math.max(0.5, state.startScale * (d / state.startDist)))
-        }
+        if (e.touches.length !== 1) return
+        state.ox = e.touches[0].clientX - state.startX
+        state.oy = e.touches[0].clientY - state.startY
         update()
       }, { passive: true })
 
-      /* mouse */
+      /* mouse pan */
       bg.addEventListener('mousedown', e => {
         state.dragging = true
         state.startX = e.clientX - state.ox
@@ -413,22 +396,8 @@ export class GridView extends Component {
         if (state.dragging) { state.dragging = false; bg.style.cursor = 'grab' }
       })
 
-      /* zoom controls */
-      const slider = overlay.querySelector('#heroCropSlider')
-      slider.addEventListener('input', () => {
-        state.scale = slider.value / 100
-        update()
-      })
-      overlay.querySelector('#heroCropZoomOut').addEventListener('click', () => {
-        state.scale = Math.max(0.5, state.scale - 0.25)
-        update()
-      })
-      overlay.querySelector('#heroCropZoomIn').addEventListener('click', () => {
-        state.scale = Math.min(3, state.scale + 0.25)
-        update()
-      })
       overlay.querySelector('#heroCropDone').addEventListener('click', () => {
-        this._heroData = { dataUrl, scale: state.scale, offsetX: state.ox, offsetY: state.oy }
+        this._heroData = { dataUrl, offsetX: state.ox, offsetY: state.oy }
         this._saveHeroImage()
         this._applyHeroImage()
         overlay.remove()
@@ -444,7 +413,7 @@ export class GridView extends Component {
     if (this._heroData) {
       hero.classList.add('has-image')
       hero.style.backgroundImage = `url(${this._heroData.dataUrl})`
-      hero.style.backgroundSize = `${this._heroData.scale * 100}%`
+      hero.style.backgroundSize = '150%'
       hero.style.backgroundPosition = `calc(50% + ${this._heroData.offsetX}px) calc(50% + ${this._heroData.offsetY}px)`
       hero.style.backgroundRepeat = 'no-repeat'
     } else {
@@ -660,7 +629,7 @@ export class GridView extends Component {
     const statusClass = !online ? 'offline' : (conn === 'slow-2g' || conn === '2g' ? 'weak' : 'online')
     let heroStyle
     if (this._heroData) {
-      heroStyle = `background-image:url(${this._heroData.dataUrl});background-size:${this._heroData.scale * 100}%;background-position:calc(50% + ${this._heroData.offsetX}px) calc(50% + ${this._heroData.offsetY}px);background-repeat:no-repeat`
+      heroStyle = `background-image:url(${this._heroData.dataUrl});background-size:150%;background-position:calc(50% + ${this._heroData.offsetX}px) calc(50% + ${this._heroData.offsetY}px);background-repeat:no-repeat`
     } else {
       heroStyle = `background:${this._heroGradient}`
     }
@@ -692,13 +661,24 @@ export class GridView extends Component {
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           Home
         </button>
-
+        <button class="view-tab" data-view="activity">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M17 12h-2l-2 5-2-10-2 5H7"/></svg>
+          Activity
+        </button>
       </div>
       <div id="homeView" class="home-view" style="display:none">
         <div class="home-view-content">
           <div class="home-view-empty">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             <p class="home-view-empty-text">Your home view is empty</p>
+          </div>
+        </div>
+      </div>
+      <div id="activityView" class="home-view" style="display:none">
+        <div class="home-view-content">
+          <div class="home-view-empty">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M17 12h-2l-2 5-2-10-2 5H7"/></svg>
+            <p class="home-view-empty-text">Your activity view is empty</p>
           </div>
         </div>
       </div>
@@ -1426,7 +1406,7 @@ export class GridView extends Component {
     this._applyViewState(view)
     if (view === 'grid') {
       document.getElementById('gridBtn')?.classList.add('active')
-    } else if (view === 'home') {
+    } else {
       document.getElementById('gridBtn')?.classList.remove('active')
     }
     this._syncTabs(view)
@@ -1438,8 +1418,10 @@ export class GridView extends Component {
   _applyViewState(view) {
     const gs = document.getElementById('gridSections')
     const hv = document.getElementById('homeView')
+    const av = document.getElementById('activityView')
     if (gs) gs.style.display = view === 'grid' ? '' : 'none'
     if (hv) hv.style.display = view === 'home' ? 'flex' : 'none'
+    if (av) av.style.display = view === 'activity' ? 'flex' : 'none'
   }
 
   _anyExternalViewOpen() {

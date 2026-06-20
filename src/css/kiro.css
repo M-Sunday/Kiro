@@ -1,9 +1,8 @@
 /* ─── Kiro: Dashboard ──────────────────────────────── */
 .dashboard-hero {
   height: 180px;
-  margin: 0 -20px 20px;
+  margin-bottom: 20px;
   cursor: pointer;
-  position: relative;
   overflow: hidden;
 }
 

@@ -265,51 +265,101 @@
 
 /* ─── External video player ────────────────────────── */
 .ext-video-view {
-  display: none; flex: 1; flex-direction: column; overflow: hidden; padding: 20px;
+  display: none; flex-direction: column; overflow: hidden;
+  position: absolute; inset: 0; z-index: 5;
+  background: #000;
 }
+.ext-video-body {
+  flex: 1; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: #000;
+}
+.ext-video-element {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; background: #000;
+}
+
+/* Video gradients for readability */
+.ext-video-gradient {
+  position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none;
+}
+.ext-video-gradient.top { top: 0; height: 40%; background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent); }
+.ext-video-gradient.bottom { bottom: 0; height: 50%; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); }
+
+/* Header overlay */
 .ext-video-header {
-  display: flex; align-items: center; gap: 10px; padding: 8px 14px; margin: 0 0 8px;
-  border-radius: 14px; background: #f5f5f7; border: 1px solid #e8e8ed;
+  position: absolute; top: 0; left: 0; right: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; padding-top: max(16px, env(safe-area-inset-top));
 }
-.ext-video-icon { width: 18px; height: 18px; color: #8e8e93; flex-shrink: 0; }
-.ext-video-title { flex: 1; font-size: 16px; font-weight: 600; color: #1d1d1f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ext-video-close { background: none; border: 1px solid #e8e8ed; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; color: #8e8e93; flex-shrink: 0; }
-.ext-video-close:hover { background: #f5f5f7; }
-.ext-video-body { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; overflow: hidden; background: #000; border-radius: 12px; }
-.ext-video-element { flex: 1; width: 100%; min-height: 0; object-fit: contain; background: #000; }
+.ext-video-header-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.ext-video-icon { width: 18px; height: 18px; color: #fff; flex-shrink: 0; opacity: 0.8; }
+.ext-video-title { font-size: 15px; font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+.ext-video-close {
+  background: rgba(255,255,255,0.12); border: none; border-radius: 50%;
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.12s; color: #fff; flex-shrink: 0; backdrop-filter: blur(4px);
+}
+.ext-video-close:hover { background: rgba(255,255,255,0.25); }
+.ext-video-close svg, .ext-video-close i { width: 20px; height: 20px; }
 
-.ext-video-error { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #fff; background: rgba(0,0,0,0.7); padding: 12px 20px; border-radius: 8px; font-size: 14px; pointer-events: none; z-index: 10; }
+/* Error message */
+.ext-video-error { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #fff; background: rgba(0,0,0,0.7); padding: 12px 20px; border-radius: 8px; font-size: 14px; pointer-events: none; z-index: 3; }
 
+/* Center overlay icon (play/pause/skip) */
 .ext-video-overlay-icon {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.6);
-  width: 80px; height: 80px; pointer-events: none; z-index: 2;
-  background: rgba(0,0,0,0.55); border-radius: 50%;
+  width: 80px; height: 80px; pointer-events: none; z-index: 3;
+  background: rgba(0,0,0,0.5); border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease;
-  color: #fff;
+  color: #fff; backdrop-filter: blur(2px);
 }
 .ext-video-overlay-icon svg { width: 40px; height: 40px; }
 .ext-video-overlay-icon.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }
 .ext-video-overlay-icon.skip-left { left: 25%; }
 .ext-video-overlay-icon.skip-right { left: auto; right: 25%; }
 
-/* ─── Custom video controls ────────────────────────── */
+/* ─── Custom video controls overlay ────────────────── */
 .ext-video-controls {
-  display: flex; align-items: center; gap: 6px; padding: 6px 10px;
-  background: #1d1d1f; border-radius: 0 0 12px 12px;
-  flex-shrink: 0;
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+  display: flex; flex-direction: column;
+  padding: 0 20px; padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
+.ext-video-controls-top { padding: 0; }
+.ext-video-controls-bottom {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0;
+}
+
+/* Progress bar */
+.ext-video-progress { cursor: pointer; padding: 6px 0; }
+.ext-video-progress-track { height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; position: relative; overflow: hidden; cursor: pointer; transition: height 0.1s; }
+.ext-video-progress-track:hover { height: 6px; }
+.ext-video-progress-fill { height: 100%; background: #fff; border-radius: 2px; width: 0%; transition: width 0.1s linear; }
+
+/* Control groups */
+.ext-video-ctrl-group { display: flex; align-items: center; gap: 4px; }
+.ext-video-ctrl-group:first-child { flex: 1; }
+.ext-video-ctrl-group:last-child { flex: 1; justify-content: flex-end; }
+
+/* Control buttons */
 .ext-video-ctrl-btn {
-  background: none; border: none; cursor: pointer; color: #f5f5f7; padding: 8px;
-  border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.12s; flex-shrink: 0;
+  background: none; border: none; cursor: pointer; color: #fff; padding: 6px;
+  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s; flex-shrink: 0; opacity: 0.85;
 }
-.ext-video-ctrl-btn:hover { background: rgba(255,255,255,0.12); }
-.ext-video-progress { flex: 1; cursor: pointer; padding: 8px 0; display: flex; align-items: center; min-width: 0; }
-.ext-video-progress-track { height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; flex: 1; position: relative; overflow: hidden; }
-.ext-video-progress-fill { height: 100%; background: #fff; border-radius: 3px; width: 0%; transition: width 0.1s linear; }
-.ext-video-time { font-size: 13px; color: #a1a1a6; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; min-width: 75px; text-align: center; }
-.ext-video-volume { width: 72px; height: 6px; cursor: pointer; accent-color: #fff; flex-shrink: 0; }
-.ext-video-ctrl-btn svg { width: 20px; height: 20px; display: block; }
+.ext-video-ctrl-btn:hover { background: rgba(255,255,255,0.12); opacity: 1; }
+.ext-video-ctrl-btn svg, .ext-video-ctrl-btn i { width: 22px; height: 22px; display: block; }
+.ext-video-ctrl-btn .icon-md { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+.ext-video-ctrl-btn .icon-md svg { width: 22px; height: 22px; }
+
+/* Time */
+.ext-video-time { font-size: 13px; color: rgba(255,255,255,0.7); font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; min-width: 80px; text-align: center; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+/* Volume slider */
+.ext-video-volume { width: 60px; height: 4px; cursor: pointer; accent-color: #fff; flex-shrink: 0; opacity: 0.7; transition: opacity 0.12s; }
+.ext-video-volume:hover { opacity: 1; }
 
 /* ─── External image viewer ──────────────────────────── */
 .ext-image-view {
@@ -336,10 +386,8 @@ body.theme-black .ext-text-title { color: #f5f5f7; }
 body.theme-black .ext-text-close { border-color: #3a3a3c; color: #a1a1a6; }
 body.theme-black .ext-text-close:hover { background: #3a3a3c; }
 body.theme-black .ext-text-content { color: #a1a1a6; }
-body.theme-black .ext-video-header { background: rgba(44,44,46,0.95); border-color: #3a3a3c; }
-body.theme-black .ext-video-title { color: #f5f5f7; }
-body.theme-black .ext-video-close { border-color: #3a3a3c; color: #a1a1a6; }
-body.theme-black .ext-video-close:hover { background: #3a3a3c; }
+body.theme-black .ext-video-close { background: rgba(255,255,255,0.1); color: #fff; }
+body.theme-black .ext-video-close:hover { background: rgba(255,255,255,0.2); }
 body.theme-black .ext-image-header { background: rgba(44,44,46,0.95); border-color: #3a3a3c; }
 body.theme-black .ext-image-title { color: #f5f5f7; }
 body.theme-black .ext-image-close { border-color: #3a3a3c; color: #a1a1a6; }

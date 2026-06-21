@@ -44,6 +44,14 @@
 .sidebar-icon-btn.pinned { color: #1d1d1f; }
 .sidebar-icon { width: 16px; height: 16px; }
 
+@media (min-width: 1200px) {
+  .sidebar-icon-btn { width: 24px; height: 24px; border-radius: 6px; }
+  .sidebar-icon { width: 14px; height: 14px; }
+  .sidebar-header-icon { width: 24px; height: 24px; border-radius: 6px; }
+  .sidebar-header-icon svg { width: 14px; height: 14px; }
+  .sidebar-settings-bar { padding: 6px 10px 8px; }
+}
+
 .sidebar-search { display: flex; align-items: center; padding: 10px 14px 8px; }
 .search-icon { width: 16px; height: 16px; color: #8e8e93; position: absolute; margin-left: 10px; pointer-events: none; }
 .sidebar-search input { width: 100%; padding: 7px 10px 7px 30px; border: 1px solid #e8e8ed; border-radius: 8px; font-size: 12px; font-family: inherit; background: #f5f5f7; outline: none; transition: border-color 0.15s; }
@@ -91,7 +99,7 @@
 
 
 .content { overflow-y: auto; display: flex; align-items: flex-start; justify-content: center; flex: 1; }
-.container { width: 100%; max-width: 520px; }
+.container { width: 100%; max-width: 720px; }
 
 /* ─── SIDEBAR SETTINGS ────────────────────────────────── */
 .sidebar-settings-bar { padding: 8px 12px 10px; display: flex; justify-content: flex-end; }

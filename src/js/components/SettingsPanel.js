@@ -525,20 +525,6 @@ export class SettingsPanel extends Component {
     return (bytes / 1048576).toFixed(1) + ' MB'
   }
   _showRenameSplash(name) {
-    const splash = document.getElementById('splash')
-    const splashText = document.getElementById('splashText')
-    if (!splash || !splashText) return
-    splash.style.display = 'flex'
-    splash.classList.remove('fade', 'offline', 'onboarding')
-    splashText.style.display = 'block'
-    splashText.textContent = 'Checking for updates...'
-    const icon = splash.querySelector('.splash-content img')
-    if (icon) { icon.style.filter = 'none'; icon.style.opacity = '1' }
-    setTimeout(() => { splashText.textContent = 'Up to date' }, 1200)
-    setTimeout(() => { splashText.textContent = 'Welcome, ' + name }, 2600)
-    setTimeout(() => {
-      splash.classList.add('fade')
-      setTimeout(() => { splash.style.display = 'none' }, 500)
-    }, 3800)
+    // splash screen removed
   }
 }

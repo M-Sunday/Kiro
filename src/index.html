@@ -17,25 +17,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=Geist+Mono:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Jeju+Myeongjo&family=Rethink+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* Critical splash CSS — inlined so splash renders immediately */
-        #splash { position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; background: var(--splash-bg, #f5f5f7); opacity: 1; transition: opacity 0.4s ease, background 0.5s ease; }
+        /* Splash container (also holds onboarding) */
+        #splash { position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; background: var(--splash-bg, #f5f5f7); }
         #splash.fade { opacity: 0; pointer-events: none; }
         #splash.info-bg { background: #D97757; }
-        #splash.info-bg .onb-title,
-        #splash.info-bg .haiku-line,
-        #splash.info-bg .onb-choice,
-        #splash.info-bg .onb-choice-divider,
-        #splash.info-bg .onb-info-content,
-        #splash.info-bg .onb-back,
-        #splash.info-bg .onb-footer { color: #fff; }
-        #splash.info-bg .splash-content img { filter: brightness(0) invert(1); }
-        .splash-content { display: flex; flex-direction: column; align-items: center; gap: 24px; }
-        .splash-content svg, .splash-content img { width: 64px; height: 64px; animation: splashPulse 1.6s ease-in-out infinite; transition: filter 0.4s ease; }
-        #splash.onboarding .splash-content img, #onboarding .splash-content img, #welcomeBack .splash-content img { animation: none; }
-        #splash.offline .splash-content img { filter: grayscale(1); opacity: 0.5; animation: none; }
-        #splash.offline #splashText { color: #8e8e93; }
-        @keyframes splashPulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.08); opacity: 1; } }
-        #splashText { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; font-weight: 500; color: #86868b; letter-spacing: 0.3px; }
 
         body.native-android { padding-top: 0 !important; }
         body.native-android.theme-black { background: transparent; }
@@ -55,50 +40,43 @@
 </head>
 <body>
 
-    <!-- Splash — first child so it renders before anything else -->
+    <!-- Splash container (also holds onboarding step 0) -->
     <div id="splash">
-        <div class="splash-content">
-            <img id="splashIcon" src="assets/icons/app-icon-splash.svg" width="94" height="94" alt="Kiro">
-            <p id="splashText">Checking for updates...</p>
-            <!-- Step 0 (welcome screen for first-time users) -->
-            <div id="onbStep0" class="onb-step onb-hidden">
-                <div class="onb-stage" id="onbStage">
-                    <div class="onb-page onb-page-main">
-                        <p class="onb-title">welcome to Kiro</p>
-                        <div class="haiku">
-                            <p class="haiku-line">a blank page</p>
-                            <p class="haiku-line">for the chaos</p>
-                            <p class="haiku-line">you carry</p>
-                        </div>
-                        <div class="onb-choices" id="onbChoices">
-                            <span class="onb-choice" data-action="setup">set up</span>
-                            <span class="onb-choice-divider">·</span>
-                            <span class="onb-choice" data-action="appinfo">app info</span>
-                            <span class="onb-choice-divider">·</span>
-                            <span class="onb-choice" data-action="privacy">privacy</span>
-                        </div>
+        <div id="onbStep0" class="onb-step onb-hidden">
+            <div class="onb-stage" id="onbStage">
+                <div class="onb-page onb-page-main">
+                    <p class="onb-title">welcome to Kiro</p>
+                    <div class="haiku">
+                        <p class="haiku-line">a blank page</p>
+                        <p class="haiku-line">for the chaos</p>
+                        <p class="haiku-line">you carry</p>
                     </div>
-                    <div class="onb-page onb-page-info">
-                        <div class="onb-info-content" id="onbInfoContent"></div>
-                        <div class="onb-back" id="onbBack">←</div>
+                    <div class="onb-choices" id="onbChoices">
+                        <span class="onb-choice" data-action="setup">set up</span>
+                        <span class="onb-choice-divider">·</span>
+                        <span class="onb-choice" data-action="appinfo">app info</span>
+                        <span class="onb-choice-divider">·</span>
+                        <span class="onb-choice" data-action="privacy">privacy</span>
                     </div>
                 </div>
-                <div class="onb-footer">© 2026 Kiro · <span id="onbFooterVersion"></span></div>
+                <div class="onb-page onb-page-info">
+                    <div class="onb-info-content" id="onbInfoContent"></div>
+                    <div class="onb-back" id="onbBack">←</div>
+                </div>
             </div>
+            <div class="onb-footer">© 2026 Kiro · <span id="onbFooterVersion"></span></div>
         </div>
     </div>
 
     <!-- Onboarding step 1 (username entry) -->
     <div id="onboarding" class="onb-hidden">
-        <div class="splash-content">
-            <div id="onbStep1" class="onb-step onb-hidden">
-                <p class="onb-prompt">what should I call you?</p>
-                <input type="text" id="onbNameInput" class="onb-input" placeholder="" maxlength="30" autocomplete="off">
-                <div class="onb-actions" id="onbActions" style="display:none">
-                    <span class="onb-choice" id="onbYes">yes</span>
-                    <span class="onb-choice-divider">·</span>
-                    <span class="onb-choice" id="onbNo">no</span>
-                </div>
+        <div id="onbStep1" class="onb-step onb-hidden">
+            <p class="onb-prompt">what should I call you?</p>
+            <input type="text" id="onbNameInput" class="onb-input" placeholder="" maxlength="30" autocomplete="off">
+            <div class="onb-actions" id="onbActions" style="display:none">
+                <span class="onb-choice" id="onbYes">yes</span>
+                <span class="onb-choice-divider">·</span>
+                <span class="onb-choice" id="onbNo">no</span>
             </div>
         </div>
     </div>
@@ -234,6 +212,43 @@
                 <div class="note-view-todos" id="noteViewTodos"></div>
                 <div class="note-view-footer" id="noteViewFooter"></div>
             </div>
+            <div class="page-view" id="pageView" style="display:none">
+                <div class="page-hero" id="pageHero">
+                    <img class="page-hero-img" id="pageHeroImg" src="" alt="Hero image">
+                    <div class="page-hero-placeholder" id="pageHeroPlaceholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span>Add cover image</span>
+                    </div>
+                    <div class="page-hero-gradient" id="pageHeroGradient"></div>
+                    <button class="page-hero-remove" id="pageHeroRemove" title="Remove hero image">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <div class="page-header" id="pageHeader">
+                    <div class="page-header-left">
+                        <button class="page-back-btn" id="pageBackBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                        </button>
+                        <input class="page-title-input" id="pageTitleInput" placeholder="Add your idea..." spellcheck="false">
+                    </div>
+                    <button class="page-delete-btn" id="pageDeleteBtn" title="Delete page">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
+                </div>
+                <div class="page-canvas" id="pageCanvas">
+                    <div class="page-blocks" id="pageBlocks"></div>
+                </div>
+                <div class="page-picker" id="pagePicker" style="display:none">
+                    <div class="page-picker-header">
+                        <span class="page-picker-title" id="pickerTitle">Select</span>
+                        <div class="page-picker-actions">
+                            <button class="page-picker-btn" id="pickerSelectAll">Select All</button>
+                            <button class="page-picker-btn page-picker-btn-primary" id="pickerDone">Done</button>
+                        </div>
+                    </div>
+                    <div class="page-picker-items" id="pickerItems"></div>
+                </div>
+            </div>
             <div class="ext-text-view" id="extTextView" style="display:none">
                 <div class="ext-text-header">
                     <i data-lucide="file-text" class="ext-text-icon"></i>
@@ -244,29 +259,43 @@
                 <div class="ext-text-footer" id="extTextFooter"></div>
             </div>
             <div class="ext-video-view" id="extVideoView" style="display:none">
-                <div class="ext-video-header">
-                    <i data-lucide="file-video-2" class="ext-video-icon"></i>
-                    <span class="ext-video-title" id="extVideoTitle"></span>
-                    <button class="ext-video-close" id="extVideoClose"><i data-lucide="x" class="icon-md"></i></button>
-                </div>
-                <div class="ext-video-body">
+                <div class="ext-video-body" id="extVideoBody">
+                    <video class="ext-video-element" id="extVideoElement" playsinline preload="metadata"></video>
+                    <div class="ext-video-gradient top"></div>
+                    <div class="ext-video-gradient bottom"></div>
+                    <div class="ext-video-header">
+                        <div class="ext-video-header-left">
+                            <i data-lucide="file-video-2" class="ext-video-icon"></i>
+                            <span class="ext-video-title" id="extVideoTitle"></span>
+                        </div>
+                        <button class="ext-video-close" id="extVideoClose"><i data-lucide="x" class="icon-md"></i></button>
+                    </div>
                     <div class="ext-video-overlay-icon" id="extVideoOverlayIcon"></div>
                     <div class="ext-video-error" id="extVideoError" style="display:none">Video could not be loaded</div>
-                    <video class="ext-video-element" id="extVideoElement" playsinline preload="metadata"></video>
                     <div class="ext-video-controls" id="extVideoControls">
-                        <button class="ext-video-ctrl-btn" id="extVideoPlayBtn" title="Play/Pause" type="button"><span class="icon-sm" id="extVideoPlayIcon"></span></button>
-                        <button class="ext-video-ctrl-btn" id="extVideoSkipBackBtn" title="Skip back 10s" type="button"><i data-lucide="skip-back" class="icon-sm"></i></button>
-                        <button class="ext-video-ctrl-btn" id="extVideoSkipFwdBtn" title="Skip forward 10s" type="button"><i data-lucide="skip-forward" class="icon-sm"></i></button>
-                        <button class="ext-video-ctrl-btn" id="extVideoPipBtn" title="Picture in picture" type="button"><span class="icon-sm" id="extVideoPipIcon"></span></button>
-                        <div class="ext-video-progress" id="extVideoProgress">
-                            <div class="ext-video-progress-track" id="extVideoProgressTrack">
-                                <div class="ext-video-progress-fill" id="extVideoProgressFill"></div>
+                        <div class="ext-video-controls-top">
+                            <div class="ext-video-progress" id="extVideoProgress">
+                                <div class="ext-video-progress-track" id="extVideoProgressTrack">
+                                    <div class="ext-video-progress-fill" id="extVideoProgressFill"></div>
+                                </div>
                             </div>
                         </div>
-                        <span class="ext-video-time" id="extVideoTime">0:00 / 0:00</span>
-                        <button class="ext-video-ctrl-btn" id="extVideoMuteBtn" title="Mute/Unmute" type="button"><span class="icon-sm" id="extVideoMuteIcon"></span></button>
-                        <input class="ext-video-volume" id="extVideoVolume" type="range" min="0" max="1" step="0.05" value="1" title="Volume">
-                        <button class="ext-video-ctrl-btn" id="extVideoFullscreenBtn" title="Fullscreen" type="button"><i data-lucide="maximize" class="icon-sm"></i></button>
+                        <div class="ext-video-controls-bottom">
+                            <div class="ext-video-ctrl-group">
+                                <button class="ext-video-ctrl-btn" id="extVideoPlayBtn" title="Play/Pause" type="button"><span class="icon-md" id="extVideoPlayIcon"></span></button>
+                                <button class="ext-video-ctrl-btn" id="extVideoSkipBackBtn" title="Skip back 10s" type="button"><i data-lucide="skip-back" class="icon-md"></i></button>
+                                <button class="ext-video-ctrl-btn" id="extVideoSkipFwdBtn" title="Skip forward 10s" type="button"><i data-lucide="skip-forward" class="icon-md"></i></button>
+                            </div>
+                            <div class="ext-video-ctrl-group">
+                                <span class="ext-video-time" id="extVideoTime">0:00 / 0:00</span>
+                            </div>
+                            <div class="ext-video-ctrl-group">
+                                <button class="ext-video-ctrl-btn" id="extVideoMuteBtn" title="Mute/Unmute" type="button"><span class="icon-md" id="extVideoMuteIcon"></span></button>
+                                <input class="ext-video-volume" id="extVideoVolume" type="range" min="0" max="1" step="0.05" value="1" title="Volume">
+                                <button class="ext-video-ctrl-btn" id="extVideoPipBtn" title="Picture in picture" type="button"><span class="icon-md" id="extVideoPipIcon"></span></button>
+                                <button class="ext-video-ctrl-btn" id="extVideoFullscreenBtn" title="Fullscreen" type="button"><i data-lucide="maximize" class="icon-md"></i></button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -418,30 +447,24 @@
     <!-- Settings -->
     <div class="settings-overlay" id="settingsOverlay">
         <div class="settings-modal">
+            <div class="settings-handle"></div>
             <div class="settings-sidebar">
-                <div class="settings-sidebar-header">Settings</div>
                 <div class="settings-categories">
-                    <div class="settings-cat active" data-cat="about">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
-                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-                            <circle cx="12" cy="7" r="4"/>
-                        </svg>
-                        About
-                    </div>
-                    <div class="settings-cat" data-cat="theme"><i data-lucide="eye" class="icon-md flex-shrink-0"></i> Theme</div>
-                    <div class="settings-cat" data-cat="toolbar"><i data-lucide="edit-3" class="icon-md flex-shrink-0"></i> Toolbar</div>
-                    <div class="settings-cat" data-cat="files"><i data-lucide="folder" class="icon-md flex-shrink-0"></i> Files and links</div>
-                    <div class="settings-cat" data-cat="history"><i data-lucide="history" class="icon-md flex-shrink-0"></i> Link history</div>
-                    <div class="settings-cat" data-cat="download"><i data-lucide="download" class="icon-md flex-shrink-0"></i> Download</div>
-                    <div class="settings-cat" data-cat="nsfw"><i data-lucide="eye-off" class="icon-md flex-shrink-0"></i> NSFW</div>
-                    <div class="settings-cat" data-cat="storage"><i data-lucide="hard-drive" class="icon-md flex-shrink-0"></i> Data & Storage</div>
+                    <div class="settings-cat active" data-cat="about">About</div>
+                    <div class="settings-cat" data-cat="theme">Theme</div>
+                    <div class="settings-cat" data-cat="toolbar">Toolbar</div>
+                    <div class="settings-cat" data-cat="files">Files and links</div>
+                    <div class="settings-cat" data-cat="history">Link history</div>
+                    <div class="settings-cat" data-cat="download">Download</div>
+                    <div class="settings-cat" data-cat="nsfw">NSFW</div>
+                    <div class="settings-cat" data-cat="storage">Data & Storage</div>
                 </div>
                 <div class="settings-sidebar-footer" id="settingsClose">
-                    <i data-lucide="x" class="settings-close-icon"></i> Close
+                    <i data-lucide="x" class="settings-close-icon"></i>
                 </div>
             </div>
             <div class="settings-content" id="settingsContent">
-                <div class="settings-pane" id="pane-about">
+                <div class="settings-pane active" id="pane-about">
                     <div class="settings-pane-header">
                         <h2>About</h2>
                         <p class="settings-pane-desc">Your account information.</p>
@@ -474,7 +497,7 @@
                         <p class="settings-warning">This will permanently delete all your data and settings.</p>
                     </div>
                 </div>
-                <div class="settings-pane" id="pane-theme" style="display:none">
+                <div class="settings-pane" id="pane-theme">
                     <div class="settings-pane-header">
                         <h2>Theme</h2>
                         <p class="settings-pane-desc">Choose your preferred appearance.</p>
@@ -512,7 +535,7 @@
                     </div>
 
                 </div>
-                <div class="settings-pane" id="pane-toolbar" style="display:none">
+                <div class="settings-pane" id="pane-toolbar">
                     <div class="settings-pane-header">
                         <h2>Toolbar</h2>
                         <p class="settings-pane-desc">Customize your toolbar.</p>
@@ -528,7 +551,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="settings-pane" id="pane-files" style="display:none">
+                <div class="settings-pane" id="pane-files">
                     <div class="settings-pane-header">
                         <h2>Files and links</h2>
                         <p class="settings-pane-desc">How files and links are handled.</p>
@@ -548,7 +571,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="settings-pane" id="pane-history" style="display:none">
+                <div class="settings-pane" id="pane-history">
                     <div class="settings-pane-header">
                         <h2>Link history</h2>
                         <p class="settings-pane-desc">Recently opened video links.</p>
@@ -568,7 +591,7 @@
                     </div>
                     <div class="settings-history-list" id="settingsHistoryList"></div>
                 </div>
-                <div class="settings-pane" id="pane-download" style="display:none">
+                <div class="settings-pane" id="pane-download">
                     <div class="settings-pane-header">
                         <h2>Download</h2>
                         <p class="settings-pane-desc">Media download preferences.</p>
@@ -629,7 +652,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="settings-pane" id="pane-nsfw" style="display:none">
+                <div class="settings-pane" id="pane-nsfw">
                     <div class="settings-pane-header">
                         <h2>NSFW</h2>
                         <p class="settings-pane-desc">Mark sites as NSFW to blur their thumbnails.</p>
@@ -649,7 +672,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="settings-pane" id="pane-storage" style="display:none">
+                <div class="settings-pane" id="pane-storage">
                     <div class="settings-pane-header">
                         <h2>Data & Storage</h2>
                         <p class="settings-pane-desc">Your data lives on this device only.</p>
@@ -710,38 +733,11 @@
         if (location.protocol === 'file:' && navigator.userAgent.includes('Electron')) {
             location.replace('http://localhost:3001/index.html')
         }
-        (function () {
+        window.__splashFade = function (cb) {
             var splash = document.getElementById('splash');
-            var splashText = document.getElementById('splashText');
-            if (!splash) return;
-            var faded = false;
-            var icon = splash.querySelector('.splash-content svg, .splash-content img');
-            if (icon) {
-                icon.style.transition = 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                function randomSpin() {
-                    if (faded) return;
-                    icon.style.transform = 'rotate(' + (360 * (Math.floor(Math.random() * 3) + 1)) + 'deg)';
-                    setTimeout(function () {
-                        icon.style.transition = 'none';
-                        icon.style.transform = 'rotate(0deg)';
-                        setTimeout(function () {
-                            icon.style.transition = 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                            randomSpin();
-                        }, 50);
-                    }, 800);
-                }
-                setTimeout(randomSpin, 2000);
-            }
-            window.__splashFade = function (cb) {
-                if (faded) return cb && cb();
-                faded = true;
-                splash.classList.add('fade');
-                setTimeout(function () {
-                    splash.style.display = 'none';
-                    if (cb) cb();
-                }, 500);
-            };
-        })();
+            if (splash) splash.style.display = 'none';
+            if (cb) cb();
+        };
     </script>
 
     <!-- Keyboard shortcuts overlay -->

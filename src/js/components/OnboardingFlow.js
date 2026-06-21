@@ -15,7 +15,6 @@ export class OnboardingFlow extends Component {
 
   _init() {
     const splash = document.getElementById('splash')
-    const splashText = document.getElementById('splashText')
     const onbStep0 = document.getElementById('onbStep0')
     const onboarding = document.getElementById('onboarding')
     const onbStep1 = document.getElementById('onbStep1')
@@ -200,23 +199,16 @@ export class OnboardingFlow extends Component {
 
     // ── Welcome screen ──
     function showWelcome() {
-      splash.classList.add('onboarding')
-      if (splashText) splashText.style.display = 'none'
       onbStep0.classList.remove('onb-hidden')
     }
 
     // ── Decide flow ──
     if (userName) {
-      // Returning user: animate splash text then fade
-      if (navigator.onLine && splashText) {
-        setTimeout(() => { splashText.textContent = 'Up to date' }, 2000)
-        setTimeout(() => { splashText.textContent = 'Welcome, ' + userName }, 3400)
-      }
       setTimeout(() => {
         window.__splashFade(() => {
           if (window.startApp) window.startApp()
         })
-      }, navigator.onLine ? 4600 : 2000)
+      }, 0)
     } else {
       // First-time user
       if (eulaAccepted) {

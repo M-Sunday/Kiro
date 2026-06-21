@@ -15,7 +15,7 @@ const STORAGE_GROUPS = {
   bookmarks: ['kiroBookmarks'],
   direct: ['kiroDirectAccess'],
   externalFiles: ['kiro_external_files'],
-  other: ['kiroNSFW','kiroCollapsed','kiroSettings','kiroUserName','linkHistory']
+  other: ['kiroNSFW','kiroCollapsed','kiroSettings','kiroUserName','linkHistory','kiroPages']
 }
 
 function migrateStorage() {
@@ -197,6 +197,9 @@ function getVideoCount() { return Object.keys(getVideos()).length }
 function getNoteCount() { return getNotes().length }
 function getBookmarkCount() { return getBookmarks().length }
 
+function getPages() { try { return JSON.parse(localStorage.getItem('kiroPages') || '[]') } catch { return [] } }
+function savePages(p) { safeSetItem('kiroPages', JSON.stringify(p)) }
+
 function loadHistory() { try { return JSON.parse(localStorage.getItem('linkHistory') || '[]') } catch { return [] } }
 function saveHistory(items) { safeSetItem('linkHistory', JSON.stringify(items)) }
 
@@ -242,6 +245,8 @@ window.selectedGridItems = selectedGridItems
 window.currentVideo = currentVideo
 window.dragVideoId = dragVideoId
 window.currentNoteId = currentNoteId
+window.getPages = getPages
+window.savePages = savePages
 window.loadHistory = loadHistory
 window.saveHistory = saveHistory
 window.getInstalledAt = getInstalledAt
@@ -291,6 +296,8 @@ export {
   currentVideo,
   dragVideoId,
   currentNoteId,
+  getPages,
+  savePages,
   loadHistory,
   saveHistory,
   getInstalledAt,

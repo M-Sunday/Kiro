@@ -51,6 +51,7 @@ export class GridView extends Component {
     this.state.subscribe('pins', () => this.render())
     this.state.subscribe('userName', () => this.render())
     this.state.subscribe('externalFiles', () => this.render())
+    this.state.subscribe('pages', () => this.render())
 
     this.on('ui:grid:refresh', () => this.render())
     this.on('ui:camera:open', () => this._handleCameraOpen())
@@ -168,6 +169,50 @@ export class GridView extends Component {
           <input type="text" id="kiroInput" placeholder="Search..." spellcheck="false">
         </div>
       </div>
+      <div class="page-fab-set" id="pageFabSet">
+        <div class="page-fab page-fab-trigger">
+          <button class="fab-btn" title="Add block">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          </button>
+        </div>
+        <div class="page-fab page-note-fab">
+          <button class="fab-btn" data-page-action="note" title="Add Note">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg>
+          </button>
+        </div>
+        <div class="page-fab page-photo-fab">
+          <button class="fab-btn" data-page-action="photo" title="Add Photo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </button>
+        </div>
+        <div class="page-fab page-video-fab">
+          <button class="fab-btn" data-page-action="video" title="Import Video">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </button>
+        </div>
+        <div class="page-fab-popup" id="pageFabPopup">
+          <div class="page-fab-grid-row">
+            <div class="page-fab-grid-btn" data-page-action="note" data-page-popup-action="new">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg>
+              <span>New note</span>
+            </div>
+            <div class="page-fab-grid-btn" data-page-action="photo" data-page-popup-action="pick">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span>New image</span>
+            </div>
+          </div>
+          <div class="page-fab-grid-row">
+            <div class="page-fab-grid-btn" data-page-action="photo" data-page-popup-action="new">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+              <span>New photo</span>
+            </div>
+            <div class="page-fab-grid-btn page-fab-grid-close">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              <span>Close</span>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="add-fab">
         <button class="fab-btn" id="mobileAddBtn" title="Add">
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
@@ -246,8 +291,15 @@ export class GridView extends Component {
     if (addBtn && popup) {
       addBtn.addEventListener('click', (e) => {
         e.stopPropagation()
-        if (isSearchActive()) { exitSearch(); mobileInput?.blur(); return }
-        popup.classList.toggle('open')
+        if (addBtn.classList.contains('page-close')) {
+          this._hideAllViews()
+          this.rootEl.classList.add('open')
+          this._switchView('grid')
+          return
+        }
+        if (isSearchActive()) { popup.classList.remove('open'); exitSearch(); mobileInput?.blur(); return }
+        if (popup.classList.contains('open')) { popup.classList.remove('open'); return }
+        popup.classList.add('open')
       })
 
       popup.addEventListener('click', (e) => {
@@ -272,6 +324,26 @@ export class GridView extends Component {
         }
       }
     })
+
+    // Page mode buttons
+    const pageFabSet = document.getElementById('pageFabSet')
+    if (pageFabSet) {
+      pageFabSet.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-page-action]')
+        if (!btn) return
+        const action = btn.dataset.pageAction
+        window.__pageMobileAction?.(action)
+      })
+
+      // Collapsed trigger opens grid popup on narrow mobile
+      const trigger = pageFabSet.querySelector('.page-fab-trigger')
+      if (trigger) {
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation()
+          window.__pageMobileAction?.()
+        })
+      }
+    }
   }
 
   /* ─── Hero image (pick, crop, persist) ────────────── */
@@ -592,6 +664,12 @@ export class GridView extends Component {
       html += '</div></div>'
     }
 
+    const pages = this.state.getState('pages') || []
+    html += `<div class="grid-section"><div class="grid-section-header"><i data-lucide="layout-dashboard" style="width:16px;height:16px;flex-shrink:0"></i> Pages</div><div class="grid-items">`
+    for (const p of pages) html += this._pageCard(p)
+    html += this._newPageCard()
+    html += '</div></div>'
+
     el.innerHTML = this._dashboardHTML(userName) + `<div class="grid-sections" id="gridSections">${html}</div>`
 
     const heroEl = el.querySelector('.dashboard-hero')
@@ -640,6 +718,9 @@ export class GridView extends Component {
       const firstLetter = (userName || 'U').charAt(0).toUpperCase()
       avatarHtml = `<div class="dashboard-avatar">${firstLetter}</div>`
     }
+    const pages = this.state.getState('pages') || []
+    const homePagesHtml = pages.length ? pages.map(p => this._pageCard(p)).join('') + this._newPageCard() : this._newPageCard()
+    const homeEmptyDisplay = pages.length ? 'none' : ''
     return `<div class="dashboard-hero${this._heroData ? ' has-image' : ''}" style="${heroStyle}"></div>
     <div class="grid-dashboard">
       <div class="dashboard-header">
@@ -668,7 +749,8 @@ export class GridView extends Component {
       </div>
       <div id="homeView" class="home-view" style="display:none">
         <div class="home-view-content">
-          <div class="home-view-empty">
+          <div class="home-view-pages" id="homeViewPages">${homePagesHtml}</div>
+          <div class="home-view-empty" id="homeViewEmpty" style="display:${homeEmptyDisplay}">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             <p class="home-view-empty-text">Your home view is empty</p>
           </div>
@@ -750,6 +832,29 @@ export class GridView extends Component {
     </div>`
   }
 
+  _pageCard(p) {
+    const preview = p.blocks?.length ? p.blocks.length + ' block' + (p.blocks.length > 1 ? 's' : '') : 'Empty'
+    const title = p.title || 'Untitled'
+    const imgHtml = p.heroImage
+      ? `<img class="grid-item-img" src="${p.heroImage}" loading="lazy">`
+      : `<div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;gap:4px;flex-direction:column">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#8e8e93"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+        </div>`
+    return `<div class="grid-item page" data-page-id="${p.id}">
+      ${imgHtml}
+      <div class="grid-item-info"><div class="grid-item-title">${title}</div><div class="grid-item-sublabel">${preview}</div></div>
+    </div>`
+  }
+
+  _newPageCard() {
+    return `<div class="grid-item page new-page" data-action="new-page">
+      <div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;gap:4px;flex-direction:column">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#8e8e93"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+      </div>
+      <div class="grid-item-info"><div class="grid-item-title">Create new page</div><div class="grid-item-sublabel">Add a new page</div></div>
+    </div>`
+  }
+
   _updateDate() {
     const el = this.rootEl?.querySelector('.dashboard-date')
     if (!el) return
@@ -785,6 +890,36 @@ export class GridView extends Component {
         if (nid) this.bus.emit('ui:note:open', { id: nid })
       })
     })
+
+    el.querySelectorAll('[data-page-id]').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const id = item.dataset.pageId
+        if (id) this.bus.emit('ui:page:open', { id })
+      })
+    })
+    el.querySelectorAll('[data-action="new-page"]').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation()
+        this.bus.emit('ui:page:create')
+      })
+    })
+    const homePages = document.getElementById('homeViewPages')
+    if (homePages) {
+      homePages.querySelectorAll('[data-page-id]').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation()
+          const id = item.dataset.pageId
+          if (id) this.bus.emit('ui:page:open', { id })
+        })
+      })
+      homePages.querySelectorAll('[data-action="new-page"]').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation()
+          this.bus.emit('ui:page:create')
+        })
+      })
+    }
 
     el.querySelectorAll('[data-ext-id]').forEach(item => {
       item.addEventListener('click', () => {
@@ -1386,6 +1521,8 @@ export class GridView extends Component {
 
   _hideAllViews() {
     document.getElementById('noteView').style.display = 'none'
+    document.getElementById('pageView').style.display = 'none'
+    document.getElementById('pagePicker').style.display = 'none'
     document.getElementById('gridView').classList.remove('open')
     document.getElementById('extTextView').style.display = 'none'
     document.getElementById('extVideoView').style.display = 'none'
@@ -1397,6 +1534,12 @@ export class GridView extends Component {
     const ve = document.getElementById('extVideoElement')
     if (ve) ve.pause()
     this._resetImageZoom()
+    this.bus.emit('ui:page:close')
+    // Restore mobile nav bar
+    const navBar = document.querySelector('.mobile-nav-bar')
+    if (navBar) navBar.classList.remove('page-mode')
+    const addBtn = document.getElementById('mobileAddBtn')
+    if (addBtn) addBtn.classList.remove('page-close')
   }
 
   _switchView(view) {
@@ -1429,12 +1572,16 @@ export class GridView extends Component {
     const extVideo = document.getElementById('extVideoView')
     const extImage = document.getElementById('extImageView')
     const note = document.getElementById('noteView')
+    const page = document.getElementById('pageView')
     const card = document.querySelector('.content')
     const landing = document.getElementById('searchLanding')
     if (extText?.style.display === 'flex') return true
     if (extVideo?.style.display === 'flex') return true
     if (extImage?.style.display === 'flex') return true
     if (note?.style.display === 'flex') return true
+    if (page?.style.display === 'flex') return true
+    const picker = document.getElementById('pagePicker')
+    if (picker?.style.display === 'flex') return true
     if (card && card.style.display !== 'none' && card.style.display !== '') return true
     if (landing?.style.display === 'flex') return true
     return false

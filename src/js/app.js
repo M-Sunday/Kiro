@@ -38,6 +38,7 @@ import { ContextMenu } from './components/ContextMenu.js'
 import { Dialogs } from './components/Dialogs.js'
 import { SettingsPanel } from './components/SettingsPanel.js'
 import { OnboardingFlow } from './components/OnboardingFlow.js'
+import { PagesView } from './components/PagesView.js'
 
 const APP_VERSION = '3.1.1'
 
@@ -50,6 +51,7 @@ function loadStateFromStorage(state) {
   state.setState('bookmarks', window.getBookmarks?.() || [])
   state.setState('directAccess', window.getDirectAccess?.() || [])
     state.setState('externalFiles', window.getExternalFiles?.() || [])
+    state.setState('pages', window.getPages?.() || [])
     state.setState('collapsed', window.getCollapsed?.() || {})
   state.setState('userName', window.getUserName?.() || '')
   state.setState('installedAt', window.getInstalledAt?.() || null)
@@ -67,6 +69,7 @@ function patchLegacySavers(state, bus) {
     state.setState('notes', window.getNotes?.() || [])
     state.setState('bookmarks', window.getBookmarks?.() || [])
     state.setState('directAccess', window.getDirectAccess?.() || [])
+    state.setState('pages', window.getPages?.() || [])
     state.setState('collapsed', window.getCollapsed?.() || {})
     state.setState('userName', window.getUserName?.() || '')
   }
@@ -83,7 +86,7 @@ function patchLegacySavers(state, bus) {
 
   const savers = [
     'saveVideos', 'saveFolders', 'saveFolderMeta', 'savePins',
-    'saveNotes', 'saveBookmarks', 'saveDirectAccess', 'saveExternalFiles',
+    'saveNotes', 'saveBookmarks', 'saveDirectAccess', 'saveExternalFiles', 'savePages',
     'saveCollapsed', 'saveUserName', 'saveNSFW', 'saveBlurAllNSFW'
   ]
   for (const fn of savers) patch(fn)
@@ -141,6 +144,7 @@ async function bootstrap() {
   const dialogs = new Dialogs()
   const settingsPanel = new SettingsPanel()
   const onboardingFlow = new OnboardingFlow()
+  const pagesView = new PagesView()
 
   services.register('searchView', searchView)
   services.register('gridView', gridView)
@@ -178,6 +182,7 @@ async function bootstrap() {
   dialogs.mount(document.getElementById('folderDialog'))
   settingsPanel.mount(document.getElementById('settingsOverlay'))
   onboardingFlow.mount(document.getElementById('splash'))
+  pagesView.mount(document.getElementById('pageView'))
 
   // Expose API for window-level access during migration
   window.__kiro = {
@@ -202,6 +207,7 @@ async function bootstrap() {
       dialogs,
       settingsPanel,
       onboardingFlow,
+      pagesView,
     },
     platform: {
       permissionService,
@@ -244,6 +250,8 @@ async function bootstrap() {
   })
   bus.on('ui:icons:load-needed', () => loadIcons())
   bus.on('ui:grid:refresh', () => { if (window.renderGridView) window.renderGridView() })
+  bus.on('ui:page:create', () => pagesView.createNewPage())
+  bus.on('ui:page:open', (e) => pagesView.openPage(e.data?.id || e.id))
   bus.on('ui:view:set', (e) => {
     viewManager.setView(e.view)
     navigationService.navigate(e.view)

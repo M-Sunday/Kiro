@@ -36,7 +36,7 @@ export class SearchView extends Component {
       if (!e.target.value.trim()) {
         const landing = document.getElementById('searchLanding')
         if (landing?.style.display === 'flex') {
-          this.bus.emit('ui:view:set', { view: 'grid' })
+          this.bus.emit('ui:view:set', { view: 'home' })
         }
       }
     })

@@ -252,6 +252,7 @@ async function bootstrap() {
   bus.on('ui:grid:refresh', () => { if (window.renderGridView) window.renderGridView() })
   bus.on('ui:page:create', () => pagesView.createNewPage())
   bus.on('ui:page:open', (e) => pagesView.openPage(e.data?.id || e.id))
+  window.openPage = (id) => bus.emit('ui:page:open', { id })
   bus.on('ui:view:set', (e) => {
     viewManager.setView(e.view)
     navigationService.navigate(e.view)

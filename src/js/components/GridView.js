@@ -41,7 +41,7 @@ export class GridView extends Component {
     this._heroGradient = HERO_GRADIENTS[Math.floor(Math.random() * HERO_GRADIENTS.length)]
     this._heroData = null
     this._avatarData = null
-    this._activeView = 'grid'
+    this._activeView = 'home'
 
     this.state.subscribe('videos', () => this.render())
     this.state.subscribe('folders', () => this.render())
@@ -162,12 +162,10 @@ export class GridView extends Component {
         </button>
       </div>
       <div class="bottom-nav-pill">
-        <button class="pill-icon-btn" id="mobileSearchFocusBtn" title="Search">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <button class="pill-icon-btn" id="mobileSearchBtn" title="Search">
+          <svg xmlns="http://www.w3.org/2000/svg" class="pill-icon-search" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         </button>
-        <div class="pill-input-wrap">
-          <input type="text" id="kiroInput" placeholder="Search..." spellcheck="false">
-        </div>
+        <div class="pill-input-wrap"><input type="text" id="kiroInput" placeholder="Search..." spellcheck="false"></div>
       </div>
       <div class="page-fab-set" id="pageFabSet">
         <div class="page-fab page-fab-trigger">
@@ -247,33 +245,17 @@ export class GridView extends Component {
 
   _bindMobilePillEvents() {
     const bar = document.querySelector('.mobile-nav-bar')
-    const mobileInput = document.getElementById('kiroInput')
-    const focusBtn = document.getElementById('mobileSearchFocusBtn')
     const gridBtn = document.getElementById('gridBtn')
+    const pillBtn = document.getElementById('mobileSearchBtn')
     const addBtn = document.getElementById('mobileAddBtn')
     const popup = document.getElementById('addMenuPopup')
 
     function isSearchActive() { return bar && bar.classList.contains('search-active') }
     function enterSearch() { if (bar) { bar.classList.add('search-active'); popup?.classList.remove('open') } }
     function exitSearch() { if (bar) { bar.classList.remove('search-active') } }
-
-    if (mobileInput) {
-      mobileInput.addEventListener('focus', () => { enterSearch() })
-      mobileInput.addEventListener('blur', (e) => {
-        if (!e.target.value.trim()) {
-          exitSearch()
-          if (document.getElementById('searchLanding')?.style.display === 'flex') {
-            this._switchView('grid')
-          }
-        }
-      })
-    }
-
-    if (focusBtn) {
-      focusBtn.addEventListener('click', () => {
-        if (mobileInput) mobileInput.focus()
-      })
-    }
+    function isShipActive() { return bar && bar.classList.contains('ship-active') }
+    function enterShip() { if (bar) { bar.classList.add('ship-active'); popup?.classList.remove('open') } }
+    function exitShip() { if (bar) { bar.classList.remove('ship-active') } }
 
     if (gridBtn) {
       gridBtn.addEventListener('click', (e) => {
@@ -288,6 +270,36 @@ export class GridView extends Component {
       })
     }
 
+    if (pillBtn) {
+      pillBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        if (isShipActive()) { exitShip(); document.getElementById('kiroInput')?.blur(); return }
+        if (isSearchActive()) { exitSearch() }
+        enterShip()
+        const input = document.getElementById('kiroInput')
+        if (input) setTimeout(() => input.focus(), 50)
+      })
+    }
+
+    const searchInput = document.getElementById('kiroInput')
+    if (searchInput) {
+      searchInput.addEventListener('focus', () => {
+        this.bus.emit('ui:view:set', { view: 'landing' })
+      })
+      searchInput.addEventListener('blur', (e) => {
+        if (!e.target.value.trim()) {
+          const landing = document.getElementById('searchLanding')
+          if (landing?.style.display === 'flex') {
+            this.bus.emit('ui:view:set', { view: 'home' })
+          }
+        }
+      })
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); this._handleSearchFromInput() }
+        if (e.key === 'Escape') { e.target.blur() }
+      })
+    }
+
     if (addBtn && popup) {
       addBtn.addEventListener('click', (e) => {
         e.stopPropagation()
@@ -297,7 +309,8 @@ export class GridView extends Component {
           this._switchView('grid')
           return
         }
-        if (isSearchActive()) { popup.classList.remove('open'); exitSearch(); mobileInput?.blur(); return }
+        if (isShipActive()) { exitShip(); document.getElementById('kiroInput')?.blur(); return }
+        if (isSearchActive()) { popup.classList.remove('open'); exitSearch(); return }
         if (popup.classList.contains('open')) { popup.classList.remove('open'); return }
         popup.classList.add('open')
       })
@@ -318,7 +331,8 @@ export class GridView extends Component {
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.mobile-nav-bar')) {
         popup?.classList.remove('open')
-        if (isSearchActive()) { exitSearch(); mobileInput?.blur() }
+        if (isShipActive()) { exitShip(); document.getElementById('kiroInput')?.blur() }
+        if (isSearchActive()) { exitSearch() }
         if (document.getElementById('searchLanding')?.style.display === 'flex') {
           this._switchView('grid')
         }
@@ -610,6 +624,11 @@ export class GridView extends Component {
 
     let html = ''
 
+    const pages = this.state.getState('pages') || []
+    html += `<div class="grid-section"><div class="grid-section-header"><i data-lucide="layout-dashboard" style="width:16px;height:16px;flex-shrink:0"></i> Pages</div><div class="grid-items">`
+    for (const p of pages) html += this._pageCard(p)
+    html += '</div></div>'
+
     for (const [name, ids] of Object.entries(folders)) {
       const folderNotes = notes.filter(n => n.folder === name)
       const folderExt = externalFiles.filter(f => f.folder === name)
@@ -663,12 +682,6 @@ export class GridView extends Component {
       for (const d of directAccess) html += this._daCard(d)
       html += '</div></div>'
     }
-
-    const pages = this.state.getState('pages') || []
-    html += `<div class="grid-section"><div class="grid-section-header"><i data-lucide="layout-dashboard" style="width:16px;height:16px;flex-shrink:0"></i> Pages</div><div class="grid-items">`
-    for (const p of pages) html += this._pageCard(p)
-    html += this._newPageCard()
-    html += '</div></div>'
 
     el.innerHTML = this._dashboardHTML(userName) + `<div class="grid-sections" id="gridSections">${html}</div>`
 
@@ -734,18 +747,14 @@ export class GridView extends Component {
         </div>
       </div>
       <div class="view-tabs" id="viewTabs">
-        <button class="view-tab active" data-view="grid">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          Grid
-        </button>
-        <button class="view-tab" data-view="home">
+        <button class="view-tab active" data-view="home">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           Home
         </button>
-        <button class="view-tab" data-view="activity">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M17 12h-2l-2 5-2-10-2 5H7"/></svg>
-          Activity
-        </button>
+        <button class="view-tab" data-view="grid">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Grid
+        </button>      </div>
       </div>
       <div id="homeView" class="home-view" style="display:none">
         <div class="home-view-content">
@@ -753,14 +762,6 @@ export class GridView extends Component {
           <div class="home-view-empty" id="homeViewEmpty" style="display:${homeEmptyDisplay}">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             <p class="home-view-empty-text">Your home view is empty</p>
-          </div>
-        </div>
-      </div>
-      <div id="activityView" class="home-view" style="display:none">
-        <div class="home-view-content">
-          <div class="home-view-empty">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M17 12h-2l-2 5-2-10-2 5H7"/></svg>
-            <p class="home-view-empty-text">Your activity view is empty</p>
           </div>
         </div>
       </div>
@@ -848,10 +849,8 @@ export class GridView extends Component {
 
   _newPageCard() {
     return `<div class="grid-item page new-page" data-action="new-page">
-      <div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;gap:4px;flex-direction:column">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#8e8e93"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
-      </div>
-      <div class="grid-item-info"><div class="grid-item-title">Create new page</div><div class="grid-item-sublabel">Add a new page</div></div>
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:#8e8e93;margin-bottom:6px"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      <div class="grid-item-title" style="font-size:13px;color:#8e8e93">Create new page</div>
     </div>`
   }
 
@@ -911,12 +910,6 @@ export class GridView extends Component {
           e.stopPropagation()
           const id = item.dataset.pageId
           if (id) this.bus.emit('ui:page:open', { id })
-        })
-      })
-      homePages.querySelectorAll('[data-action="new-page"]').forEach(item => {
-        item.addEventListener('click', (e) => {
-          e.stopPropagation()
-          this.bus.emit('ui:page:create')
         })
       })
     }
@@ -1561,10 +1554,8 @@ export class GridView extends Component {
   _applyViewState(view) {
     const gs = document.getElementById('gridSections')
     const hv = document.getElementById('homeView')
-    const av = document.getElementById('activityView')
     if (gs) gs.style.display = view === 'grid' ? '' : 'none'
     if (hv) hv.style.display = view === 'home' ? 'flex' : 'none'
-    if (av) av.style.display = view === 'activity' ? 'flex' : 'none'
   }
 
   _anyExternalViewOpen() {
@@ -1631,6 +1622,13 @@ export class GridView extends Component {
 
   async _takePicture() {
     this.bus.emit('ui:camera:open')
+  }
+
+  _handleSearchFromInput() {
+    const input = document.getElementById('kiroInput')
+    const text = (input?.value || '').trim()
+    if (!text) return
+    this.bus.emit('ui:search:video', { url: text })
   }
 
   async _handleCameraOpen() {

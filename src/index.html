@@ -221,7 +221,8 @@
                     </div>
                     <div class="page-hero-gradient" id="pageHeroGradient"></div>
                     <button class="page-hero-remove" id="pageHeroRemove" title="Remove hero image">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                        Remove
                     </button>
                 </div>
                 <div class="page-header" id="pageHeader">
@@ -500,23 +501,33 @@
                 <div class="settings-pane" id="pane-theme">
                     <div class="settings-pane-header">
                         <h2>Theme</h2>
-                        <p class="settings-pane-desc">Choose your preferred appearance.</p>
+                        <p class="settings-pane-desc">Customize the look and feel.</p>
                     </div>
-                    <div class="theme-options">
-                        <div class="theme-option" data-theme="white">
-                            <div class="theme-preview theme-white"></div>
-                            <span>White</span>
-                        </div>
-                        <div class="theme-option" data-theme="black">
-                            <div class="theme-preview theme-black"></div>
-                            <span>Black</span>
+                    <div class="settings-plugin-list">
+                        <div class="settings-plugin">
+                            <span class="settings-plugin-name">Appearance</span>
+                            <div class="settings-segment" id="themeSegment">
+                                <span class="settings-seg-opt" data-theme="black">Dark</span>
+                                <span class="settings-seg-opt" data-theme="white">Light</span>
+                                <span class="settings-seg-opt" data-theme="system">System</span>
+                            </div>
                         </div>
                     </div>
-                    <label class="settings-checkbox">
-                        <input type="checkbox" id="systemTheme">
-                        <span class="settings-checkbox-mark"></span>
-                        <span>Have system theme</span>
-                    </label>
+
+                    <div class="settings-section-divider"></div>
+
+                    <div class="settings-section-label">Avatar</div>
+                    <p class="settings-section-desc">Your profile picture and name.</p>
+                    <div class="settings-hero-actions" id="settingsAvatarActions">
+                        <div class="settings-avatar-wrap">
+                            <div class="settings-avatar" id="settingsAvatar"></div>
+                            <div class="settings-avatar-name" id="settingsAvatarName"></div>
+                        </div>
+                        <div class="settings-avatar-btns">
+                            <button class="settings-btn" id="settingsAvatarChange">Change Image</button>
+                            <button class="settings-btn settings-btn-secondary" id="settingsAvatarRemove">Remove Image</button>
+                        </div>
+                    </div>
 
                     <div class="settings-section-divider"></div>
                     <div class="settings-section-label">Hero Image</div>
@@ -525,15 +536,6 @@
                         <button class="settings-btn" id="settingsHeroChange">Change Image</button>
                         <button class="settings-btn settings-btn-secondary" id="settingsHeroRemove">Remove Image</button>
                     </div>
-
-                    <div class="settings-section-divider"></div>
-                    <div class="settings-section-label">Avatar</div>
-                    <p class="settings-section-desc">Set a custom avatar image.</p>
-                    <div class="settings-hero-actions">
-                        <button class="settings-btn" id="settingsAvatarChange">Change Image</button>
-                        <button class="settings-btn settings-btn-secondary" id="settingsAvatarRemove">Remove Image</button>
-                    </div>
-
                 </div>
                 <div class="settings-pane" id="pane-toolbar">
                     <div class="settings-pane-header">

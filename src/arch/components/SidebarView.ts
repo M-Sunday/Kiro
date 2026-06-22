@@ -80,6 +80,24 @@ export class SidebarView extends Component {
 
     let html = ''
 
+    // Pages section (always shown at top)
+    const pages = state.pages
+    html += `<div class="tree-folder" data-pages="true">
+      <div class="tree-folder-header" data-pages="true">
+        <span class="tree-caret">▼</span>
+        <span class="tree-label">📄 Pages</span>
+        <span class="tree-count">${pages.length}</span>
+      </div>
+      <div class="tree-children">`
+    for (const p of pages) {
+      if (filter && !matchesFilter(p.title)) continue
+      html += `<div class="tree-file" data-page-id="${p.id}">
+        <span class="tree-file-icon">${p.heroImage ? `<img src="${this._escapeAttr(p.heroImage)}" />` : '📄'}</span>
+        <span class="tree-label">${this._escapeHtml(p.title || 'Untitled')}</span>
+      </div>`
+    }
+    html += `</div></div>`
+
     // Root folders (Videos, Archived) + custom folders
     const rootFolders = ['Videos', 'Archived']
     const customFolders = Object.keys(folders).filter(f => !rootFolders.includes(f))
@@ -235,7 +253,7 @@ export class SidebarView extends Component {
     }
 
     // File click to open
-    const files = this._treeEl.querySelectorAll('[data-video-id], [data-note-id], [data-bookmark-id], [data-da-id], [data-ext-id]')
+    const files = this._treeEl.querySelectorAll('[data-video-id], [data-note-id], [data-bookmark-id], [data-da-id], [data-ext-id], [data-page-id]')
     for (const file of files) {
       this.listenTo(file, 'click', ((e: Event) => {
         const el = e.currentTarget as HTMLElement
@@ -244,6 +262,7 @@ export class SidebarView extends Component {
         const bookmarkId = el.getAttribute('data-bookmark-id')
         const daId = el.getAttribute('data-da-id')
         const extId = el.getAttribute('data-ext-id')
+        const pageId = el.getAttribute('data-page-id')
 
         if (videoId) {
           this.emit('ui:card:load-video', { id: videoId })
@@ -258,6 +277,8 @@ export class SidebarView extends Component {
           if (da?.['url']) window.open(da['url'], '_blank')
         } else if (extId) {
           this.emit('ui:ext:open', { id: extId })
+        } else if (pageId) {
+          this.emit('ui:page:open', { id: pageId })
         }
       }) as EventListener)
     }

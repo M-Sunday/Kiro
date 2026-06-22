@@ -61,7 +61,16 @@ export class GridView extends Component {
     // Workbench toolbar
     html += this._workbenchHTML(state.userName)
 
-    // Sections: Pinned, Folders, Notes, Bookmarks, Direct Access, External Files
+    // Pages section
+    const pages = state.pages
+    if (pages.length > 0) {
+      html += `<div class="grid-section"><div class="grid-section-header"><i data-lucide="layout-dashboard" style="width:16px;height:16px;flex-shrink:0"></i> Pages</div><div class="grid-items">`
+      for (const p of pages) {
+        html += `<div class="grid-item grid-page" data-page-id="${p.id}"><div class="grid-item-img-wrap"><div class="grid-item-img-placeholder" style="background:var(--color, #e8e8ed);display:flex;align-items:center;justify-content:center;height:100%"><i data-lucide="layout-dashboard" style="width:24px;height:24px;color:#a1a1a6"></i></div></div><div class="grid-item-title">${this._escapeHtml(p.title || 'Untitled')}</div></div>`
+      }
+      html += '</div></div>'
+    }
+
     const pins = state.pins
     if (pins.length > 0) {
       html += this._sectionHTML('Pinned', this._itemsFromIds(pins, 'video', state.videos), 'pinned', undefined, true)
@@ -244,7 +253,7 @@ export class GridView extends Component {
     }
 
     // Item click to open
-    const items = this._gridEl.querySelectorAll('[data-video-id], [data-note-id], [data-bookmark-id], [data-da-id], [data-ext-id]')
+    const items = this._gridEl.querySelectorAll('[data-video-id], [data-note-id], [data-bookmark-id], [data-da-id], [data-ext-id], [data-page-id]')
     for (const item of items) {
       this.listenTo(item, 'click', ((e: Event) => {
         const el = e.currentTarget as HTMLElement
@@ -253,6 +262,7 @@ export class GridView extends Component {
         const bookmarkId = el.getAttribute('data-bookmark-id')
         const daId = el.getAttribute('data-da-id')
         const extId = el.getAttribute('data-ext-id')
+        const pageId = el.getAttribute('data-page-id')
 
         if (videoId) {
           this.emit('ui:card:load-video', { id: videoId })
@@ -267,7 +277,17 @@ export class GridView extends Component {
           if (da?.url) window.open(da.url, '_blank')
         } else if (extId) {
           this.emit('ui:ext:open', { id: extId })
+        } else if (pageId) {
+          this.emit('ui:page:open', { id: pageId })
         }
+      }) as EventListener)
+    }
+
+    // New page click
+    const newPages = this._gridEl.querySelectorAll('[data-new-page]')
+    for (const np of newPages) {
+      this.listenTo(np, 'click', (() => {
+        this.emit('ui:page:create')
       }) as EventListener)
     }
 
@@ -281,7 +301,7 @@ export class GridView extends Component {
           x: e instanceof MouseEvent ? e.clientX : rect.left,
           y: e instanceof MouseEvent ? e.clientY : rect.bottom,
         }
-        const attrs = ['video-id', 'note-id', 'bookmark-id', 'da-id', 'ext-id']
+        const attrs = ['video-id', 'note-id', 'bookmark-id', 'da-id', 'ext-id', 'page-id']
         for (const attr of attrs) {
           const val = el.getAttribute(attr)
           if (val) payload[attr.replace(/-/g, '')] = val

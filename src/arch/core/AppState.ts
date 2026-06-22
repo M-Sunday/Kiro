@@ -12,6 +12,7 @@ const INITIAL_STATE: AppState = {
   bookmarks: [],
   directAccess: [],
   externalFiles: [],
+  pages: [],
   collapsed: {},
   nsfw: [],
   blurAllNSFW: false,

@@ -58,6 +58,25 @@ export interface DirectAccess {
   blurred: boolean
 }
 
+export interface Page {
+  id: string
+  title: string
+  heroImage: string
+  blocks: PageBlock[]
+  added: number
+  updated: number
+}
+
+export interface PageBlock {
+  id: string
+  type: 'note' | 'photo' | 'video'
+  content?: string
+  dataUrl?: string
+  fileName?: string
+  videoId?: string
+  thumbnail?: string
+}
+
 export interface ExternalFile {
   id: string
   name: string
@@ -149,6 +168,7 @@ export interface AppState {
   bookmarks: Bookmark[]
   directAccess: DirectAccess[]
   externalFiles: ExternalFile[]
+  pages: Page[]
   collapsed: Record<string, boolean>
   nsfw: string[]
   blurAllNSFW: boolean
@@ -205,6 +225,8 @@ export type AppEvent =
   | { type: 'ui:file:selected'; payload: { name: string; size: number; type: string; data: string } }
   | { type: 'ui:camera:open' }
   | { type: 'ui:camera:captured'; payload: { dataUrl: string } }
+  | { type: 'ui:page:create' }
+  | { type: 'ui:page:open'; payload: { id: string } }
   | { type: 'ui:clipboard:paste'; payload: { data: string; type: string } }
   | { type: 'ui:permission:request'; payload: { type: PermissionType } }
   | { type: 'ui:permission:granted'; payload: { type: PermissionType; scope: PermissionScope } }

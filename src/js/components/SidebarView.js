@@ -53,6 +53,16 @@ export class SidebarView extends Component {
 
     let html = ''
 
+    const pages = window.getPages?.() || []
+    const pCollapsed = collapsed['section:pages'] === true
+    html += '<div class="tree-item ' + (pCollapsed ? '' : 'expanded') + '" data-pages="true"><div class="tree-folder" draggable="false"><i data-lucide="chevron-down" class="tree-chevron"></i><i data-lucide="layout-dashboard" class="tree-folder-icon"></i><span class="tree-label">Pages</span></div><div class="tree-children">'
+    for (const p of pages) {
+      if (query && !p.title.toLowerCase().includes(query)) continue
+      const preview = this._stripHtml((p.blocks || []).map(b => b.content || '').join(' ')).replace(/\n/g, ' ').substring(0, 50)
+      html += '<div class="tree-item" data-page-id="' + p.id + '" draggable="true"><div class="tree-file"><div class="bm-thumb-wrap">' + (p.heroImage ? '<img class="bm-thumb" src="' + p.heroImage + '" onerror="this.style.display=\'none\'" loading="lazy">' : '<i data-lucide="layout-dashboard" class="tree-file-icon" style="margin:4px"></i>') + '</div><div class="tree-file-meta"><span class="tree-label">' + (p.title || 'Untitled') + '</span><span class="tree-sublabel">' + preview + (preview.length >= 50 ? '…' : '') + '</span></div><button class="tree-file-btn"><i data-lucide="ellipsis-vertical" style="width:14px;height:14px"></i></button></div></div>'
+    }
+    html += '</div></div>'
+
     for (const [name, ids] of Object.entries(folders)) {
       if (name === 'Archived' && !ids.length) continue
       let showAll = query && name.toLowerCase().includes(query)
@@ -235,7 +245,8 @@ export class SidebarView extends Component {
         const nt = item.dataset.notes
         const da = item.dataset.directaccess
         const ef = item.dataset.externalfiles
-        const key = folder ? 'folder:' + folder : bm ? 'section:bookmarks' : nt ? 'section:notes' : da ? 'section:directaccess' : ef ? 'section:externalfiles' : null
+        const pg = item.dataset.pages
+        const key = folder ? 'folder:' + folder : bm ? 'section:bookmarks' : nt ? 'section:notes' : da ? 'section:directaccess' : ef ? 'section:externalfiles' : pg ? 'section:pages' : null
         if (key) {
           collapsed[key] = item.classList.contains('expanded')
           window.saveCollapsed?.(collapsed)
@@ -269,6 +280,11 @@ export class SidebarView extends Component {
         if (da) {
           const das = (window.getDirectAccess?.() || []).filter(d => d.id === da.dataset.daId)
           if (das[0]?.url) { window.open(das[0].url); window.closeSidebar?.() }
+        }
+        const pg = file.closest('[data-page-id]')
+        if (pg) {
+          if (window.openPage) window.openPage(pg.dataset.pageId)
+          window.closeSidebar?.()
         }
         const ext = file.closest('[data-ext-id]')
         if (ext) {

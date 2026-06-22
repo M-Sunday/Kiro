@@ -29,6 +29,7 @@ export class SettingsPanel extends Component {
       const icon = document.querySelector('#settingsBtn .sni')
       if (icon) { icon.classList.remove('spin'); void icon.offsetWidth; icon.classList.add('spin') }
       this._renderStorageInfo()
+      this._renderSettingsAvatar()
     })
     this.listenTo(document.getElementById('settingsClose'), 'click', () => {
       document.getElementById('settingsOverlay')?.classList.remove('open')
@@ -63,38 +64,14 @@ export class SettingsPanel extends Component {
       t.addEventListener('click', function () { this.classList.toggle('on') })
     })
 
-    // Theme options
-    document.querySelectorAll('.theme-option').forEach(opt => {
+    // Theme segment
+    document.querySelectorAll('#themeSegment .settings-seg-opt').forEach(opt => {
       opt.addEventListener('click', function () {
-        document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'))
+        document.querySelectorAll('#themeSegment .settings-seg-opt').forEach(o => o.classList.remove('active'))
         this.classList.add('active')
         const t = this.dataset.theme
-        document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim()
-        if (t !== 'white') document.body.classList.add('theme-' + t)
-        try { localStorage.setItem('theme', t) } catch {}
-        document.getElementById('systemTheme').checked = false
-        self._unlistenSystemTheme()
+        self._setTheme(t)
       })
-    })
-
-    this.listenTo(document.getElementById('systemTheme'), 'change', function () {
-      document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'))
-      if (this.checked) {
-        const prevTheme = localStorage.getItem('theme') || 'white'
-        if (prevTheme !== 'system') try { localStorage.setItem('kiroPrevTheme', prevTheme) } catch {}
-        document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim()
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('theme-black')
-        try { localStorage.setItem('theme', 'system') } catch {}
-        self._listenSystemTheme()
-      } else {
-        self._unlistenSystemTheme()
-        const prev = localStorage.getItem('kiroPrevTheme') || 'white'
-        document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim()
-        if (prev !== 'white') document.body.classList.add('theme-' + prev)
-        try { localStorage.setItem('theme', prev) } catch {}
-        const opt = document.querySelector(`.theme-option[data-theme="${prev}"]`)
-        if (opt) opt.classList.add('active')
-      }
     })
 
     // Hero image settings
@@ -268,25 +245,29 @@ export class SettingsPanel extends Component {
     this._applyTheme()
     this._initUserName()
     this._initDeviceName()
+    this._renderSettingsAvatar()
     this._renderNSFWChips()
     this._applyToolbarSettings()
   }
 
-  _applyTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'white'
-    document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'))
+  _setTheme(t) {
+    this._unlistenSystemTheme()
     document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim()
-    if (savedTheme === 'system') {
-      const cb = document.getElementById('systemTheme')
-      if (cb) cb.checked = true
+    if (t === 'system') {
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('theme-black')
       this._listenSystemTheme()
-    } else {
-      this._unlistenSystemTheme()
-      if (savedTheme !== 'white') document.body.classList.add('theme-' + savedTheme)
-      const opt = document.querySelector(`.theme-option[data-theme="${savedTheme}"]`)
-      if (opt) opt.classList.add('active')
+    } else if (t !== 'white') {
+      document.body.classList.add('theme-' + t)
     }
+    try { localStorage.setItem('theme', t) } catch {}
+  }
+
+  _applyTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'white'
+    document.querySelectorAll('#themeSegment .settings-seg-opt').forEach(o => o.classList.remove('active'))
+    this._setTheme(savedTheme)
+    const opt = document.querySelector(`#themeSegment .settings-seg-opt[data-theme="${savedTheme}"]`)
+    if (opt) opt.classList.add('active')
   }
 
   _listenSystemTheme() {
@@ -313,6 +294,27 @@ export class SettingsPanel extends Component {
     if (userDisplay) {
       userDisplay.textContent = (window.getUserName?.()) || '\u2014'
     }
+    this._renderSettingsAvatar()
+  }
+
+  _renderSettingsAvatar() {
+    const avatarEl = document.getElementById('settingsAvatar')
+    const nameEl = document.getElementById('settingsAvatarName')
+    if (!avatarEl) return
+    const name = window.getUserName?.() || ''
+    if (nameEl) nameEl.textContent = name || '\u2014'
+    const repo = this.api.getRepository('settings')
+    Promise.resolve(repo.get('avatarImage')).then(data => {
+      if (data?.dataUrl) {
+        avatarEl.innerHTML = `<img src="${data.dataUrl}" alt="Avatar">`
+      } else {
+        const firstLetter = name ? name.charAt(0).toUpperCase() : '?'
+        avatarEl.innerHTML = firstLetter
+      }
+    }).catch(() => {
+      const firstLetter = name ? name.charAt(0).toUpperCase() : '?'
+      avatarEl.innerHTML = firstLetter
+    })
   }
 
   _initDeviceName() {

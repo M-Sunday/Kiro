@@ -187,7 +187,5 @@ body {
 }
 
 /* ─── SCROLLBARS ─────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: #a1a1a6; }
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { display: none; }

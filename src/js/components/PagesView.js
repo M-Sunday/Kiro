@@ -164,7 +164,10 @@ export class PagesView extends Component {
     page.title = title
     page.updated = Date.now()
     window.savePages(pages)
-    this.state.setState('pages', pages)
+    clearTimeout(this._saveTitleTimer)
+    this._saveTitleTimer = setTimeout(() => {
+      this.state.setState('pages', pages)
+    }, 300)
   }
 
   _addNoteBlock() {

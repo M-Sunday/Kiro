@@ -105,6 +105,20 @@ export class GridView extends Component {
       this._switchView(view)
     })
 
+    /* Swipe to switch tabs on mobile */
+    let gvTouchStartX = 0, gvTouchStartY = 0
+    this.rootEl.addEventListener('touchstart', (e) => {
+      gvTouchStartX = e.touches[0].clientX
+      gvTouchStartY = e.touches[0].clientY
+    }, { passive: true })
+    this.rootEl.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - gvTouchStartX
+      const dy = e.changedTouches[0].clientY - gvTouchStartY
+      if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+      if (dx > 0 && this._activeView !== 'grid') { window.Capacitor?.Plugins?.Haptics?.selectionChanged(); this._switchView('grid') }
+      else if (dx < 0 && this._activeView !== 'home') { window.Capacitor?.Plugins?.Haptics?.selectionChanged(); this._switchView('home') }
+    }, { passive: true })
+
     this.listenTo(document.getElementById('extVideoPlayBtn'), 'click', () => this._toggleVideoPlay())
     this.listenTo(document.getElementById('extVideoSkipBackBtn'), 'click', () => { this._videoSkip(-10); this._showSkipOverlay('skip-back') })
     this.listenTo(document.getElementById('extVideoSkipFwdBtn'), 'click', () => { this._videoSkip(10); this._showSkipOverlay('skip-forward') })
@@ -685,6 +699,17 @@ export class GridView extends Component {
 
     el.innerHTML = this._dashboardHTML(userName) + `<div class="grid-sections" id="gridSections">${html}</div>`
 
+    /* Wrap homeView and gridSections in swipable container */
+    const hv = document.getElementById('homeView')
+    const gs = document.getElementById('gridSections')
+    if (hv && gs && !hv.parentElement?.classList.contains('grid-swipable')) {
+      const wrapper = document.createElement('div')
+      wrapper.className = 'grid-swipable'
+      el.insertBefore(wrapper, gs)
+      wrapper.appendChild(hv)
+      wrapper.appendChild(gs)
+    }
+
     const heroEl = el.querySelector('.dashboard-hero')
     if (heroEl) heroEl.onclick = () => this._handleHeroPick()
 
@@ -756,7 +781,7 @@ export class GridView extends Component {
           Grid
         </button>      </div>
       </div>
-      <div id="homeView" class="home-view" style="display:none">
+      <div id="homeView" class="home-view">
         <div class="home-view-content">
           <div class="home-view-pages" id="homeViewPages">${homePagesHtml}</div>
           <div class="home-view-empty" id="homeViewEmpty" style="display:${homeEmptyDisplay}">
@@ -1555,7 +1580,7 @@ export class GridView extends Component {
     const gs = document.getElementById('gridSections')
     const hv = document.getElementById('homeView')
     if (gs) gs.style.display = view === 'grid' ? '' : 'none'
-    if (hv) hv.style.display = view === 'home' ? 'flex' : 'none'
+    if (hv) { hv.style.display = view === 'home' ? 'flex' : 'none'; hv.style.visibility = '' }
   }
 
   _anyExternalViewOpen() {

@@ -236,8 +236,8 @@ async function bootstrap() {
   window.startApp = () => {
     window.renderSidebar()
     window.renderGridView()
-    viewManager.setView('grid')
-    navigationService.replace('grid')
+    viewManager.setView('home')
+    navigationService.replace('home')
     loadIcons()
     window.startGridAnim?.()
   }

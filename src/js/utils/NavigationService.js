@@ -25,6 +25,7 @@ export class NavigationService {
   }
 
   _detectCurrentView() {
+    if (document.getElementById('pageView')?.style.display === 'flex') return 'page'
     if (document.getElementById('extImageView')?.style.display === 'flex') return 'extImage'
     if (document.getElementById('extVideoView')?.style.display === 'flex') return 'extVideo'
     if (document.getElementById('extTextView')?.style.display === 'flex') return 'extText'
@@ -37,6 +38,8 @@ export class NavigationService {
   }
 
   _getViewName() {
+    if (document.getElementById('pagePicker')?.style.display === 'flex') return 'pagePicker'
+    if (document.getElementById('pageView')?.style.display === 'flex') return 'page'
     if (document.getElementById('extImageView')?.style.display === 'flex') return 'extImage'
     if (document.getElementById('extVideoView')?.style.display === 'flex') return 'extVideo'
     if (document.getElementById('extTextView')?.style.display === 'flex') return 'extText'
@@ -91,6 +94,8 @@ export class NavigationService {
     const ct = document.querySelector('.content')
     const nv = document.getElementById('noteView')
     const hv = document.getElementById('homeView')
+    const pv = document.getElementById('pageView')
+    const pp = document.getElementById('pagePicker')
     const extTV = document.getElementById('extTextView')
     const extVV = document.getElementById('extVideoView')
     const extIV = document.getElementById('extImageView')
@@ -104,6 +109,8 @@ export class NavigationService {
     if (ct) ct.style.display = 'none'
     if (sl) sl.style.display = 'none'
     if (hv) hv.style.display = 'none'
+    if (pv) pv.style.display = 'none'
+    if (pp) pp.style.display = 'none'
     if (gv) gv.classList.remove('open')
 
     if (target === 'grid') {
@@ -124,6 +131,12 @@ export class NavigationService {
       if (nv) nv.style.display = 'flex'
     } else if (target === 'landing') {
       if (sl) sl.style.display = 'flex'
+    } else if (target === 'page') {
+      if (pv) pv.style.display = 'flex'
+      if (window.__pageMobileAction) {
+        const bar = document.querySelector('.mobile-nav-bar')
+        if (bar) bar.classList.add('page-mode')
+      }
     }
 
     if (window.renderSidebar) window.renderSidebar()
@@ -169,6 +182,15 @@ export class NavigationService {
   _handleBack() {
     const current = this._getViewName()
 
+    if (current === 'pagePicker') {
+      const picker = document.getElementById('pagePicker')
+      if (picker) picker.style.display = 'none'
+      return
+    }
+    if (current === 'page' && window.closePageView) {
+      window.closePageView()
+      return
+    }
     if (current === 'extImage' && window.closeExternalImage) {
       window.closeExternalImage()
       return

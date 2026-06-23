@@ -5,12 +5,16 @@
   body { padding: 0; gap: 0; min-height: 100dvh; }
 
   .sidebar {
-    top: 12px; left: 12px;
+    top: max(12px, env(safe-area-inset-top, 12px)); left: 12px;
     width: calc(100vw - 24px); max-width: 360px;
     height: calc(100dvh - 24px);
     border-radius: 16px;
     margin: 0; z-index: 400;
   }
+  .sidebar-header { padding: 12px 12px 6px; }
+  .sidebar-search { padding: 6px 12px 6px; }
+  .sidebar-tree { padding: 0 6px 6px; }
+  .tree-folder, .tree-file { padding: 4px 6px; font-size: 13px; gap: 5px; }
   .sidebar.closed {
     transform: translateX(-100%);
     opacity: 0; pointer-events: none;
@@ -23,7 +27,7 @@
     padding: 0;
   }
 
-  .settings-modal { max-height: 90vh; }
+  .settings-modal { height: 45vh; }
   .settings-categories { overflow-x: auto; }
   .settings-cat { white-space: nowrap; flex-shrink: 0; }
   .settings-content { padding: 16px 20px; }
@@ -60,7 +64,7 @@
   .view-tab { height: 40px; font-size: 12px; gap: 6px; }
   .view-tab svg { width: 14px; height: 14px; }
 
-  .home-view { padding: 16px; }
+  .home-view { padding: 16px; padding-top: max(56px, env(safe-area-inset-top, 56px)); }
   .home-view-pages { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .home-view-empty svg { width: 40px; height: 40px; }
   .home-view-empty-text { font-size: 14px; }
@@ -76,15 +80,23 @@
   .page-toolbar { padding: 10px 14px; gap: 6px; }
   .page-tb-btn { padding: 8px 12px; font-size: 11px; }
   .page-tb-btn svg { width: 14px; height: 14px; }
-  .page-hero.has-image { height: 180px; }
-  .page-hero-placeholder { padding: 28px 16px; font-size: 13px; }
+  .page-hero.has-image { height: 280px; }
+  .page-hero-placeholder { padding: 28px 16px; font-size: 13px; padding-top: max(28px, env(safe-area-inset-top, 28px)); }
+  .page-hero-remove { top: max(12px, env(safe-area-inset-top)); }
+  .page-hero.has-image + .page-header.stuck { padding-top: max(56px, env(safe-area-inset-top, 56px)); }
   .page-canvas { padding: 16px 12px 24px; }
   .page-blocks { column-width: 140px; column-gap: 8px; }
   .page-blocks > * { margin-bottom: 8px; }
+  .page-picker { padding-top: max(56px, env(safe-area-inset-top, 56px)); }
+  .page-picker-header { padding-top: max(12px, env(safe-area-inset-top)); }
+  .bottom-nav-pill { gap: 0; }
+  .mobile-nav-bar.ship-active .bottom-nav-pill { gap: 4px; }
+  .mobile-nav-bar.ship-active .pill-icon-btn { opacity: 0; pointer-events: none; }
+  .pill-icon-btn { transition: opacity 0.2s ease; }
   .page-picker-items { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 12px; }
 
   .ext-text-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)); }
-  .ext-video-header { padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); }
+  .ext-video-header { padding: 12px 16px; padding-top: max(56px, env(safe-area-inset-top, 56px)); }
   .ext-video-controls { padding: 0 12px; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
   .ext-video-ctrl-btn { padding: 4px; }
   .ext-video-ctrl-btn svg, .ext-video-ctrl-btn i, .ext-video-ctrl-btn .icon-md svg { width: 18px; height: 18px; }
@@ -107,9 +119,15 @@ body.theme-black { background: transparent; }
 .search-landing { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
 .note-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
 .ext-text-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
-.ext-video-header { padding: 16px 20px; padding-top: max(16px, env(safe-area-inset-top)); }
+.ext-video-header { padding: 16px 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); }
 .ext-video-controls { padding: 0 20px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
 .ext-image-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
+.page-picker { padding-top: max(56px, env(safe-area-inset-top, 56px)); }
+.page-picker-header { padding-top: max(12px, env(safe-area-inset-top)); }
+.home-view { padding-top: max(56px, env(safe-area-inset-top, 56px)); }
+.page-hero-remove { top: max(12px, env(safe-area-inset-top)); }
+.page-hero.has-image + .page-header.stuck { padding-top: max(56px, env(safe-area-inset-top, 56px)); }
+.page-hero-placeholder { padding-top: max(28px, env(safe-area-inset-top, 28px)); }
 .grid-view { padding: 0 0 max(90px, env(safe-area-inset-bottom, 90px)); }
 
 /* ─── Narrow mobile: collapse page fab into trigger pill with grid popup ─── */

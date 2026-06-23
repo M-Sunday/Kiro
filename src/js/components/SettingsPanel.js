@@ -56,6 +56,7 @@ export class SettingsPanel extends Component {
         if (pane) pane.style.display = 'block'
         if (this.dataset.cat === 'history') self._renderSettingsHistory()
         if (this.dataset.cat === 'storage') self._renderStorageInfo()
+        if (this.dataset.cat === 'theme') self._renderSettingsHeroPreview()
       })
     })
 
@@ -64,10 +65,10 @@ export class SettingsPanel extends Component {
       t.addEventListener('click', function () { this.classList.toggle('on') })
     })
 
-    // Theme segment
-    document.querySelectorAll('#themeSegment .settings-seg-opt').forEach(opt => {
-      opt.addEventListener('click', function () {
-        document.querySelectorAll('#themeSegment .settings-seg-opt').forEach(o => o.classList.remove('active'))
+    // Theme dots
+    document.querySelectorAll('#themeSegment .theme-dot').forEach(dot => {
+      dot.addEventListener('click', function () {
+        document.querySelectorAll('#themeSegment .theme-dot').forEach(d => d.classList.remove('active'))
         this.classList.add('active')
         const t = this.dataset.theme
         self._setTheme(t)
@@ -81,6 +82,8 @@ export class SettingsPanel extends Component {
     this.listenTo(document.getElementById('settingsHeroRemove'), 'click', () => {
       this.bus.emit('settings:hero:remove')
     })
+    this.bus.on('settings:hero:change', () => this._renderSettingsHeroPreview())
+    this.bus.on('settings:hero:remove', () => this._renderSettingsHeroPreview())
 
     // Avatar settings
     this.listenTo(document.getElementById('settingsAvatarChange'), 'click', () => {
@@ -246,6 +249,7 @@ export class SettingsPanel extends Component {
     this._initUserName()
     this._initDeviceName()
     this._renderSettingsAvatar()
+    this._renderSettingsHeroPreview()
     this._renderNSFWChips()
     this._applyToolbarSettings()
   }
@@ -264,10 +268,10 @@ export class SettingsPanel extends Component {
 
   _applyTheme() {
     const savedTheme = localStorage.getItem('theme') || 'white'
-    document.querySelectorAll('#themeSegment .settings-seg-opt').forEach(o => o.classList.remove('active'))
+    document.querySelectorAll('#themeSegment .theme-dot').forEach(d => d.classList.remove('active'))
     this._setTheme(savedTheme)
-    const opt = document.querySelector(`#themeSegment .settings-seg-opt[data-theme="${savedTheme}"]`)
-    if (opt) opt.classList.add('active')
+    const dot = document.querySelector(`#themeSegment .theme-dot[data-theme="${savedTheme}"]`)
+    if (dot) dot.classList.add('active')
   }
 
   _listenSystemTheme() {
@@ -314,6 +318,25 @@ export class SettingsPanel extends Component {
     }).catch(() => {
       const firstLetter = name ? name.charAt(0).toUpperCase() : '?'
       avatarEl.innerHTML = firstLetter
+    })
+  }
+
+  _renderSettingsHeroPreview() {
+    const preview = document.getElementById('settingsHeroPreview')
+    const img = document.getElementById('settingsHeroPreviewImg')
+    if (!preview || !img) return
+    const repo = this.api.getRepository('settings')
+    Promise.resolve(repo.get('heroImage')).then(data => {
+      if (data?.dataUrl) {
+        preview.classList.add('has-image')
+        img.style.backgroundImage = `url(${data.dataUrl})`
+      } else {
+        preview.classList.remove('has-image')
+        img.style.backgroundImage = 'none'
+      }
+    }).catch(() => {
+      preview.classList.remove('has-image')
+      img.style.backgroundImage = 'none'
     })
   }
 

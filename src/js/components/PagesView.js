@@ -20,6 +20,7 @@ export class PagesView extends Component {
 
   mount(rootEl) {
     super.mount(rootEl)
+    window.closePageView = () => this.closePageView()
     this._bindEvents()
   }
 
@@ -40,6 +41,21 @@ export class PagesView extends Component {
       if (!hero.classList.contains('has-image')) { header.classList.remove('stuck'); return }
       header.classList.toggle('stuck', pageView.scrollTop >= hero.offsetHeight - header.offsetHeight)
     })
+
+    /* Swipe navigation on mobile */
+    let touchStartX = 0, touchStartY = 0
+    pageView.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX
+      touchStartY = e.touches[0].clientY
+    }, { passive: true })
+    pageView.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - touchStartX
+      const dy = e.changedTouches[0].clientY - touchStartY
+      if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+      window.Capacitor?.Plugins?.Haptics?.selectionChanged()
+      if (dx > 0) this._close() /* swipe right → grid */
+      else this._goHome()        /* swipe left → home */
+    }, { passive: true })
 
     window.__pageMobileAction = () => {
       const popup = document.getElementById('pageFabPopup')
@@ -107,12 +123,12 @@ export class PagesView extends Component {
     this._renderHero(page.heroImage)
     this._renderBlocks(page.blocks)
     this._show()
+    window.__navigation?.push('page')
   }
 
   _show() {
     this._hideOtherViews()
     document.getElementById('pageView').style.display = 'flex'
-    document.getElementById('pageTitleInput')?.focus()
     this._toggleMobileNav(true)
   }
 
@@ -140,9 +156,26 @@ export class PagesView extends Component {
 
   _close() {
     document.getElementById('pageView').style.display = 'none'
-    document.getElementById('gridView')?.classList.add('open')
     this._currentPageId = null
     this._toggleMobileNav(false)
+    window.__navigation?.replace('grid')
+    document.getElementById('gridView')?.classList.add('open')
+    if (window.renderGridView) window.renderGridView()
+    if (window.syncViewTabs) window.syncViewTabs('grid')
+  }
+
+  closePageView() {
+    this._close()
+  }
+
+  _goHome() {
+    document.getElementById('pageView').style.display = 'none'
+    this._currentPageId = null
+    this._toggleMobileNav(false)
+    window.__navigation?.replace('home')
+    document.getElementById('gridView')?.classList.add('open')
+    if (window.renderGridView) window.renderGridView()
+    if (window.syncViewTabs) window.syncViewTabs('home')
   }
 
   _deleteCurrent() {

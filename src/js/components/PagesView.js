@@ -42,20 +42,7 @@ export class PagesView extends Component {
       header.classList.toggle('stuck', pageView.scrollTop >= hero.offsetHeight - header.offsetHeight)
     })
 
-    /* Swipe navigation on mobile */
-    let touchStartX = 0, touchStartY = 0
-    pageView.addEventListener('touchstart', (e) => {
-      touchStartX = e.touches[0].clientX
-      touchStartY = e.touches[0].clientY
-    }, { passive: true })
-    pageView.addEventListener('touchend', (e) => {
-      const dx = e.changedTouches[0].clientX - touchStartX
-      const dy = e.changedTouches[0].clientY - touchStartY
-      if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 1.5) return
-      window.Capacitor?.Plugins?.Haptics?.selectionChanged()
-      if (dx > 0) this._close() /* swipe right → grid */
-      else this._goHome()        /* swipe left → home */
-    }, { passive: true })
+    /* ── Page view navigation is via toolbar/buttons only ── */
 
     window.__pageMobileAction = () => {
       const popup = document.getElementById('pageFabPopup')

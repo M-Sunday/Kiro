@@ -105,18 +105,132 @@ export class GridView extends Component {
       this._switchView(view)
     })
 
-    /* Swipe to switch tabs on mobile */
+    /* ── Instagram-style swipe between home/grid tabs ── */
     let gvTouchStartX = 0, gvTouchStartY = 0
+    let gvSwipeCurrentX = 0
+    let gvSwipeActive = false
+    const gvSwipeThreshold = 60
+    const gvSwipeRatio = 0.8
+
     this.rootEl.addEventListener('touchstart', (e) => {
       gvTouchStartX = e.touches[0].clientX
       gvTouchStartY = e.touches[0].clientY
+      gvSwipeCurrentX = gvTouchStartX
+      gvSwipeActive = false
     }, { passive: true })
+
+    this.rootEl.addEventListener('touchmove', (e) => {
+      const dx = e.touches[0].clientX - gvTouchStartX
+      const dy = e.touches[0].clientY - gvTouchStartY
+      if (!gvSwipeActive && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+        if (Math.abs(dx) > Math.abs(dy) * 0.5) {
+          gvSwipeActive = true
+        }
+      }
+      if (!gvSwipeActive) return
+
+      if (Math.abs(dx) > Math.abs(dy)) e.preventDefault()
+
+      gvSwipeCurrentX = e.touches[0].clientX
+
+      const swipeable = this.rootEl.querySelector('.grid-swipable')
+      if (!swipeable) return
+
+      const viewWidth = this.rootEl.offsetWidth
+      const progress = dx / viewWidth
+      const clamped = Math.max(-1, Math.min(1, progress))
+
+      const hv = document.getElementById('homeView')
+      const gs = document.getElementById('gridSections')
+
+      if (this._activeView === 'home' && dx < 0) {
+        if (gs) gs.style.zIndex = '2'
+        if (hv) hv.style.zIndex = '1'
+        if (hv) {
+          hv.style.transition = 'none'
+          hv.style.transform = `translateX(${dx}px)`
+          hv.style.opacity = `${1 - Math.abs(clamped) * 0.3}`
+        }
+        if (gs) {
+          gs.style.transition = 'none'
+          gs.style.display = ''
+          gs.style.transform = `translateX(${viewWidth + dx}px)`
+          gs.style.opacity = `${0.5 + Math.abs(clamped) * 0.5}`
+        }
+      } else if (this._activeView === 'grid' && dx > 0) {
+        if (hv) hv.style.zIndex = '2'
+        if (gs) gs.style.zIndex = '1'
+        if (gs) {
+          gs.style.transition = 'none'
+          gs.style.transform = `translateX(${dx}px)`
+          gs.style.opacity = `${1 - Math.abs(clamped) * 0.3}`
+        }
+        if (hv) {
+          hv.style.transition = 'none'
+          hv.style.display = 'flex'
+          hv.style.transform = `translateX(${-viewWidth + dx}px)`
+          hv.style.opacity = `${0.5 + Math.abs(clamped) * 0.5}`
+        }
+      }
+    }, { passive: false })
+
     this.rootEl.addEventListener('touchend', (e) => {
-      const dx = e.changedTouches[0].clientX - gvTouchStartX
+      if (!gvSwipeActive) return
+      const dx = gvSwipeCurrentX - gvTouchStartX
       const dy = e.changedTouches[0].clientY - gvTouchStartY
-      if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 1.5) return
-      if (dx > 0 && this._activeView !== 'grid') { window.Capacitor?.Plugins?.Haptics?.selectionChanged(); this._switchView('grid') }
-      else if (dx < 0 && this._activeView !== 'home') { window.Capacitor?.Plugins?.Haptics?.selectionChanged(); this._switchView('home') }
+
+      const hv = document.getElementById('homeView')
+      const gs = document.getElementById('gridSections')
+      const transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s ease'
+
+      if (hv) { hv.style.transition = transition }
+      if (gs) { gs.style.transition = transition }
+
+      const committed = Math.abs(dx) > gvSwipeThreshold && Math.abs(dx) > Math.abs(dy) * gvSwipeRatio
+
+      if (committed) {
+        if (dx > 0 && this._activeView !== 'home') {
+          if (hv) { hv.style.transform = 'translateX(0)'; hv.style.opacity = '1' }
+          if (gs) { gs.style.transform = 'translateX(100%)'; gs.style.opacity = '0' }
+          window.Capacitor?.Plugins?.Haptics?.selectionChanged?.()
+          setTimeout(() => {
+            if (gs) { gs.style.display = 'none'; gs.style.transform = ''; gs.style.opacity = ''; gs.style.transition = '' }
+            if (hv) { hv.style.transition = '' }
+            this._switchView('home')
+          }, 350)
+        } else if (dx < 0 && this._activeView !== 'grid') {
+          if (gs) { gs.style.transform = 'translateX(0)'; gs.style.opacity = '1' }
+          if (hv) { hv.style.transform = 'translateX(-100%)'; hv.style.opacity = '0' }
+          window.Capacitor?.Plugins?.Haptics?.selectionChanged?.()
+          setTimeout(() => {
+            if (hv) { hv.style.display = 'none'; hv.style.transform = ''; hv.style.opacity = ''; hv.style.transition = '' }
+            if (gs) { gs.style.transition = '' }
+            this._switchView('grid')
+          }, 350)
+        } else {
+          if (this._activeView === 'home') {
+            if (hv) { hv.style.transform = 'translateX(0)'; hv.style.opacity = '1' }
+            if (gs) { gs.style.transform = 'translateX(100%)'; gs.style.opacity = '0' }
+            setTimeout(() => { if (gs) { gs.style.display = 'none'; gs.style.transform = ''; gs.style.opacity = ''; gs.style.transition = '' } if (hv) { hv.style.transition = '' } }, 350)
+          } else {
+            if (gs) { gs.style.transform = 'translateX(0)'; gs.style.opacity = '1' }
+            if (hv) { hv.style.transform = 'translateX(-100%)'; hv.style.display = 'none'; hv.style.opacity = '0' }
+            setTimeout(() => { if (hv) { hv.style.transform = ''; hv.style.opacity = ''; hv.style.transition = '' } if (gs) { gs.style.transition = '' } }, 350)
+          }
+        }
+      } else {
+        if (this._activeView === 'home') {
+          if (hv) { hv.style.transform = 'translateX(0)'; hv.style.opacity = '1' }
+          if (gs) { gs.style.transform = 'translateX(100%)'; gs.style.opacity = '0' }
+          setTimeout(() => { if (gs) { gs.style.display = 'none'; gs.style.transform = ''; gs.style.opacity = ''; gs.style.transition = '' } if (hv) { hv.style.transition = '' } }, 350)
+        } else {
+          if (gs) { gs.style.transform = 'translateX(0)'; gs.style.opacity = '1' }
+          if (hv) { hv.style.transform = 'translateX(-100%)'; hv.style.opacity = '0' }
+          setTimeout(() => { if (hv) { hv.style.display = 'none'; hv.style.transform = ''; hv.style.opacity = ''; hv.style.transition = '' } if (gs) { gs.style.transition = '' } }, 350)
+        }
+      }
+
+      gvSwipeActive = false
     }, { passive: true })
 
     this.listenTo(document.getElementById('extVideoPlayBtn'), 'click', () => this._toggleVideoPlay())
@@ -759,27 +873,29 @@ export class GridView extends Component {
     const pages = this.state.getState('pages') || []
     const homePagesHtml = pages.length ? pages.map(p => this._pageCard(p)).join('') + this._newPageCard() : this._newPageCard()
     const homeEmptyDisplay = pages.length ? 'none' : ''
-    return `<div class="dashboard-hero${this._heroData ? ' has-image' : ''}" style="${heroStyle}"></div>
-    <div class="grid-dashboard">
+    return `<div class="grid-dashboard">
+      <div class="dashboard-hero${this._heroData ? ' has-image' : ''}" style="${heroStyle}"></div>
       <div class="dashboard-header">
-        <div class="dashboard-meta">
-          <div class="dashboard-greeting">${userName || 'Dashboard'}${userName ? "'s Dashboard" : ''}</div>
-          <div class="dashboard-date">${dateStr}</div>
+        <div class="dashboard-header-top">
+          <div class="dashboard-meta">
+            <div class="dashboard-greeting">${userName || 'Dashboard'}${userName ? "'s Dashboard" : ''}</div>
+            <div class="dashboard-date">${dateStr}</div>
+          </div>
+          <div class="dashboard-avatar-wrap">
+            ${avatarHtml}
+            <span class="dashboard-avatar-status ${statusClass}"></span>
+          </div>
         </div>
-        <div class="dashboard-avatar-wrap">
-          ${avatarHtml}
-          <span class="dashboard-avatar-status ${statusClass}"></span>
+        <div class="view-tabs" id="viewTabs">
+          <button class="view-tab active" data-view="home">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Home
+          </button>
+          <button class="view-tab" data-view="grid">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Grid
+          </button>
         </div>
-      </div>
-      <div class="view-tabs" id="viewTabs">
-        <button class="view-tab active" data-view="home">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          Home
-        </button>
-        <button class="view-tab" data-view="grid">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          Grid
-        </button>      </div>
       </div>
       <div id="homeView" class="home-view">
         <div class="home-view-content">
@@ -795,11 +911,23 @@ export class GridView extends Component {
 
   _videoCard(id, v, thumb, pinned) {
     const stale = v._stale
+    const heart = v.favorited ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>'
     return `<div class="grid-item${stale ? ' stale' : ''}" data-video-id="${id}">
-      <button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button>
-      ${pinned ? '<div class="pin-badge"><i data-lucide="pin-off" style="width:14px;height:14px"></i></div>' : ''}
-      <div style="position:relative">${stale ? '<div class="stale-overlay"><i data-lucide="play-off" style="width:22px;height:22px"></i></div>' : ''}<img class="grid-item-img${stale ? ' stale-img' : ''}" src="${thumb}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${id}/hqdefault.jpg'" /></div>
-      <div class="grid-item-info${stale ? ' stale-info' : ''}"><div class="grid-item-title">${v.title}</div><div class="grid-item-sublabel">${v.channel}</div></div>
+      <div class="grid-item-img-wrap">
+        <div class="grid-item-actions">
+          <button class="grid-item-menu grid-item-action-btn" onclick="event.stopPropagation()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+          <button class="grid-item-action-btn grid-item-heart${v.favorited ? ' active' : ''}" onclick="event.stopPropagation()">${heart}</button>
+        </div>
+        ${pinned ? '<span class="grid-item-badge">Pinned</span>' : '<span class="grid-item-badge">Video</span>'}
+        ${stale ? '<div class="stale-overlay"><i data-lucide="play-off" style="width:22px;height:22px"></i></div>' : ''}
+        <img class="grid-item-img${stale ? ' stale-img' : ''}" src="${thumb}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${id}/hqdefault.jpg'" />
+      </div>
+      <div class="grid-item-body${stale ? ' stale-info' : ''}">
+        <div class="grid-item-title-row">
+          <span class="grid-item-title">${v.title}</span>
+        </div>
+        <span class="grid-item-sublabel">${v.channel}</span>
+      </div>
     </div>`
   }
 
@@ -808,10 +936,23 @@ export class GridView extends Component {
     const hasTodos = n.todos && n.todos.length
     const noteIcon = hasTodos ? 'list-todo' : 'file-text'
     const todoHtml = this._renderNoteTodoPreview(n)
+    const heart = n.favorited ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>'
     return `<div class="grid-item note" data-note-id="${n.id}">
-      <button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button>
-      <div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;aspect-ratio:auto;height:60px"><i data-lucide="${noteIcon}" style="width:24px;height:24px;color:#8e8e93"></i></div>
-      <div class="grid-item-info"><div class="grid-item-title">${n.title || 'Untitled'}</div><div class="grid-item-sublabel">${preview}${this._stripHtml(n.content || '').length > 80 ? '…' : ''}</div>${todoHtml}</div>
+      <div class="grid-item-img-wrap" style="background:#e8e8ed">
+        <div class="grid-item-actions">
+          <button class="grid-item-menu grid-item-action-btn" onclick="event.stopPropagation()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+          <button class="grid-item-action-btn grid-item-heart${n.favorited ? ' active' : ''}" onclick="event.stopPropagation()">${heart}</button>
+        </div>
+        <span class="grid-item-badge">Note</span>
+        <div style="display:flex;align-items:center;justify-content:center;height:100%"><i data-lucide="${noteIcon}" style="width:28px;height:28px;color:#8e8e93"></i></div>
+      </div>
+      <div class="grid-item-body">
+        <div class="grid-item-title-row">
+          <span class="grid-item-title">${n.title || 'Untitled'}</span>
+        </div>
+        <span class="grid-item-sublabel">${preview}${this._stripHtml(n.content || '').length > 80 ? '…' : ''}</span>
+        ${todoHtml}
+      </div>
     </div>`
   }
 
@@ -822,60 +963,121 @@ export class GridView extends Component {
     const isImage = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(f.name)
     const isText = /\.(txt|md|json|xml|html|css|js|py|java|c|cpp|h|ts)$/i.test(f.name)
     const thumb = f.thumbnail || ''
+    const heart = f.favorited ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>'
+    let imgContent
     if (thumb) {
-      return `<div class="grid-item ext-file" data-ext-id="${f.id}">
-        <button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button>
-        <div style="position:relative"><img class="grid-item-img${nsfw ? ' nsfw-blur' : ''}" src="${thumb}" loading="lazy" onerror="this.style.display='none'" /></div>
-        <div class="grid-item-info${nsfw ? ' nsfw-blur' : ''}"><div class="grid-item-title" style="font-size:12px">${this._escapeHtml(f.name)}</div><div class="grid-item-sublabel" style="font-size:10px">${this._formatSize(f.size)}</div></div>
-      </div>`
+      imgContent = `<img class="grid-item-img${nsfw ? ' nsfw-blur' : ''}" src="${thumb}" loading="lazy" onerror="this.style.display='none'" />`
+    } else {
+      let icon = 'file'
+      if (isVideo) icon = 'file-video-2'
+      else if (isAudio) icon = 'music'
+      else if (isImage) icon = 'image'
+      else if (isText) icon = 'file-text'
+      imgContent = `<div style="display:flex;align-items:center;justify-content:center;height:100%"><i data-lucide="${icon}" style="width:28px;height:28px;color:#8e8e93"></i></div>`
     }
-    let icon = 'file'
-    if (isVideo) icon = 'file-video-2'
-    else if (isAudio) icon = 'music'
-    else if (isImage) icon = 'image'
-    else if (isText) icon = 'file-text'
     return `<div class="grid-item ext-file" data-ext-id="${f.id}">
-      <button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button>
-      <div class="grid-item-img${nsfw ? ' nsfw-blur' : ''}" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;aspect-ratio:auto;height:70px"><i data-lucide="${icon}" style="width:28px;height:28px;color:#8e8e93"></i></div>
-      <div class="grid-item-info${nsfw ? ' nsfw-blur' : ''}"><div class="grid-item-title" style="font-size:12px">${this._escapeHtml(f.name)}</div><div class="grid-item-sublabel" style="font-size:10px">${this._formatSize(f.size)}</div></div>
+      <div class="grid-item-img-wrap">
+        <div class="grid-item-actions">
+          <button class="grid-item-menu grid-item-action-btn" onclick="event.stopPropagation()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+          <button class="grid-item-action-btn grid-item-heart${f.favorited ? ' active' : ''}" onclick="event.stopPropagation()">${heart}</button>
+        </div>
+        <span class="grid-item-badge">File</span>
+        ${imgContent}
+      </div>
+      <div class="grid-item-body${nsfw ? ' nsfw-blur' : ''}">
+        <div class="grid-item-title-row">
+          <span class="grid-item-title" style="font-size:12px">${this._escapeHtml(f.name)}</span>
+        </div>
+        <span class="grid-item-sublabel" style="font-size:10px">${this._formatSize(f.size)}</span>
+      </div>
     </div>`
   }
 
   _bookmarkCard(bm) {
     const nsfw = bm.blurred || false
+    const heart = bm.favorited ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>'
+    const imgContent = bm.image
+      ? `<img class="grid-item-img${nsfw ? ' nsfw-blur' : ''}" src="${bm.image}" loading="lazy" onerror="this.style.display='none'" />`
+      : `<div style="display:flex;align-items:center;justify-content:center;height:100%"><i data-lucide="external-link" style="width:28px;height:28px;color:#8e8e93"></i></div>`
     return `<div class="grid-item bm" data-bookmark-id="${bm.id}">
-      <button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button>
-      ${bm.image ? `<div style="position:relative"><img class="grid-item-img${nsfw ? ' nsfw-blur' : ''}" src="${bm.image}" loading="lazy" onerror="this.style.display='none'" /></div>` : `<div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed"><i data-lucide="external-link" style="width:24px;height:24px;color:#8e8e93"></i></div>`}
-      <div class="grid-item-info${nsfw ? ' nsfw-blur' : ''}"><div class="grid-item-title">${bm.title || bm.url}</div><div class="grid-item-sublabel">${bm.url}</div></div>
+      <div class="grid-item-img-wrap">
+        <div class="grid-item-actions">
+          <button class="grid-item-menu grid-item-action-btn" onclick="event.stopPropagation()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+          <button class="grid-item-action-btn grid-item-heart${bm.favorited ? ' active' : ''}" onclick="event.stopPropagation()">${heart}</button>
+        </div>
+        <span class="grid-item-badge">Bookmark</span>
+        ${imgContent}
+      </div>
+      <div class="grid-item-body${nsfw ? ' nsfw-blur' : ''}">
+        <div class="grid-item-title-row">
+          <span class="grid-item-title">${bm.title || bm.url}</span>
+        </div>
+        <span class="grid-item-sublabel">${bm.url}</span>
+      </div>
     </div>`
   }
 
   _daCard(d) {
+    const heart = d.favorited ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>'
+    const imgContent = d.image
+      ? `<img class="grid-item-img" src="${d.image}" loading="lazy" onerror="this.style.display='none'" />`
+      : `<div style="display:flex;align-items:center;justify-content:center;height:100%"><i data-lucide="external-link" style="width:28px;height:28px;color:#8e8e93"></i></div>`
     return `<div class="grid-item bm" data-da-id="${d.id}">
-      <button class="grid-item-menu"><i data-lucide="ellipsis" style="width:14px;height:14px"></i></button>
-      ${d.image ? `<div style="position:relative"><img class="grid-item-img" src="${d.image}" loading="lazy" onerror="this.style.display='none'" /></div>` : `<div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed"><i data-lucide="external-link" style="width:24px;height:24px;color:#8e8e93"></i></div>`}
-      <div class="grid-item-info"><div class="grid-item-title">${d.title}</div><div class="grid-item-sublabel">${d.url}</div></div>
+      <div class="grid-item-img-wrap">
+        <div class="grid-item-actions">
+          <button class="grid-item-menu grid-item-action-btn" onclick="event.stopPropagation()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+          <button class="grid-item-action-btn grid-item-heart${d.favorited ? ' active' : ''}" onclick="event.stopPropagation()">${heart}</button>
+        </div>
+        <span class="grid-item-badge">Link</span>
+        ${imgContent}
+      </div>
+      <div class="grid-item-body">
+        <div class="grid-item-title-row">
+          <span class="grid-item-title">${d.title}</span>
+        </div>
+        <span class="grid-item-sublabel">${d.url}</span>
+      </div>
     </div>`
   }
 
   _pageCard(p) {
     const preview = p.blocks?.length ? p.blocks.length + ' block' + (p.blocks.length > 1 ? 's' : '') : 'Empty'
     const title = p.title || 'Untitled'
-    const imgHtml = p.heroImage
+    const heart = p.favorited ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>'
+    const imgContent = p.heroImage
       ? `<img class="grid-item-img" src="${p.heroImage}" loading="lazy">`
-      : `<div class="grid-item-img" style="display:flex;align-items:center;justify-content:center;background:#e8e8ed;gap:4px;flex-direction:column">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#8e8e93"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+      : `<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:4px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#8e8e93"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
         </div>`
     return `<div class="grid-item page" data-page-id="${p.id}">
-      ${imgHtml}
-      <div class="grid-item-info"><div class="grid-item-title">${title}</div><div class="grid-item-sublabel">${preview}</div></div>
+      <div class="grid-item-img-wrap">
+        <div class="grid-item-actions">
+          <button class="grid-item-menu grid-item-action-btn" onclick="event.stopPropagation()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+          <button class="grid-item-action-btn grid-item-heart${p.favorited ? ' active' : ''}" onclick="event.stopPropagation()">${heart}</button>
+        </div>
+        <span class="grid-item-badge">Page</span>
+        ${imgContent}
+      </div>
+      <div class="grid-item-body">
+        <div class="grid-item-title-row">
+          <span class="grid-item-title">${title}</span>
+        </div>
+        <span class="grid-item-sublabel">${preview}</span>
+      </div>
     </div>`
   }
 
   _newPageCard() {
     return `<div class="grid-item page new-page" data-action="new-page">
-      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:#8e8e93;margin-bottom:6px"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-      <div class="grid-item-title" style="font-size:13px;color:#8e8e93">Create new page</div>
+      <div class="grid-item-img-wrap" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:#8e8e93"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      </div>
+      <div class="grid-item-body">
+        <div class="grid-item-title-row">
+          <span class="grid-item-title" style="color:#8e8e93">Create new page</span>
+        </div>
+        <span class="grid-item-sublabel">&nbsp;</span>
+      </div>
     </div>`
   }
 
@@ -977,6 +1179,7 @@ export class GridView extends Component {
           noteId: item.dataset.noteId || null,
           daId: item.dataset.daId || null,
           extId: item.dataset.extId || null,
+          pageId: item.dataset.pageId || null,
         })
       })
     })
@@ -991,7 +1194,46 @@ export class GridView extends Component {
           noteId: item.dataset.noteId || null,
           daId: item.dataset.daId || null,
           extId: item.dataset.extId || null,
+          pageId: item.dataset.pageId || null,
         })
+      })
+    })
+
+    el.querySelectorAll('.grid-item-heart').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const item = btn.closest('.grid-item')
+        const videoId = item.dataset.videoId
+        const bookmarkId = item.dataset.bookmarkId
+        const noteId = item.dataset.noteId
+        const daId = item.dataset.daId
+        const extId = item.dataset.extId
+        const pageId = item.dataset.pageId
+        if (videoId) {
+          const vs = window.getVideos?.() || {}
+          const v = vs[videoId]
+          if (v) { v.favorited = !v.favorited; window.saveVideos?.(vs); this.state.setState('videos', vs); window.renderGridView?.() }
+        } else if (bookmarkId) {
+          const bms = window.getBookmarks?.() || []
+          const b = bms.find(x => x.id === bookmarkId)
+          if (b) { b.favorited = !b.favorited; window.saveBookmarks?.(bms); this.state.setState('bookmarks', bms); window.renderGridView?.() }
+        } else if (noteId) {
+          const notes = window.getNotes?.() || []
+          const n = notes.find(x => x.id === noteId)
+          if (n) { n.favorited = !n.favorited; window.saveNotes?.(notes); this.state.setState('notes', notes); window.renderGridView?.() }
+        } else if (daId) {
+          const das = window.getDirectAccess?.() || []
+          const d = das.find(x => x.id === daId)
+          if (d) { d.favorited = !d.favorited; window.saveDirectAccess?.(das); this.state.setState('directAccess', das); window.renderGridView?.() }
+        } else if (extId) {
+          const files = window.getExternalFiles?.() || []
+          const f = files.find(x => x.id === extId)
+          if (f) { f.favorited = !f.favorited; window.saveExternalFiles?.(files); this.state.setState('externalFiles', files); window.renderGridView?.() }
+        } else if (pageId) {
+          const pages = window.getPages?.() || []
+          const p = pages.find(x => x.id === pageId)
+          if (p) { p.favorited = !p.favorited; window.savePages?.(pages); this.state.setState('pages', pages); window.renderGridView?.() }
+        }
       })
     })
 
@@ -1057,6 +1299,7 @@ export class GridView extends Component {
             noteId: item.dataset.noteId || null,
             daId: item.dataset.daId || null,
             extId: item.dataset.extId || null,
+            pageId: item.dataset.pageId || null,
           })
         }
       }
@@ -1579,8 +1822,8 @@ export class GridView extends Component {
   _applyViewState(view) {
     const gs = document.getElementById('gridSections')
     const hv = document.getElementById('homeView')
-    if (gs) gs.style.display = view === 'grid' ? '' : 'none'
-    if (hv) { hv.style.display = view === 'home' ? 'flex' : 'none'; hv.style.visibility = '' }
+    if (gs) { gs.style.display = view === 'grid' ? '' : 'none'; gs.style.transform = ''; gs.style.opacity = ''; gs.style.zIndex = ''; gs.style.transition = '' }
+    if (hv) { hv.style.display = view === 'home' ? 'flex' : 'none'; hv.style.transform = ''; hv.style.opacity = ''; hv.style.zIndex = ''; hv.style.transition = '' }
   }
 
   _anyExternalViewOpen() {

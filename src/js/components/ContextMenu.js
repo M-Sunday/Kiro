@@ -15,8 +15,8 @@ export class ContextMenu extends Component {
   }
 
   _exposeGlobals() {
-    window.showContextMenu = (x, y, videoId, folderName, bookmarkId, noteId, daId, extId) =>
-      this.show(x, y, videoId, folderName, bookmarkId, noteId, daId, extId)
+    window.showContextMenu = (x, y, videoId, folderName, bookmarkId, noteId, daId, extId, pageId) =>
+      this.show(x, y, videoId, folderName, bookmarkId, noteId, daId, extId, pageId)
   }
 
   mount(rootEl) {
@@ -54,11 +54,11 @@ export class ContextMenu extends Component {
     })
 
     this.bus.on('ui:context-menu:show', (e) => {
-      this.show(e.x, e.y, e.videoId, null, e.bookmarkId, e.noteId, e.daId, e.extId)
+      this.show(e.x, e.y, e.videoId, null, e.bookmarkId, e.noteId, e.daId, e.extId, e.pageId)
     })
   }
 
-  show(x, y, videoId, folderName, bookmarkId, noteId, daId, extId) {
+  show(x, y, videoId, folderName, bookmarkId, noteId, daId, extId, pageId) {
     const menu = document.getElementById('ctxMenu')
     if (!menu) return
 
@@ -70,6 +70,7 @@ export class ContextMenu extends Component {
     this._ctxNote = noteId
     this._ctxDA = daId
     this._ctxExt = extId
+    this._ctxPage = pageId
 
     const isTouch = 'ontouchstart' in window
     menu.style.left = (isTouch ? x - 40 : x) + 'px'
@@ -92,21 +93,23 @@ export class ContextMenu extends Component {
     const isNote = noteId != null
     const isDA = daId != null
     const showVideo = videoId != null
+    const isPage = pageId != null
     const renameEl = menu.querySelector('[data-action="rename-folder"]')
-    renameEl.style.display = (showVideo || isBm || isNote || isDA || isExt || folderName) ? '' : 'none'
+    renameEl.style.display = (showVideo || isBm || isNote || isDA || isExt || folderName || isPage) ? '' : 'none'
     if (folderName) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename folder'
     else if (showVideo) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename video'
     else if (isNote) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename note'
     else if (isBm) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename bookmark'
     else if (isDA) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename direct access'
     else if (isExt) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename file'
+    else if (isPage) renameEl.innerHTML = '<i data-lucide="edit-3" class="ctx-icon"></i> Rename page'
 
-    menu.querySelector('[data-action="delete-folder"]').style.display = videoId ? 'none' : (isBm || isNote || isDA || isExt) ? 'none' : ''
-    menu.querySelector('[data-action="open-link"]').style.display = (showVideo || isBm || isDA) ? '' : 'none'
-    menu.querySelector('[data-action="archive"]').style.display = showVideo ? '' : 'none'
-    menu.querySelector('[data-action="open-file-location"]').style.display = isExt ? '' : 'none'
+    menu.querySelector('[data-action="delete-folder"]').style.display = (videoId || isPage) ? 'none' : (isBm || isNote || isDA || isExt) ? 'none' : ''
+    menu.querySelector('[data-action="open-link"]').style.display = (showVideo || isBm || isDA) && !isPage ? '' : 'none'
+    menu.querySelector('[data-action="archive"]').style.display = showVideo && !isPage ? '' : 'none'
+    menu.querySelector('[data-action="open-file-location"]').style.display = isExt && !isPage ? '' : 'none'
 
-    menu.querySelector('[data-action="blur"]').style.display = showVideo || isBm || isDA || isExt ? '' : 'none'
+    menu.querySelector('[data-action="blur"]').style.display = (showVideo || isBm || isDA || isExt) && !isPage ? '' : 'none'
     {
       let manualBlurred = false
       let isAutoBlurred = false
@@ -119,8 +122,8 @@ export class ContextMenu extends Component {
       if (isAutoBlurred) blurEl.classList.add('disabled'); else blurEl.classList.remove('disabled')
     }
 
-    menu.querySelector('[data-action="pin"]').style.display = showVideo ? '' : 'none'
-    menu.querySelector('[data-action="mark-stale"]').style.display = showVideo ? '' : 'none'
+    menu.querySelector('[data-action="pin"]').style.display = showVideo && !isPage ? '' : 'none'
+    menu.querySelector('[data-action="mark-stale"]').style.display = showVideo && !isPage ? '' : 'none'
     if (showVideo) {
       const v = window.getVideos?.()?.[videoId]
       const staleEl = menu.querySelector('[data-action="mark-stale"]')
@@ -130,17 +133,17 @@ export class ContextMenu extends Component {
         staleEl.innerHTML = '<i data-lucide="alert-circle" class="ctx-icon"></i> Mark not found'
       }
     }
-    menu.querySelector('[data-action="move-up"]').style.display = (showVideo || isBm || isNote || isDA || isExt) ? '' : 'none'
-    menu.querySelector('[data-action="move-down"]').style.display = (showVideo || isBm || isNote || isDA || isExt) ? '' : 'none'
-    menu.querySelector('[data-action="delete"]').style.display = (showVideo || isBm || isNote || isDA || isExt) ? '' : 'none'
+    menu.querySelector('[data-action="move-up"]').style.display = (showVideo || isBm || isNote || isDA || isExt) && !isPage ? '' : 'none'
+    menu.querySelector('[data-action="move-down"]').style.display = (showVideo || isBm || isNote || isDA || isExt) && !isPage ? '' : 'none'
+    menu.querySelector('[data-action="delete"]').style.display = (showVideo || isBm || isNote || isDA || isExt || isPage) ? '' : 'none'
 
     const delItem = menu.querySelector('[data-action="delete"]')
-    delItem.innerHTML = `<i data-lucide="trash-2" class="ctx-icon"></i> ${isNote ? 'Delete note' : isBm ? 'Delete bookmark' : isDA ? 'Delete direct access' : isExt ? 'Delete file' : 'Delete'}`
+    delItem.innerHTML = `<i data-lucide="trash-2" class="ctx-icon"></i> ${isNote ? 'Delete note' : isBm ? 'Delete bookmark' : isDA ? 'Delete direct access' : isExt ? 'Delete file' : isPage ? 'Delete forever' : 'Delete'}`
     delItem.className = 'ctx-item ctx-danger'
 
-    document.getElementById('ctxDiv1').style.display = (showVideo || isBm || isDA) ? '' : 'none'
-    document.getElementById('ctxDiv2').style.display = showVideo ? '' : 'none'
-    document.getElementById('ctxDiv3').style.display = (showVideo || isNote || isExt) ? '' : 'none'
+    document.getElementById('ctxDiv1').style.display = (showVideo || isBm || isDA) && !isPage ? '' : 'none'
+    document.getElementById('ctxDiv2').style.display = showVideo && !isPage ? '' : 'none'
+    document.getElementById('ctxDiv3').style.display = (showVideo || isNote || isExt) && !isPage ? '' : 'none'
 
     const moveToEl = document.getElementById('ctxMoveTo')
     moveToEl.classList.remove('show')
@@ -220,10 +223,17 @@ export class ContextMenu extends Component {
       window.saveDirectAccess?.(das)
       window.renderSidebar?.()
     }
-    if (a === 'delete' && this._ctxExt && !this._ctxTarget && !this._ctxBookmark && !this._ctxNote && !this._ctxDA) {
+    if (a === 'delete' && this._ctxExt && !this._ctxTarget && !this._ctxBookmark && !this._ctxNote && !this._ctxDA && !this._ctxPage) {
       const files = (window.getExternalFiles?.() || []).filter(f => f.id !== this._ctxExt)
       window.saveExternalFiles?.(files)
       this.state.setState('externalFiles', files)
+      window.renderSidebar?.()
+      window.renderGridView?.()
+    }
+    if (a === 'delete' && this._ctxPage && !this._ctxTarget && !this._ctxBookmark && !this._ctxNote && !this._ctxDA && !this._ctxExt) {
+      const pages = (window.getPages?.() || []).filter(p => p.id !== this._ctxPage)
+      window.savePages?.(pages)
+      this.state.setState('pages', pages)
       window.renderSidebar?.()
       window.renderGridView?.()
     }
@@ -404,6 +414,7 @@ export class ContextMenu extends Component {
     else if (this._ctxBookmark) selector = `[data-bookmark-id="${this._ctxBookmark}"] .tree-label`
     else if (this._ctxDA) selector = `[data-da-id="${this._ctxDA}"] .tree-label`
     else if (this._ctxExt) selector = `[data-ext-id="${this._ctxExt}"] .grid-item-title, [data-ext-id="${this._ctxExt}"] .tree-label`
+    else if (this._ctxPage) selector = `[data-page-id="${this._ctxPage}"] .grid-item-title`
     if (!selector) return
 
     const label = document.querySelector(selector)
@@ -457,6 +468,10 @@ export class ContextMenu extends Component {
         const files = window.getExternalFiles?.() || []
         const f = files.filter(x => x.id === this._ctxExt)[0]
         if (f) { f.name = name; window.saveExternalFiles?.(files); this.state.setState('externalFiles', files); window.renderGridView?.() }
+      } else if (this._ctxPage) {
+        const pages = window.getPages?.() || []
+        const p = pages.filter(x => x.id === this._ctxPage)[0]
+        if (p) { p.title = name; p.updated = Date.now(); window.savePages?.(pages); this.state.setState('pages', pages); window.renderGridView?.() }
       }
       window.renderSidebar?.()
     }

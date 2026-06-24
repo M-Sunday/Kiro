@@ -1,9 +1,11 @@
 /* ─── Kiro: Dashboard ──────────────────────────────── */
 .dashboard-hero {
   height: 200px;
+  min-height: 200px;
+  flex-shrink: 0;
   cursor: pointer;
   overflow: hidden;
-  margin: 0 -24px;
+  width: 100%;
 }
 
 /* ─── Hero crop overlay ───────────────────────────── */
@@ -81,24 +83,22 @@
   flex-shrink: 0;
 }
 
-.grid-dashboard {
-  position: relative;
-  padding: 0 24px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  background: transparent;
-}
 .dashboard-header {
-  position: relative;
-  z-index: 1;
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin: 0 -16px;
+  width: 100%;
   padding: 12px 16px 8px;
+  padding-top: max(12px, env(safe-area-inset-top));
   background: #f5f5f7;
   border-bottom: 1px solid #e8e8ed;
+  margin-top: -56px;
+}
+.dashboard-header.stuck {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 .dashboard-header-top {
   display: flex;

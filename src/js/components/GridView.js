@@ -63,6 +63,11 @@ export class GridView extends Component {
     this._exposeGlobals()
   }
 
+  _haptic() {
+    if (navigator.vibrate) navigator.vibrate(8)
+    else window.Capacitor?.Plugins?.Haptics?.selectionChanged?.()
+  }
+
   _exposeGlobals() {
     window.renderGridView = () => this.render()
     window.startGridAnim = () => this._startAnim()
@@ -143,35 +148,41 @@ export class GridView extends Component {
       const hv = document.getElementById('homeView')
       const gs = document.getElementById('gridSections')
 
+      const homeContent = hv?.querySelector('.home-view-content')
+      const gridContent = gs?.querySelector('.grid-sections-content')
+
       if (this._activeView === 'home' && dx < 0) {
-        if (gs) gs.style.zIndex = '2'
-        if (hv) hv.style.zIndex = '1'
-        if (hv) {
-          hv.style.transition = 'none'
-          hv.style.transform = `translateX(${dx}px)`
-          hv.style.opacity = `${1 - Math.abs(clamped) * 0.3}`
-        }
+        if (hv) hv.style.zIndex = '2'
         if (gs) {
-          gs.style.transition = 'none'
-          gs.style.display = ''
-          gs.style.transform = `translateX(${viewWidth + dx}px)`
-          gs.style.opacity = `${0.5 + Math.abs(clamped) * 0.5}`
+          gs.style.zIndex = '1'; gs.style.display = ''
+          if (hv) gs.scrollTop = hv.scrollTop
+        }
+        if (homeContent) {
+          homeContent.style.transition = 'none'
+          homeContent.style.transform = `translateX(${dx}px)`
+        }
+        if (gridContent) {
+          gridContent.style.transition = 'none'
+          gridContent.style.transform = `translateX(${viewWidth + dx}px)`
         }
       } else if (this._activeView === 'grid' && dx > 0) {
-        if (hv) hv.style.zIndex = '2'
-        if (gs) gs.style.zIndex = '1'
-        if (gs) {
-          gs.style.transition = 'none'
-          gs.style.transform = `translateX(${dx}px)`
-          gs.style.opacity = `${1 - Math.abs(clamped) * 0.3}`
-        }
+        if (gs) gs.style.zIndex = '2'
         if (hv) {
-          hv.style.transition = 'none'
-          hv.style.display = 'flex'
-          hv.style.transform = `translateX(${-viewWidth + dx}px)`
-          hv.style.opacity = `${0.5 + Math.abs(clamped) * 0.5}`
+          hv.style.zIndex = '1'; hv.style.display = 'flex'
+          if (gs) hv.scrollTop = gs.scrollTop
+        }
+        if (gridContent) {
+          gridContent.style.transition = 'none'
+          gridContent.style.transform = `translateX(${dx}px)`
+        }
+        if (homeContent) {
+          homeContent.style.transition = 'none'
+          homeContent.style.transform = `translateX(${-viewWidth + dx}px)`
         }
       }
+
+      if (hv) { hv.style.opacity = ''; hv.style.transform = '' }
+      if (gs) { gs.style.opacity = ''; gs.style.transform = '' }
     }, { passive: false })
 
     this.rootEl.addEventListener('touchend', (e) => {
@@ -181,52 +192,50 @@ export class GridView extends Component {
 
       const hv = document.getElementById('homeView')
       const gs = document.getElementById('gridSections')
-      const transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s ease'
+      const homeContent = hv?.querySelector('.home-view-content')
+      const gridContent = gs?.querySelector('.grid-sections-content')
+      const transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)'
 
-      if (hv) { hv.style.transition = transition }
-      if (gs) { gs.style.transition = transition }
+      if (homeContent) { homeContent.style.transition = transition }
+      if (gridContent) { gridContent.style.transition = transition }
 
       const committed = Math.abs(dx) > gvSwipeThreshold && Math.abs(dx) > Math.abs(dy) * gvSwipeRatio
 
       if (committed) {
         if (dx > 0 && this._activeView !== 'home') {
-          if (hv) { hv.style.transform = 'translateX(0)'; hv.style.opacity = '1' }
-          if (gs) { gs.style.transform = 'translateX(100%)'; gs.style.opacity = '0' }
-          window.Capacitor?.Plugins?.Haptics?.selectionChanged?.()
-          setTimeout(() => {
-            if (gs) { gs.style.display = 'none'; gs.style.transform = ''; gs.style.opacity = ''; gs.style.transition = '' }
-            if (hv) { hv.style.transition = '' }
-            this._switchView('home')
-          }, 350)
+          if (homeContent) { homeContent.style.transform = 'translateX(0)' }
+          if (gridContent) { gridContent.style.transform = 'translateX(100%)' }
+          this._activeView = 'home'
+          this._syncTabs('home')
+          this._haptic()
+          setTimeout(() => { this._switchView('home') }, 350)
         } else if (dx < 0 && this._activeView !== 'grid') {
-          if (gs) { gs.style.transform = 'translateX(0)'; gs.style.opacity = '1' }
-          if (hv) { hv.style.transform = 'translateX(-100%)'; hv.style.opacity = '0' }
-          window.Capacitor?.Plugins?.Haptics?.selectionChanged?.()
-          setTimeout(() => {
-            if (hv) { hv.style.display = 'none'; hv.style.transform = ''; hv.style.opacity = ''; hv.style.transition = '' }
-            if (gs) { gs.style.transition = '' }
-            this._switchView('grid')
-          }, 350)
+          if (gridContent) { gridContent.style.transform = 'translateX(0)' }
+          if (homeContent) { homeContent.style.transform = 'translateX(-100%)' }
+          this._activeView = 'grid'
+          this._syncTabs('grid')
+          this._haptic()
+          setTimeout(() => { this._switchView('grid') }, 350)
         } else {
           if (this._activeView === 'home') {
-            if (hv) { hv.style.transform = 'translateX(0)'; hv.style.opacity = '1' }
-            if (gs) { gs.style.transform = 'translateX(100%)'; gs.style.opacity = '0' }
-            setTimeout(() => { if (gs) { gs.style.display = 'none'; gs.style.transform = ''; gs.style.opacity = ''; gs.style.transition = '' } if (hv) { hv.style.transition = '' } }, 350)
+            if (homeContent) { homeContent.style.transform = 'translateX(0)' }
+            if (gridContent) { gridContent.style.transform = 'translateX(100%)' }
+            setTimeout(() => { this._switchView('home') }, 350)
           } else {
-            if (gs) { gs.style.transform = 'translateX(0)'; gs.style.opacity = '1' }
-            if (hv) { hv.style.transform = 'translateX(-100%)'; hv.style.display = 'none'; hv.style.opacity = '0' }
-            setTimeout(() => { if (hv) { hv.style.transform = ''; hv.style.opacity = ''; hv.style.transition = '' } if (gs) { gs.style.transition = '' } }, 350)
+            if (gridContent) { gridContent.style.transform = 'translateX(0)' }
+            if (homeContent) { homeContent.style.transform = 'translateX(-100%)' }
+            setTimeout(() => { this._switchView('grid') }, 350)
           }
         }
       } else {
         if (this._activeView === 'home') {
-          if (hv) { hv.style.transform = 'translateX(0)'; hv.style.opacity = '1' }
-          if (gs) { gs.style.transform = 'translateX(100%)'; gs.style.opacity = '0' }
-          setTimeout(() => { if (gs) { gs.style.display = 'none'; gs.style.transform = ''; gs.style.opacity = ''; gs.style.transition = '' } if (hv) { hv.style.transition = '' } }, 350)
+          if (homeContent) { homeContent.style.transform = 'translateX(0)' }
+          if (gridContent) { gridContent.style.transform = 'translateX(100%)' }
+          setTimeout(() => { this._switchView('home') }, 350)
         } else {
-          if (gs) { gs.style.transform = 'translateX(0)'; gs.style.opacity = '1' }
-          if (hv) { hv.style.transform = 'translateX(-100%)'; hv.style.opacity = '0' }
-          setTimeout(() => { if (hv) { hv.style.display = 'none'; hv.style.transform = ''; hv.style.opacity = ''; hv.style.transition = '' } if (gs) { gs.style.transition = '' } }, 350)
+          if (gridContent) { gridContent.style.transform = 'translateX(0)' }
+          if (homeContent) { homeContent.style.transform = 'translateX(-100%)' }
+          setTimeout(() => { this._switchView('grid') }, 350)
         }
       }
 
@@ -740,6 +749,7 @@ export class GridView extends Component {
   render() {
     if (!this.rootEl) return
     const el = this.rootEl
+
     const folders = this.state.getState('folders') || {}
     const folderMeta = this.state.getState('folderMeta') || {}
     const videos = this.state.getState('videos') || {}
@@ -811,7 +821,7 @@ export class GridView extends Component {
       html += '</div></div>'
     }
 
-    el.innerHTML = this._dashboardHTML(userName) + `<div class="grid-sections" id="gridSections">${html}</div>`
+    el.innerHTML = this._dashboardHTML(userName) + `<div class="grid-sections" id="gridSections">${this._headerHTML(userName)}<div class="grid-sections-content">${html}</div></div>`
 
     /* Wrap homeView and gridSections in swipable container */
     const hv = document.getElementById('homeView')
@@ -832,9 +842,20 @@ export class GridView extends Component {
       el.querySelectorAll('.grid-item').forEach(s => s.classList.add('grid-item-anim'))
       const hero = el.querySelector('.dashboard-hero')
       if (hero) hero.classList.add('grid-section-anim')
-      const dash = el.querySelector('.grid-dashboard')
-      if (dash) dash.classList.add('grid-section-anim')
     }
+
+    /* Sticky header — toggle .stuck when scrolled past hero */
+    ;[hv, gs].forEach(view => {
+      if (!view) return
+      const onScroll = () => {
+        const hdr = view.querySelector('.dashboard-header')
+        const hero = view.querySelector('.dashboard-hero')
+        if (hdr && hero) hdr.classList.toggle('stuck', view.scrollTop >= hero.offsetHeight - hdr.offsetHeight)
+      }
+      view.removeEventListener('scroll', view._stickyScroll)
+      view._stickyScroll = onScroll
+      view.addEventListener('scroll', onScroll, { passive: true })
+    })
 
     this._updateDate()
     if (!this._dateInterval) {
@@ -847,9 +868,26 @@ export class GridView extends Component {
 
     this.bus.emit('ui:icons:load-needed')
     this._applyViewState(this._activeView)
+    this._syncTabs(this._activeView)
   }
 
   _dashboardHTML(userName) {
+    const pages = this.state.getState('pages') || []
+    const homePagesHtml = pages.length ? pages.map(p => this._pageCard(p)).join('') + this._newPageCard() : this._newPageCard()
+    const homeEmptyDisplay = pages.length ? 'none' : ''
+    return `<div id="homeView" class="home-view">
+        ${this._headerHTML(userName)}
+        <div class="home-view-content">
+          <div class="home-view-pages" id="homeViewPages">${homePagesHtml}</div>
+          <div class="home-view-empty" id="homeViewEmpty" style="display:${homeEmptyDisplay}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <p class="home-view-empty-text">Your home view is empty</p>
+          </div>
+        </div>
+      </div>`
+  }
+
+  _headerHTML(userName) {
     const now = new Date()
     const dayName = DAYS[now.getDay()]
     const monthName = MONTHS[now.getMonth()]
@@ -870,11 +908,7 @@ export class GridView extends Component {
       const firstLetter = (userName || 'U').charAt(0).toUpperCase()
       avatarHtml = `<div class="dashboard-avatar">${firstLetter}</div>`
     }
-    const pages = this.state.getState('pages') || []
-    const homePagesHtml = pages.length ? pages.map(p => this._pageCard(p)).join('') + this._newPageCard() : this._newPageCard()
-    const homeEmptyDisplay = pages.length ? 'none' : ''
-    return `<div class="grid-dashboard">
-      <div class="dashboard-hero${this._heroData ? ' has-image' : ''}" style="${heroStyle}"></div>
+    return `<div class="dashboard-hero${this._heroData ? ' has-image' : ''}" style="${heroStyle}"></div>
       <div class="dashboard-header">
         <div class="dashboard-header-top">
           <div class="dashboard-meta">
@@ -888,25 +922,15 @@ export class GridView extends Component {
         </div>
         <div class="view-tabs" id="viewTabs">
           <button class="view-tab active" data-view="home">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             Home
           </button>
           <button class="view-tab" data-view="grid">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             Grid
           </button>
         </div>
-      </div>
-      <div id="homeView" class="home-view">
-        <div class="home-view-content">
-          <div class="home-view-pages" id="homeViewPages">${homePagesHtml}</div>
-          <div class="home-view-empty" id="homeViewEmpty" style="display:${homeEmptyDisplay}">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            <p class="home-view-empty-text">Your home view is empty</p>
-          </div>
-        </div>
-      </div>
-    </div>`
+      </div>`
   }
 
   _videoCard(id, v, thumb, pinned) {
@@ -984,7 +1008,7 @@ export class GridView extends Component {
         <span class="grid-item-badge">File</span>
         ${imgContent}
       </div>
-      <div class="grid-item-body${nsfw ? ' nsfw-blur' : ''}">
+      <div class="grid-item-body">
         <div class="grid-item-title-row">
           <span class="grid-item-title" style="font-size:12px">${this._escapeHtml(f.name)}</span>
         </div>
@@ -1008,7 +1032,7 @@ export class GridView extends Component {
         <span class="grid-item-badge">Bookmark</span>
         ${imgContent}
       </div>
-      <div class="grid-item-body${nsfw ? ' nsfw-blur' : ''}">
+      <div class="grid-item-body">
         <div class="grid-item-title-row">
           <span class="grid-item-title">${bm.title || bm.url}</span>
         </div>
@@ -1804,10 +1828,26 @@ export class GridView extends Component {
   }
 
   _switchView(view) {
+    const prevView = this._activeView
     this._activeView = view
     const gv = this.rootEl
     if (!gv.classList.contains('open')) gv.classList.add('open')
+    const hv = document.getElementById('homeView')
+    const gs = document.getElementById('gridSections')
+    const fromEl = prevView === 'home' ? hv : gs
+    const savedScrollTop = fromEl ? fromEl.scrollTop : 0
     this._applyViewState(view)
+    requestAnimationFrame(() => {
+      const toEl = view === 'home' ? document.getElementById('homeView') : document.getElementById('gridSections')
+      if (toEl) {
+        void toEl.offsetHeight
+        toEl.scrollTop = savedScrollTop
+        const hdr = toEl.querySelector('.dashboard-header')
+        const hero = toEl.querySelector('.dashboard-hero')
+        if (hdr && hero) hdr.classList.toggle('stuck', toEl.scrollTop >= hero.offsetHeight - hdr.offsetHeight)
+      }
+    })
+    this._haptic()
     if (view === 'grid') {
       document.getElementById('gridBtn')?.classList.add('active')
     } else {
@@ -1822,8 +1862,28 @@ export class GridView extends Component {
   _applyViewState(view) {
     const gs = document.getElementById('gridSections')
     const hv = document.getElementById('homeView')
-    if (gs) { gs.style.display = view === 'grid' ? '' : 'none'; gs.style.transform = ''; gs.style.opacity = ''; gs.style.zIndex = ''; gs.style.transition = '' }
-    if (hv) { hv.style.display = view === 'home' ? 'flex' : 'none'; hv.style.transform = ''; hv.style.opacity = ''; hv.style.zIndex = ''; hv.style.transition = '' }
+    if (gs) {
+      gs.style.display = view === 'grid' ? '' : 'none'; gs.style.transform = ''; gs.style.opacity = ''; gs.style.zIndex = ''; gs.style.transition = ''
+      const gc = gs.querySelector('.grid-sections-content')
+      if (gc) { gc.style.transform = ''; gc.style.opacity = ''; gc.style.transition = ''; gc.style.display = '' }
+    }
+    if (hv) {
+      hv.style.display = view === 'home' ? 'flex' : 'none'; hv.style.transform = ''; hv.style.opacity = ''; hv.style.zIndex = ''; hv.style.transition = ''
+      const hc = hv.querySelector('.home-view-content')
+      if (hc) { hc.style.transform = ''; hc.style.opacity = ''; hc.style.transition = ''; hc.style.display = '' }
+    }
+  }
+
+  _syncStickyState(fromView, toView, savedScrollTop) {
+    const hv = document.getElementById('homeView')
+    const gs = document.getElementById('gridSections')
+    const toEl = toView === 'home' ? hv : gs
+    if (!toEl) return
+    void toEl.offsetHeight
+    toEl.scrollTop = savedScrollTop
+    const hdr = toEl.querySelector('.dashboard-header')
+    const hero = toEl.querySelector('.dashboard-hero')
+    if (hdr && hero) hdr.classList.toggle('stuck', toEl.scrollTop >= hero.offsetHeight - hdr.offsetHeight)
   }
 
   _anyExternalViewOpen() {

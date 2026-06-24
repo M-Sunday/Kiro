@@ -148,11 +148,11 @@ export class OnboardingFlow extends Component {
       if (window.startApp) window.startApp()
 
       setTimeout(() => {
-        const db = document.querySelector('.grid-dashboard')
-        if (db) {
-          db.classList.remove('grid-section-anim')
-          db.style.opacity = '1'
-          db.style.transform = 'translateY(0)'
+        const gv = document.getElementById('gridView')
+        if (gv) {
+          gv.classList.remove('grid-section-anim')
+          gv.style.opacity = '1'
+          gv.style.transform = 'translateY(0)'
         }
         if (window.startGridAnim) window.startGridAnim()
       }, 250)

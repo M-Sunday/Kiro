@@ -8,13 +8,14 @@
     top: max(12px, env(safe-area-inset-top, 12px)); left: 12px;
     width: calc(100vw - 24px); max-width: 360px;
     height: calc(100dvh - 24px);
-    border-radius: 16px;
+    border-radius: 18px;
     margin: 0; z-index: 400;
   }
-  .sidebar-header { padding: 12px 12px 6px; }
-  .sidebar-search { padding: 6px 12px 6px; }
-  .sidebar-tree { padding: 0 6px 6px; }
-  .tree-folder, .tree-file { padding: 4px 6px; font-size: 13px; gap: 5px; }
+  .sidebar-header { padding: 16px 14px 8px; }
+  .sidebar-search { padding: 6px 12px 10px; }
+  .sidebar-tree { padding: 0 8px 8px; }
+  .tree-folder { padding: 8px 10px; font-size: 13px; gap: 8px; }
+  .tree-file { padding: 10px 10px; font-size: 13px; gap: 8px; }
   .sidebar.closed {
     transform: translateX(-100%);
     opacity: 0; pointer-events: none;
@@ -49,7 +50,7 @@
   .grid-view { overflow-x: hidden; overflow-y: auto; width: 100%; max-width: 100%; box-sizing: border-box; }
   .grid-items { grid-template-columns: repeat(2, 1fr); gap: 8px; min-width: 0; padding: 0; }
 
-  .sidebar-settings-bar { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+  .sidebar-settings-bar { padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); }
 
   .note-view { padding: 0 20px; padding-top: max(56px, env(safe-area-inset-top, 56px)); }
   .note-view-header { margin: 0 0 8px; padding: 4px 8px; gap: 4px; flex-wrap: wrap; }

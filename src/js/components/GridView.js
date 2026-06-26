@@ -42,16 +42,18 @@ export class GridView extends Component {
     this._heroData = null
     this._avatarData = null
     this._activeView = 'home'
+    this._renderQueued = false
+    this._savedScroll = { home: 0, grid: 0 }
 
-    this.state.subscribe('videos', () => this.render())
-    this.state.subscribe('folders', () => this.render())
-    this.state.subscribe('notes', () => this.render())
-    this.state.subscribe('bookmarks', () => this.render())
-    this.state.subscribe('directAccess', () => this.render())
-    this.state.subscribe('pins', () => this.render())
-    this.state.subscribe('userName', () => this.render())
-    this.state.subscribe('externalFiles', () => this.render())
-    this.state.subscribe('pages', () => this.render())
+    this.state.subscribe('videos', () => this._queueRender())
+    this.state.subscribe('folders', () => this._queueRender())
+    this.state.subscribe('notes', () => this._queueRender())
+    this.state.subscribe('bookmarks', () => this._queueRender())
+    this.state.subscribe('directAccess', () => this._queueRender())
+    this.state.subscribe('pins', () => this._queueRender())
+    this.state.subscribe('userName', () => this._queueRender())
+    this.state.subscribe('externalFiles', () => this._queueRender())
+    this.state.subscribe('pages', () => this._queueRender())
 
     this.on('ui:grid:refresh', () => this.render())
     this.on('ui:camera:open', () => this._handleCameraOpen())
@@ -63,13 +65,23 @@ export class GridView extends Component {
     this._exposeGlobals()
   }
 
+  _queueRender() {
+    /* Batch multiple synchronous state changes into a single render via microtask */
+    if (this._renderQueued) return
+    this._renderQueued = true
+    queueMicrotask(() => {
+      this._renderQueued = false
+      this.render()
+    })
+  }
+
   _haptic() {
     if (navigator.vibrate) navigator.vibrate(8)
     else window.Capacitor?.Plugins?.Haptics?.selectionChanged?.()
   }
 
   _exposeGlobals() {
-    window.renderGridView = () => this.render()
+    window.renderGridView = () => this._queueRender()
     window.startGridAnim = () => this._startAnim()
     window.takePicture = () => this._takePicture()
     window.renderProgressBar = (c, t, l) => this._renderProgressBar(c, t, l)
@@ -127,9 +139,11 @@ export class GridView extends Component {
     this.rootEl.addEventListener('touchmove', (e) => {
       const dx = e.touches[0].clientX - gvTouchStartX
       const dy = e.touches[0].clientY - gvTouchStartY
-      if (!gvSwipeActive && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      if (!gvSwipeActive && (Math.abs(dx) >= gvSwipeThreshold || Math.abs(dy) >= gvSwipeThreshold)) {
         if (Math.abs(dx) > Math.abs(dy) * 0.5) {
           gvSwipeActive = true
+          document.getElementById('homeView')?.style.setProperty('overflow-y', 'hidden')
+          document.getElementById('gridSections')?.style.setProperty('overflow-y', 'hidden')
         }
       }
       if (!gvSwipeActive) return
@@ -205,14 +219,12 @@ export class GridView extends Component {
         if (dx > 0 && this._activeView !== 'home') {
           if (homeContent) { homeContent.style.transform = 'translateX(0)' }
           if (gridContent) { gridContent.style.transform = 'translateX(100%)' }
-          this._activeView = 'home'
           this._syncTabs('home')
           this._haptic()
           setTimeout(() => { this._switchView('home') }, 350)
         } else if (dx < 0 && this._activeView !== 'grid') {
           if (gridContent) { gridContent.style.transform = 'translateX(0)' }
           if (homeContent) { homeContent.style.transform = 'translateX(-100%)' }
-          this._activeView = 'grid'
           this._syncTabs('grid')
           this._haptic()
           setTimeout(() => { this._switchView('grid') }, 350)
@@ -239,6 +251,8 @@ export class GridView extends Component {
         }
       }
 
+      document.getElementById('homeView')?.style.setProperty('overflow-y', '')
+      document.getElementById('gridSections')?.style.setProperty('overflow-y', '')
       gvSwipeActive = false
     }, { passive: true })
 
@@ -750,6 +764,12 @@ export class GridView extends Component {
     if (!this.rootEl) return
     const el = this.rootEl
 
+    /* Save scroll position before DOM rebuild */
+    const oldHv = document.getElementById('homeView')
+    const oldGs = document.getElementById('gridSections')
+    const savedHomeScroll = oldHv ? oldHv.scrollTop : 0
+    const savedGridScroll = oldGs ? oldGs.scrollTop : 0
+
     const folders = this.state.getState('folders') || {}
     const folderMeta = this.state.getState('folderMeta') || {}
     const videos = this.state.getState('videos') || {}
@@ -821,7 +841,7 @@ export class GridView extends Component {
       html += '</div></div>'
     }
 
-    el.innerHTML = this._dashboardHTML(userName) + `<div class="grid-sections" id="gridSections">${this._headerHTML(userName)}<div class="grid-sections-content">${html}</div></div>`
+    el.innerHTML = this._dashboardHTML(userName) + `<div class="grid-sections" id="gridSections">${this._headerHTML(userName)}<div class="grid-sections-content">${html}<div class="content-spacer"></div></div></div>`
 
     /* Wrap homeView and gridSections in swipable container */
     const hv = document.getElementById('homeView')
@@ -848,13 +868,31 @@ export class GridView extends Component {
     ;[hv, gs].forEach(view => {
       if (!view) return
       const onScroll = () => {
-        const hdr = view.querySelector('.dashboard-header')
+        const key = view === hv ? 'home' : 'grid'
+        this._savedScroll[key] = view.scrollTop
+        const tabs = view.querySelector('#viewTabs')
         const hero = view.querySelector('.dashboard-hero')
-        if (hdr && hero) hdr.classList.toggle('stuck', view.scrollTop >= hero.offsetHeight - hdr.offsetHeight)
+        if (tabs && hero) tabs.classList.toggle('stuck', view.scrollTop >= hero.offsetHeight + 60)
       }
       view.removeEventListener('scroll', view._stickyScroll)
       view._stickyScroll = onScroll
       view.addEventListener('scroll', onScroll, { passive: true })
+    })
+
+    /* Restore scroll position after full DOM rebuild.
+       Prefer this._savedScroll (last known position for each view, even when hidden)
+       over the capture above (which is 0 for hidden views). */
+    requestAnimationFrame(() => {
+      const newHv = document.getElementById('homeView')
+      const newGs = document.getElementById('gridSections')
+      if (newHv) newHv.scrollTop = this._savedScroll.home || savedHomeScroll
+      if (newGs) newGs.scrollTop = this._savedScroll.grid || savedGridScroll
+      const activeEl = this._activeView === 'home' ? newHv : newGs
+      if (activeEl) {
+        const tabs = activeEl.querySelector('#viewTabs')
+        const hero = activeEl.querySelector('.dashboard-hero')
+        if (tabs && hero) tabs.classList.toggle('stuck', activeEl.scrollTop >= hero.offsetHeight + 60)
+      }
     })
 
     this._updateDate()
@@ -883,6 +921,7 @@ export class GridView extends Component {
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             <p class="home-view-empty-text">Your home view is empty</p>
           </div>
+          <div class="content-spacer"></div>
         </div>
       </div>`
   }
@@ -909,27 +948,25 @@ export class GridView extends Component {
       avatarHtml = `<div class="dashboard-avatar">${firstLetter}</div>`
     }
     return `<div class="dashboard-hero${this._heroData ? ' has-image' : ''}" style="${heroStyle}"></div>
-      <div class="dashboard-header">
-        <div class="dashboard-header-top">
-          <div class="dashboard-meta">
-            <div class="dashboard-greeting">${userName || 'Dashboard'}${userName ? "'s Dashboard" : ''}</div>
-            <div class="dashboard-date">${dateStr}</div>
-          </div>
-          <div class="dashboard-avatar-wrap">
-            ${avatarHtml}
-            <span class="dashboard-avatar-status ${statusClass}"></span>
-          </div>
+      <div class="dashboard-header-top">
+        <div class="dashboard-meta">
+          <div class="dashboard-greeting">${userName || 'Dashboard'}${userName ? "'s Dashboard" : ''}</div>
+          <div class="dashboard-date">${dateStr}</div>
         </div>
-        <div class="view-tabs" id="viewTabs">
-          <button class="view-tab active" data-view="home">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            Home
-          </button>
-          <button class="view-tab" data-view="grid">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Grid
-          </button>
+        <div class="dashboard-avatar-wrap">
+          ${avatarHtml}
+          <span class="dashboard-avatar-status ${statusClass}"></span>
         </div>
+      </div>
+      <div class="view-tabs" id="viewTabs">
+        <button class="view-tab active" data-view="home">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Home
+        </button>
+        <button class="view-tab" data-view="grid">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Grid
+        </button>
       </div>`
   }
 
@@ -1236,27 +1273,27 @@ export class GridView extends Component {
         if (videoId) {
           const vs = window.getVideos?.() || {}
           const v = vs[videoId]
-          if (v) { v.favorited = !v.favorited; window.saveVideos?.(vs); this.state.setState('videos', vs); window.renderGridView?.() }
+          if (v) { v.favorited = !v.favorited; window.saveVideos?.(vs) }
         } else if (bookmarkId) {
           const bms = window.getBookmarks?.() || []
           const b = bms.find(x => x.id === bookmarkId)
-          if (b) { b.favorited = !b.favorited; window.saveBookmarks?.(bms); this.state.setState('bookmarks', bms); window.renderGridView?.() }
+          if (b) { b.favorited = !b.favorited; window.saveBookmarks?.(bms) }
         } else if (noteId) {
           const notes = window.getNotes?.() || []
           const n = notes.find(x => x.id === noteId)
-          if (n) { n.favorited = !n.favorited; window.saveNotes?.(notes); this.state.setState('notes', notes); window.renderGridView?.() }
+          if (n) { n.favorited = !n.favorited; window.saveNotes?.(notes) }
         } else if (daId) {
           const das = window.getDirectAccess?.() || []
           const d = das.find(x => x.id === daId)
-          if (d) { d.favorited = !d.favorited; window.saveDirectAccess?.(das); this.state.setState('directAccess', das); window.renderGridView?.() }
+          if (d) { d.favorited = !d.favorited; window.saveDirectAccess?.(das) }
         } else if (extId) {
           const files = window.getExternalFiles?.() || []
           const f = files.find(x => x.id === extId)
-          if (f) { f.favorited = !f.favorited; window.saveExternalFiles?.(files); this.state.setState('externalFiles', files); window.renderGridView?.() }
+          if (f) { f.favorited = !f.favorited; window.saveExternalFiles?.(files) }
         } else if (pageId) {
           const pages = window.getPages?.() || []
           const p = pages.find(x => x.id === pageId)
-          if (p) { p.favorited = !p.favorited; window.savePages?.(pages); this.state.setState('pages', pages); window.renderGridView?.() }
+          if (p) { p.favorited = !p.favorited; window.savePages?.(pages) }
         }
       })
     })
@@ -1834,19 +1871,24 @@ export class GridView extends Component {
     if (!gv.classList.contains('open')) gv.classList.add('open')
     const hv = document.getElementById('homeView')
     const gs = document.getElementById('gridSections')
-    const fromEl = prevView === 'home' ? hv : gs
-    const savedScrollTop = fromEl ? fromEl.scrollTop : 0
+    /* Save the current (source) view's scroll before hiding it */
+    if (prevView === 'home' && hv) {
+      this._savedScroll.home = hv.scrollTop
+    } else if (prevView === 'grid' && gs) {
+      this._savedScroll.grid = gs.scrollTop
+    }
     this._applyViewState(view)
-    requestAnimationFrame(() => {
-      const toEl = view === 'home' ? document.getElementById('homeView') : document.getElementById('gridSections')
-      if (toEl) {
-        void toEl.offsetHeight
-        toEl.scrollTop = savedScrollTop
-        const hdr = toEl.querySelector('.dashboard-header')
-        const hero = toEl.querySelector('.dashboard-hero')
-        if (hdr && hero) hdr.classList.toggle('stuck', toEl.scrollTop >= hero.offsetHeight - hdr.offsetHeight)
-      }
-    })
+    /* Restore the target view's own saved scroll */
+    const toEl = view === 'home' ? hv : gs
+    if (toEl) {
+      const savedScrollTop = this._savedScroll[view] || 0
+      void toEl.offsetHeight
+      toEl.scrollTop = savedScrollTop
+      const tabs = toEl.querySelector('#viewTabs')
+      const hero = toEl.querySelector('.dashboard-hero')
+      if (tabs && hero) tabs.classList.toggle('stuck', toEl.scrollTop >= hero.offsetHeight + 60)
+    }
+
     this._haptic()
     if (view === 'grid') {
       document.getElementById('gridBtn')?.classList.add('active')
@@ -1881,9 +1923,9 @@ export class GridView extends Component {
     if (!toEl) return
     void toEl.offsetHeight
     toEl.scrollTop = savedScrollTop
-    const hdr = toEl.querySelector('.dashboard-header')
+    const tabs = toEl.querySelector('#viewTabs')
     const hero = toEl.querySelector('.dashboard-hero')
-    if (hdr && hero) hdr.classList.toggle('stuck', toEl.scrollTop >= hero.offsetHeight - hdr.offsetHeight)
+    if (tabs && hero) tabs.classList.toggle('stuck', toEl.scrollTop >= hero.offsetHeight + 60)
   }
 
   _anyExternalViewOpen() {

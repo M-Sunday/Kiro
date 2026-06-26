@@ -226,16 +226,12 @@ export class ContextMenu extends Component {
     if (a === 'delete' && this._ctxExt && !this._ctxTarget && !this._ctxBookmark && !this._ctxNote && !this._ctxDA && !this._ctxPage) {
       const files = (window.getExternalFiles?.() || []).filter(f => f.id !== this._ctxExt)
       window.saveExternalFiles?.(files)
-      this.state.setState('externalFiles', files)
       window.renderSidebar?.()
-      window.renderGridView?.()
     }
     if (a === 'delete' && this._ctxPage && !this._ctxTarget && !this._ctxBookmark && !this._ctxNote && !this._ctxDA && !this._ctxExt) {
       const pages = (window.getPages?.() || []).filter(p => p.id !== this._ctxPage)
       window.savePages?.(pages)
-      this.state.setState('pages', pages)
       window.renderSidebar?.()
-      window.renderGridView?.()
     }
     if (a === 'archive' && this._ctxTarget) {
       const fs = window.getFolders?.() || {}
@@ -271,13 +267,13 @@ export class ContextMenu extends Component {
       } else if (this._ctxExt) {
         const files = window.getExternalFiles?.() || []
         const f = files.filter(x => x.id === this._ctxExt)[0]
-        if (f) { f.blurred = !f.blurred; window.saveExternalFiles?.(files); this.state.setState('externalFiles', files); window.renderSidebar?.(); window.renderGridView?.() }
+        if (f) { f.blurred = !f.blurred; window.saveExternalFiles?.(files); window.renderSidebar?.() }
       }
     }
     if (a === 'mark-stale' && this._ctxTarget) {
       const vs = window.getVideos?.() || {}
       const v = vs[this._ctxTarget]
-      if (v) { v._stale = !v._stale; window.saveVideos?.(vs); window.renderGridView?.(); window.renderSidebar?.() }
+      if (v) { v._stale = !v._stale; window.saveVideos?.(vs); window.renderSidebar?.() }
     }
     if (a === 'rename-folder') {
       this._handleRename()
@@ -361,9 +357,7 @@ export class ContextMenu extends Component {
         if (swap >= 0 && swap < files.length) {
           [files[idx], files[swap]] = [files[swap], files[idx]]
           window.saveExternalFiles?.(files)
-          this.state.setState('externalFiles', files)
           window.renderSidebar?.()
-          window.renderGridView?.()
         }
       }
     }
@@ -397,12 +391,12 @@ export class ContextMenu extends Component {
       if (!target) return
       const files = window.getExternalFiles?.() || []
       const f = files.filter(x => x.id === this._ctxExt)[0]
-      if (f) { f.folder = target; window.saveExternalFiles?.(files); this.state.setState('externalFiles', files); window.renderSidebar?.(); window.renderGridView?.() }
+      if (f) { f.folder = target; window.saveExternalFiles?.(files); window.renderSidebar?.() }
     }
     if (a === 'unassign-folder' && this._ctxExt) {
       const files = window.getExternalFiles?.() || []
       const f = files.filter(x => x.id === this._ctxExt)[0]
-      if (f) { delete f.folder; window.saveExternalFiles?.(files); this.state.setState('externalFiles', files); window.renderSidebar?.(); window.renderGridView?.() }
+      if (f) { delete f.folder; window.saveExternalFiles?.(files); window.renderSidebar?.() }
     }
   }
 
@@ -467,11 +461,11 @@ export class ContextMenu extends Component {
       } else if (this._ctxExt) {
         const files = window.getExternalFiles?.() || []
         const f = files.filter(x => x.id === this._ctxExt)[0]
-        if (f) { f.name = name; window.saveExternalFiles?.(files); this.state.setState('externalFiles', files); window.renderGridView?.() }
+        if (f) { f.name = name; window.saveExternalFiles?.(files) }
       } else if (this._ctxPage) {
         const pages = window.getPages?.() || []
         const p = pages.filter(x => x.id === this._ctxPage)[0]
-        if (p) { p.title = name; p.updated = Date.now(); window.savePages?.(pages); this.state.setState('pages', pages); window.renderGridView?.() }
+        if (p) { p.title = name; p.updated = Date.now(); window.savePages?.(pages) }
       }
       window.renderSidebar?.()
     }

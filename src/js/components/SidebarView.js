@@ -34,6 +34,32 @@ export class SidebarView extends Component {
       document.getElementById('sidebar')?.classList.add('closed')
     })
     this.listenTo(document.getElementById('searchInput'), 'input', () => this.render())
+
+    /* Edge swipe to open (left edge) */
+    let edgeStartX = 0, edgeStartY = 0, edgeActive = false
+    document.addEventListener('touchstart', (e) => {
+      const sidebar = document.getElementById('sidebar')
+      if (!sidebar?.classList.contains('closed')) { edgeActive = false; return }
+      const t = e.touches[0]
+      if (t.clientX <= 24) {
+        edgeActive = true
+        edgeStartX = t.clientX
+        edgeStartY = t.clientY
+      }
+    }, { passive: true })
+    document.addEventListener('touchmove', (e) => {
+      if (!edgeActive) return
+      const t = e.touches[0]
+      const dx = t.clientX - edgeStartX
+      const dy = Math.abs(t.clientY - edgeStartY)
+      if (dy > dx) { edgeActive = false; return }
+      if (dx > 30) {
+        edgeActive = false
+        document.getElementById('sidebar')?.classList.remove('closed')
+        _lastMenuToggle = Date.now()
+      }
+    }, { passive: true })
+    document.addEventListener('touchend', () => { edgeActive = false }, { passive: true })
   }
 
   render() {

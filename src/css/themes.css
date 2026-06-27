@@ -112,7 +112,7 @@ body.theme-black .settings-btn-secondary:hover { background: #3a3a3c; color: #f5
 body.theme-black .page-view { background: #1c1c1e; }
 body.theme-black .page-header { border-color: #3a3a3c; }
 body.theme-black .page-hero.has-image + .page-header { background: linear-gradient(rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0.75) 100%); border-color: transparent; }
-body.theme-black .page-hero.has-image + .page-header.stuck { background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+body.theme-black .page-hero.has-image + .page-header::before { background: rgba(0,0,0,0.85); }
 body.theme-black .page-back-btn:hover { background: #3a3a3c; color: #f5f5f7; }
 body.theme-black .page-hero.has-image + .page-header .page-back-btn:hover { background: rgba(255,255,255,0.15); }
 body.theme-black .page-title-input { color: #f5f5f7; }

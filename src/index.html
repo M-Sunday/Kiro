@@ -304,13 +304,17 @@
                 </div>
             </div>
             <div class="ext-image-view" id="extImageView" style="display:none">
-                <div class="ext-image-header">
-                    <i data-lucide="image" class="ext-image-icon"></i>
-                    <span class="ext-image-title" id="extImageTitle"></span>
-                    <button class="ext-image-close" id="extImageClose"><i data-lucide="x" class="icon-md"></i></button>
-                </div>
                 <div class="ext-image-body" id="extImageBody">
                     <img class="ext-image-element" id="extImageElement" alt="">
+                    <div class="ext-image-gradient top"></div>
+                    <div class="ext-image-gradient bottom"></div>
+                    <div class="ext-image-header">
+                        <div class="ext-image-header-left">
+                            <i data-lucide="image" class="ext-image-icon"></i>
+                            <span class="ext-image-title" id="extImageTitle"></span>
+                        </div>
+                        <button class="ext-image-close" id="extImageClose"><i data-lucide="x" class="icon-md"></i></button>
+                    </div>
                     <div class="ext-image-error" id="extImageError">Failed to load image</div>
                 </div>
             </div>

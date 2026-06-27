@@ -42,6 +42,7 @@ export class GridView extends Component {
     this._heroData = null
     this._avatarData = null
     this._activeView = 'home'
+    this._animatingSwitch = false
     this._renderQueued = false
     this._savedScroll = { home: 0, grid: 0 }
 
@@ -118,8 +119,8 @@ export class GridView extends Component {
       const tab = e.target.closest('.view-tab')
       if (!tab) return
       const view = tab.dataset.view
-      if (view === this._activeView) return
-      this._switchView(view)
+      if (view === this._activeView || this._animatingSwitch) return
+      this._animateSwitch(view)
     })
 
     /* ── Instagram-style swipe between home/grid tabs ── */
@@ -165,6 +166,11 @@ export class GridView extends Component {
       const homeContent = hv?.querySelector('.home-view-content')
       const gridContent = gs?.querySelector('.grid-sections-content')
 
+      /* Clamp dx to viewport width so the user can't overshoot */
+      const cappedDx = this._activeView === 'home'
+        ? Math.max(-viewWidth, Math.min(0, dx))
+        : Math.max(0, Math.min(viewWidth, dx))
+
       if (this._activeView === 'home' && dx < 0) {
         if (hv) hv.style.zIndex = '2'
         if (gs) {
@@ -173,11 +179,11 @@ export class GridView extends Component {
         }
         if (homeContent) {
           homeContent.style.transition = 'none'
-          homeContent.style.transform = `translateX(${dx}px)`
+          homeContent.style.transform = `translateX(${cappedDx}px)`
         }
         if (gridContent) {
           gridContent.style.transition = 'none'
-          gridContent.style.transform = `translateX(${viewWidth + dx}px)`
+          gridContent.style.transform = `translateX(${viewWidth + cappedDx}px)`
         }
       } else if (this._activeView === 'grid' && dx > 0) {
         if (gs) gs.style.zIndex = '2'
@@ -187,11 +193,11 @@ export class GridView extends Component {
         }
         if (gridContent) {
           gridContent.style.transition = 'none'
-          gridContent.style.transform = `translateX(${dx}px)`
+          gridContent.style.transform = `translateX(${cappedDx}px)`
         }
         if (homeContent) {
           homeContent.style.transition = 'none'
-          homeContent.style.transform = `translateX(${-viewWidth + dx}px)`
+          homeContent.style.transform = `translateX(${-viewWidth + cappedDx}px)`
         }
       }
 
@@ -363,8 +369,8 @@ export class GridView extends Component {
         </div>
       </div>
       <div class="add-fab">
-        <button class="fab-btn" id="mobileAddBtn" title="Add">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        <button class="fab-btn" id="mobileAddBtn" title="Add" style="background:#F54927">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M19 13h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 1 1 2 0v6h6a1 1 0 1 1 0 2z"/></svg>
         </button>
         <div class="add-menu-popup" id="addMenuPopup">
           <div class="add-menu-item" data-action="note">
@@ -416,8 +422,10 @@ export class GridView extends Component {
           this._hideAllViews()
           this.rootEl.classList.add('open')
           this.render()
+          this._switchView('grid')
+        } else {
+          this._animateSwitch('grid')
         }
-        this._switchView('grid')
       })
     }
 
@@ -864,12 +872,10 @@ export class GridView extends Component {
       if (hero) hero.classList.add('grid-section-anim')
     }
 
-    /* Sticky header — toggle .stuck when scrolled past hero */
+    /* Sticky header — just toggle .stuck, no scroll saves */
     ;[hv, gs].forEach(view => {
       if (!view) return
       const onScroll = () => {
-        const key = view === hv ? 'home' : 'grid'
-        this._savedScroll[key] = view.scrollTop
         const tabs = view.querySelector('#viewTabs')
         const hero = view.querySelector('.dashboard-hero')
         if (tabs && hero) tabs.classList.toggle('stuck', view.scrollTop >= hero.offsetHeight + 60)
@@ -879,14 +885,12 @@ export class GridView extends Component {
       view.addEventListener('scroll', onScroll, { passive: true })
     })
 
-    /* Restore scroll position after full DOM rebuild.
-       Prefer this._savedScroll (last known position for each view, even when hidden)
-       over the capture above (which is 0 for hidden views). */
+    /* Restore scroll after DOM rebuild (only place saves are needed) */
     requestAnimationFrame(() => {
       const newHv = document.getElementById('homeView')
       const newGs = document.getElementById('gridSections')
-      if (newHv) newHv.scrollTop = this._savedScroll.home || savedHomeScroll
-      if (newGs) newGs.scrollTop = this._savedScroll.grid || savedGridScroll
+      if (newHv) newHv.scrollTop = savedHomeScroll
+      if (newGs) newGs.scrollTop = savedGridScroll
       const activeEl = this._activeView === 'home' ? newHv : newGs
       if (activeEl) {
         const tabs = activeEl.querySelector('#viewTabs')
@@ -1864,6 +1868,60 @@ export class GridView extends Component {
     if (addBtn) addBtn.classList.remove('page-close')
   }
 
+  _animateSwitch(view) {
+    if (view === this._activeView || this._animatingSwitch) return
+    this._animatingSwitch = true
+    const hv = document.getElementById('homeView')
+    const gs = document.getElementById('gridSections')
+    const homeContent = hv?.querySelector('.home-view-content')
+    const gridContent = gs?.querySelector('.grid-sections-content')
+    const transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)'
+
+    /* Show the target view and prevent scrolling during animation */
+    if (view === 'grid') {
+      if (gs) { gs.style.zIndex = '1'; gs.style.display = '' }
+      if (hv) hv.style.zIndex = '2'
+    } else {
+      if (hv) { hv.style.zIndex = '1'; hv.style.display = 'flex' }
+      if (gs) gs.style.zIndex = '2'
+    }
+    if (hv) hv.style.setProperty('overflow-y', 'hidden')
+    if (gs) gs.style.setProperty('overflow-y', 'hidden')
+
+    /* Set initial positions (no transition) */
+    if (homeContent) homeContent.style.transition = 'none'
+    if (gridContent) gridContent.style.transition = 'none'
+    if (view === 'grid') {
+      if (homeContent) homeContent.style.transform = 'translateX(0)'
+      if (gridContent) gridContent.style.transform = 'translateX(100%)'
+    } else {
+      if (gridContent) gridContent.style.transform = 'translateX(0)'
+      if (homeContent) homeContent.style.transform = 'translateX(-100%)'
+    }
+
+    void (homeContent || gridContent)?.offsetHeight
+
+    /* Animate to final positions */
+    if (homeContent) homeContent.style.transition = transition
+    if (gridContent) gridContent.style.transition = transition
+    if (view === 'grid') {
+      if (homeContent) homeContent.style.transform = 'translateX(-100%)'
+      if (gridContent) gridContent.style.transform = 'translateX(0)'
+    } else {
+      if (gridContent) gridContent.style.transform = 'translateX(100%)'
+      if (homeContent) homeContent.style.transform = 'translateX(0)'
+    }
+
+    this._syncTabs(view)
+    this._haptic()
+    setTimeout(() => {
+      this._animatingSwitch = false
+      document.getElementById('homeView')?.style.setProperty('overflow-y', '')
+      document.getElementById('gridSections')?.style.setProperty('overflow-y', '')
+      this._switchView(view)
+    }, 350)
+  }
+
   _switchView(view) {
     const prevView = this._activeView
     this._activeView = view
@@ -1871,22 +1929,14 @@ export class GridView extends Component {
     if (!gv.classList.contains('open')) gv.classList.add('open')
     const hv = document.getElementById('homeView')
     const gs = document.getElementById('gridSections')
-    /* Save the current (source) view's scroll before hiding it */
-    if (prevView === 'home' && hv) {
-      this._savedScroll.home = hv.scrollTop
-    } else if (prevView === 'grid' && gs) {
-      this._savedScroll.grid = gs.scrollTop
-    }
+    /* No scroll save/restore — browser preserves scrollTop across display:none toggles */
     this._applyViewState(view)
-    /* Restore the target view's own saved scroll */
-    const toEl = view === 'home' ? hv : gs
-    if (toEl) {
-      const savedScrollTop = this._savedScroll[view] || 0
-      void toEl.offsetHeight
-      toEl.scrollTop = savedScrollTop
-      const tabs = toEl.querySelector('#viewTabs')
-      const hero = toEl.querySelector('.dashboard-hero')
-      if (tabs && hero) tabs.classList.toggle('stuck', toEl.scrollTop >= hero.offsetHeight + 60)
+    void (hv || gs)?.offsetHeight
+    const targetEl = view === 'home' ? hv : gs
+    if (targetEl) {
+      const tabs = targetEl.querySelector('#viewTabs')
+      const hero = targetEl.querySelector('.dashboard-hero')
+      if (tabs && hero) tabs.classList.toggle('stuck', targetEl.scrollTop >= hero.offsetHeight + 60)
     }
 
     this._haptic()

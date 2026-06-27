@@ -363,22 +363,47 @@
 
 /* ─── External image viewer ──────────────────────────── */
 .ext-image-view {
-  display: none; flex: 1; flex-direction: column; overflow: hidden; padding: 20px;
-  background: rgba(0,0,0,0.85);
+  display: none; flex-direction: column; overflow: hidden;
+  position: absolute; inset: 0; z-index: 5;
+  background: #000;
+  touch-action: none;
 }
-.ext-image-header {
-  display: flex; align-items: center; gap: 10px; padding: 8px 14px; margin: 0 0 8px;
-  border-radius: 14px; background: rgba(245,245,247,0.95); border: 1px solid #e8e8ed;
+.ext-image-body {
+  flex: 1; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: #000;
+  touch-action: none;
 }
-.ext-image-icon { width: 18px; height: 18px; color: #8e8e93; flex-shrink: 0; }
-.ext-image-title { flex: 1; font-size: 16px; font-weight: 600; color: #1d1d1f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ext-image-close { background: none; border: 1px solid #e8e8ed; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; color: #8e8e93; flex-shrink: 0; }
-.ext-image-close:hover { background: #f5f5f7; }
-.ext-image-body { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 10px 0; cursor: default; overflow: hidden; }
-.ext-image-element { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 12px; transition: transform 0.08s ease; }
+.ext-image-element { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.08s ease; }
 .ext-image-element.zoomed { cursor: grab; }
 .ext-image-element.zoomed:active { cursor: grabbing; }
-.ext-image-error { display: none; color: #fff; font-size: 14px; text-align: center; padding: 20px; }
+
+/* Image gradients for readability */
+.ext-image-gradient {
+  position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none;
+}
+.ext-image-gradient.top { top: 0; height: 40%; background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent); }
+.ext-image-gradient.bottom { bottom: 0; height: 50%; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); }
+
+/* Header overlay */
+.ext-image-header {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; padding-top: max(16px, env(safe-area-inset-top));
+}
+.ext-image-header-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.ext-image-icon { width: 18px; height: 18px; color: #fff; flex-shrink: 0; opacity: 0.8; }
+.ext-image-title { font-size: 15px; font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+.ext-image-close {
+  background: rgba(255,255,255,0.12); border: none; border-radius: 50%;
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.12s; color: #fff; flex-shrink: 0; backdrop-filter: blur(4px);
+}
+.ext-image-close:hover { background: rgba(255,255,255,0.25); }
+.ext-image-close svg, .ext-image-close i { width: 20px; height: 20px; }
+
+/* Error message */
+.ext-image-error { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #fff; background: rgba(0,0,0,0.7); padding: 12px 20px; border-radius: 8px; font-size: 14px; pointer-events: none; z-index: 3; }
 
 /* ─── Dark theme for external viewers ──────────────── */
 body.theme-black .ext-text-header { background: rgba(44,44,46,0.95); border-color: #3a3a3c; }
@@ -388,10 +413,8 @@ body.theme-black .ext-text-close:hover { background: #3a3a3c; }
 body.theme-black .ext-text-content { color: #a1a1a6; }
 body.theme-black .ext-video-close { background: rgba(255,255,255,0.1); color: #fff; }
 body.theme-black .ext-video-close:hover { background: rgba(255,255,255,0.2); }
-body.theme-black .ext-image-header { background: rgba(44,44,46,0.95); border-color: #3a3a3c; }
-body.theme-black .ext-image-title { color: #f5f5f7; }
-body.theme-black .ext-image-close { border-color: #3a3a3c; color: #a1a1a6; }
-body.theme-black .ext-image-close:hover { background: #3a3a3c; }
+body.theme-black .ext-image-close { background: rgba(255,255,255,0.1); color: #fff; }
+body.theme-black .ext-image-close:hover { background: rgba(255,255,255,0.2); }
 
 /* ─── Camera overlay ────────────────────────────────── */
 .camera-overlay {
@@ -509,5 +532,4 @@ body.theme-black .ext-image-close:hover { background: #3a3a3c; }
 @media (max-width: 768px) {
   .ext-text-view { padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
   .ext-video-view { padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
-  .ext-image-view { padding-top: max(56px, env(safe-area-inset-top, 56px)); padding-bottom: max(90px, env(safe-area-inset-bottom, 90px)); }
 }

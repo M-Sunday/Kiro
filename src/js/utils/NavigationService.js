@@ -211,6 +211,10 @@ export class NavigationService {
       document.getElementById('settingsOverlay')?.classList.remove('open')
       return
     }
+    if (document.getElementById('profileOverlay')?.classList.contains('open')) {
+      document.getElementById('profileOverlay')?.classList.remove('open')
+      return
+    }
     if (document.getElementById('shortcutsOverlay')?.style.display === 'flex') {
       document.getElementById('shortcutsOverlay').style.display = 'none'
       return

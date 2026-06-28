@@ -4,24 +4,12 @@
   * { scrollbar-width: none; }
   body { padding: 0; gap: 0; min-height: 100dvh; }
 
-  .sidebar {
-    top: max(12px, env(safe-area-inset-top, 12px)); left: 12px;
-    width: calc(100vw - 24px); max-width: 360px;
-    height: calc(100dvh - 24px);
-    border-radius: 18px;
-    margin: 0; z-index: 400;
-  }
   .sidebar-header { padding: 16px 14px 8px; }
   .sidebar-search { padding: 6px 12px 10px; }
-  .sidebar-tree { padding: 0 8px 8px; }
+  .sidebar-tree { padding: 0 8px 8px; flex: 1; min-height: 0; }
   .tree-folder { padding: 8px 10px; font-size: 13px; gap: 8px; }
   .tree-file { padding: 10px 10px; font-size: 13px; gap: 8px; }
-  .sidebar.closed {
-    transform: translateX(-100%);
-    opacity: 0; pointer-events: none;
-  }
-
-  .sidebar-tree { flex: 1; min-height: 0; }
+  .sidebar-settings-bar { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
 
   .main-area {
     height: 100vh; height: 100dvh; width: 100%; border-radius: 0; border: none;
@@ -57,7 +45,7 @@
   .note-view-title { font-size: 16px; min-width: 60px; flex-basis: 60px; }
   .note-view-actions { gap: 2px; }
   .note-view-btn { width: 28px; height: 28px; }
-  .note-view-content { padding: 12px 20px 12px 36px; }
+  .note-view-content { padding: 12px 12px 12px 36px; }
   .note-view-todos { padding: 0 0 8px; }
   .note-view-footer { padding: 4px 0 8px; }
   .ext-text-footer { padding: 4px 0 8px; }

@@ -299,7 +299,7 @@ export class NoteView extends Component {
     const n = notes.find(x => x.id === window.currentNoteId)
     if (!n || !n.todos || !n.todos.length) { el.innerHTML = ''; return }
 
-    let html = '<div style="border-top:1px solid #e8e8ed;padding-top:8px;margin-top:4px">'
+    let html = '<div style="padding-top:8px;margin-top:4px">'
     n.todos.forEach((t, i) => {
       const checked = t.done ? ' checked' : ''
       html += '<div class="todo-row"><span class="todo-cb' + checked + '" data-todo-id="' + t.id + '">' +

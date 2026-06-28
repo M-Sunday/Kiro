@@ -119,8 +119,48 @@ export class GridView extends Component {
       const tab = e.target.closest('.view-tab')
       if (!tab) return
       const view = tab.dataset.view
+      if (view === 'circle') return
       if (view === this._activeView || this._animatingSwitch) return
       this._animateSwitch(view)
+    })
+    this.listenTo(this.rootEl, 'click', (e) => {
+      const btn = e.target.closest('.view-tab-circle')
+      if (!btn) return
+      const overlay = document.getElementById('profileOverlay')
+      if (!overlay) return
+      const userName = this.state.getState('userName') || ''
+      const now = new Date()
+      const dayName = DAYS[now.getDay()]
+      const monthName = MONTHS[now.getMonth()]
+      const dateStr = `${dayName} • ${monthName} ${now.getDate()}, ${now.getFullYear()}`
+      const online = navigator.onLine
+      const conn = navigator.connection?.effectiveType
+      const statusClass = !online ? 'offline' : (conn === 'slow-2g' || conn === '2g' ? 'weak' : 'online')
+      let avatarHtml
+      if (this._avatarData) {
+        avatarHtml = `<img class="profile-avatar-img" src="${this._avatarData.dataUrl}" alt="Avatar">`
+      } else {
+        const firstLetter = (userName || 'U').charAt(0).toUpperCase()
+        avatarHtml = `<div class="profile-avatar-letter">${firstLetter}</div>`
+      }
+      document.getElementById('profileContent').innerHTML = `
+        <div class="profile-header">
+          <div class="profile-avatar-wrap">
+            ${avatarHtml}
+            <span class="profile-avatar-status ${statusClass}"></span>
+          </div>
+          <div class="profile-meta">
+            <div class="profile-name">${userName || 'Dashboard'}</div>
+            <div class="profile-date">${dateStr}</div>
+          </div>
+        </div>
+      `
+      overlay.classList.add('open')
+    })
+    this.listenTo(document.getElementById('profileOverlay'), 'click', (e) => {
+      if (e.target === document.getElementById('profileOverlay')) {
+        document.getElementById('profileOverlay')?.classList.remove('open')
+      }
     })
 
     /* ── Instagram-style swipe between home/grid tabs ── */
@@ -376,26 +416,27 @@ export class GridView extends Component {
         <button class="fab-btn" id="mobileAddBtn" title="Add" style="background:#F54927">
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M19 13h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 1 1 2 0v6h6a1 1 0 1 1 0 2z"/></svg>
         </button>
+        <div class="add-menu-backdrop" id="addMenuBackdrop"></div>
         <div class="add-menu-popup" id="addMenuPopup">
           <div class="add-menu-item" data-action="note">
-            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg></span>
             New note
+            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg></span>
           </div>
           <div class="add-menu-item" data-action="folder">
-            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
             New folder
+            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
           </div>
           <div class="add-menu-item" data-action="import">
-            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg></span>
             Import file
+            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m17 8-5-5-5 5"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg></span>
           </div>
           <div class="add-menu-item" data-action="camera">
-            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
             Take picture
+            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
           </div>
           <div class="add-menu-item" data-action="bookmark">
-            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></span>
             New bookmark
+            <span class="add-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></span>
           </div>
         </div>
       </div>
@@ -489,6 +530,11 @@ export class GridView extends Component {
         else if (action === 'camera') this._takePicture()
         else if (action === 'bookmark') window.openBookmarkDialog?.()
       })
+    }
+
+    const backdrop = document.getElementById('addMenuBackdrop')
+    if (backdrop) {
+      backdrop.addEventListener('click', () => popup?.classList.remove('open'))
     }
 
     document.addEventListener('click', (e) => {
@@ -956,23 +1002,14 @@ export class GridView extends Component {
       avatarHtml = `<div class="dashboard-avatar">${firstLetter}</div>`
     }
     return `<div class="dashboard-hero${this._heroData ? ' has-image' : ''}" style="${heroStyle}"></div>
-      <div class="dashboard-header-top">
-        <div class="dashboard-meta">
-          <div class="dashboard-greeting">${userName || 'Dashboard'}${userName ? "'s Dashboard" : ''}</div>
-          <div class="dashboard-date">${dateStr}</div>
-        </div>
-        <div class="dashboard-avatar-wrap">
-          ${avatarHtml}
-          <span class="dashboard-avatar-status ${statusClass}"></span>
-        </div>
-      </div>
       <div class="view-tabs" id="viewTabs">
+        <button class="view-tab view-tab-circle" data-view="circle">${avatarHtml}</button>
         <button class="view-tab active" data-view="home">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           Home
         </button>
         <button class="view-tab" data-view="grid">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-inbox-icon lucide-inbox"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
           Grid
         </button>
       </div>`

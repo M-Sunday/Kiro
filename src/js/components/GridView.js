@@ -153,6 +153,10 @@ export class GridView extends Component {
 
       gvSwipeCurrentX = e.touches[0].clientX
 
+      /* Only show slide movement when gesture is strong enough to commit */
+      const canShow = Math.abs(dx) > gvSwipeThreshold && Math.abs(dx) > Math.abs(dy) * gvSwipeRatio
+      if (!canShow) return
+
       const swipeable = this.rootEl.querySelector('.grid-swipable')
       if (!swipeable) return
 

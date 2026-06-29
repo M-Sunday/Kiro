@@ -310,14 +310,66 @@ export class PagesView extends Component {
 
   /* ─── HERO IMAGE ──────────────────────────────────── */
 
+  _extractImageColors(img) {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const w = 60, h = 60
+      canvas.width = w
+      canvas.height = h
+      ctx.drawImage(img, 0, 0, w, h)
+      const data = ctx.getImageData(0, 0, w, h).data
+
+      let topR = 0, topG = 0, topB = 0, topN = 0
+      for (let y = 0; y < h * 0.25; y++) {
+        for (let x = 0; x < w; x++) {
+          const i = (y * w + x) * 4
+          topR += data[i]; topG += data[i+1]; topB += data[i+2]; topN++
+        }
+      }
+
+      let botR = 0, botG = 0, botB = 0, botN = 0
+      for (let y = Math.floor(h * 0.65); y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const i = (y * w + x) * 4
+          botR += data[i]; botG += data[i+1]; botB += data[i+2]; botN++
+        }
+      }
+
+      resolve({
+        top: { r: Math.round(topR/topN), g: Math.round(topG/topN), b: Math.round(topB/topN) },
+        bottom: { r: Math.round(botR/botN), g: Math.round(botG/botN), b: Math.round(botB/botN) }
+      })
+    })
+  }
+
+  _applyHeroGradient(header) {
+    const img = document.getElementById('pageHeroImg')
+    if (!img.complete || !img.naturalWidth) {
+      header.style.background = ''
+      return
+    }
+    this._extractImageColors(img).then(({ top, bottom }) => {
+      header.style.background =
+        `linear-gradient(rgba(${top.r},${top.g},${top.b},0) 0%, rgba(${bottom.r},${bottom.g},${bottom.b},0.3) 30%, rgba(${bottom.r},${bottom.g},${bottom.b},0.7) 100%)`
+    })
+  }
+
   _renderHero(dataUrl) {
     const hero = document.getElementById('pageHero')
     const img = document.getElementById('pageHeroImg')
+    const header = document.getElementById('pageHeader')
     if (dataUrl) {
       img.src = dataUrl
       hero.classList.add('has-image')
+      if (img.complete) {
+        this._applyHeroGradient(header)
+      } else {
+        img.decode().then(() => this._applyHeroGradient(header)).catch(() => {})
+      }
     } else {
       hero.classList.remove('has-image')
+      header.style.background = ''
     }
   }
 

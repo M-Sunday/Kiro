@@ -97,37 +97,11 @@ export class GridView extends Component {
     window.closeExternalImage = () => this._closeExternalImage()
     window.backfillExtThumbnails = () => this._backfillThumbnails()
     window.syncViewTabs = (view) => this._syncTabs(view)
-  }
-
-  mount(rootEl) {
-    super.mount(rootEl)
-    this._bindDOMEvents()
-    this._createBottomPill()
-    this.render()
-    this._backfillThumbnails()
-    this._restoreBlobUrls()
-    this._loadHeroImage()
-    this._loadAvatarImage()
-  }
-
-  _bindDOMEvents() {
-    this.listenTo(document.getElementById('extTextClose'), 'click', () => this._closeExternalText())
-    this.listenTo(document.getElementById('extVideoClose'), 'click', () => this._closeExternalVideo())
-    this.listenTo(document.getElementById('extImageClose'), 'click', () => this._closeExternalImage())
-
-    this.listenTo(this.rootEl, 'click', (e) => {
-      const tab = e.target.closest('.view-tab')
-      if (!tab) return
-      const view = tab.dataset.view
-      if (view === 'circle') return
-      if (view === this._activeView || this._animatingSwitch) return
-      this._animateSwitch(view)
-    })
-    this.listenTo(this.rootEl, 'click', (e) => {
-      const btn = e.target.closest('.view-tab-circle')
-      if (!btn) return
+    window.openProfile = () => {
       const overlay = document.getElementById('profileOverlay')
       if (!overlay) return
+      const overlay2 = document.getElementById('settingsOverlay')
+      if (overlay2 && overlay2.classList.contains('open')) overlay2.classList.remove('open')
       const userName = this.state.getState('userName') || ''
       const now = new Date()
       const dayName = DAYS[now.getDay()]
@@ -144,6 +118,11 @@ export class GridView extends Component {
         avatarHtml = `<div class="profile-avatar-letter">${firstLetter}</div>`
       }
       document.getElementById('profileContent').innerHTML = `
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+          <button class="theme-icon-btn" id="profileCloseBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
         <div class="profile-header">
           <div class="profile-avatar-wrap">
             ${avatarHtml}
@@ -156,11 +135,39 @@ export class GridView extends Component {
         </div>
       `
       overlay.classList.add('open')
+      const closeBtn = document.getElementById('profileCloseBtn')
+      if (closeBtn) closeBtn.addEventListener('click', () => overlay.classList.remove('open'))
+    }
+  }
+
+  mount(rootEl) {
+    super.mount(rootEl)
+    this._bindDOMEvents()
+    this._createBottomPill()
+    this.render()
+    this._backfillThumbnails()
+    this._restoreBlobUrls()
+    this._loadHeroImage()
+    this._loadAvatarImage()
+    document.getElementById('profileOverlay')?.addEventListener('click', function(e) {
+      if (!this.classList.contains('open')) return
+      if (e.target.closest('.settings-modal')) return
+      this.classList.remove('open')
     })
-    this.listenTo(document.getElementById('profileOverlay'), 'click', (e) => {
-      if (e.target === document.getElementById('profileOverlay')) {
-        document.getElementById('profileOverlay')?.classList.remove('open')
-      }
+  }
+
+  _bindDOMEvents() {
+    this.listenTo(document.getElementById('extTextClose'), 'click', () => this._closeExternalText())
+    this.listenTo(document.getElementById('extVideoClose'), 'click', () => this._closeExternalVideo())
+    this.listenTo(document.getElementById('extImageClose'), 'click', () => this._closeExternalImage())
+
+    this.listenTo(this.rootEl, 'click', (e) => {
+      const tab = e.target.closest('.view-tab')
+      if (!tab) return
+      const view = tab.dataset.view
+      if (view === 'circle') return
+      if (view === this._activeView || this._animatingSwitch) return
+      this._animateSwitch(view)
     })
 
     /* ── Instagram-style swipe between home/grid tabs ── */
@@ -1003,7 +1010,7 @@ export class GridView extends Component {
     }
     return `<div class="dashboard-hero${this._heroData ? ' has-image' : ''}" style="${heroStyle}"></div>
       <div class="view-tabs" id="viewTabs">
-        <button class="view-tab view-tab-circle" data-view="circle">${avatarHtml}</button>
+        <button class="view-tab view-tab-circle" data-view="circle" onclick="openProfile()">${avatarHtml}</button>
         <button class="view-tab active" data-view="home">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           Home

@@ -91,9 +91,7 @@
 /* ─── SETTINGS ────────────────────────────────────────── */
 .settings-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 500; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
 .settings-overlay.open { opacity: 1; pointer-events: auto; }
-.settings-modal { width: 100%; max-width: none; height: 45vh; background: #f5f5f7; border-radius: 14px 14px 0 0; box-shadow: 0 -4px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
-.settings-overlay.open .settings-modal { transform: translateY(0); }
-.settings-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--w-text-secondary, #818384); margin: 10px auto 4px; flex-shrink: 0; }
+#profileOverlay { z-index: 600; }
 .profile-modal { height: auto; max-height: 70vh; }
 .profile-content { flex: 1; padding: 24px 28px; overflow-y: auto; }
 .profile-header { display: flex; align-items: center; gap: 16px; }
@@ -106,6 +104,9 @@
 .profile-meta { display: flex; flex-direction: column; gap: 2px; }
 .profile-name { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; color: var(--w-text, #1d1d1f); }
 .profile-date { font-size: 13px; color: var(--w-text-secondary, #86868b); }
+.settings-modal { width: 100%; max-width: none; height: 45vh; background: #f5f5f7; border-radius: 14px 14px 0 0; box-shadow: 0 -4px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
+.settings-overlay.open .settings-modal { transform: translateY(0); }
+.settings-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--w-text-secondary, #818384); margin: 10px auto 4px; flex-shrink: 0; }
 .settings-sidebar { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-bottom: 1px solid var(--w-border, #d1d1d6); flex-shrink: 0; }
 .settings-categories { display: flex; gap: 6px; flex: 1; }
 .settings-cat { padding: 8px 18px; font-size: 13px; font-weight: 600; color: var(--w-text-secondary, #818384); border-radius: 999px; cursor: pointer; transition: background 0.15s, color 0.15s; }
